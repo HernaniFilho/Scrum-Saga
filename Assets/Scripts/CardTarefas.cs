@@ -16,7 +16,11 @@ public class CardTarefas : MonoBehaviour
     {
 
     }
-
+    // TODO: Remover este método se não for necessário
+    void OnMouseDown()
+    {
+        Destroy(gameObject); // Destroi o objeto quando clicado
+    }
     void randomTexture()
     {
         Texture[] textures = Resources.LoadAll<Texture>(imageFolder);
