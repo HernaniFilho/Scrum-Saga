@@ -1,8 +1,16 @@
 using System.Collections.Generic;
+using System;
 using UnityEngine;
+using TMPro;
 
 public class ScoreManager : MonoBehaviour
 {
+    public enum ScoreType
+    {
+        Entrosamento,
+        Produtividade,
+        Expectativa
+    }
     public enum Difficulty
     {
         Easy = 7,
@@ -10,89 +18,86 @@ public class ScoreManager : MonoBehaviour
         Hard = 5
     }
 
-    [Header("Caminho do arquivo de variáveis de pontuação")]
-    public string scoreVarPath = "ScoreVars/scoreVars";
-
     [Header("Dificuldade do jogo")]
     public Difficulty gameDifficulty = Difficulty.Easy;
-    private Dictionary<string, int> scores = new Dictionary<string, int>();
+    public Dictionary<string, int> scoreboard = new Dictionary<string, int>();
+    public Dictionary<string, TMP_Text> scoreTexts = new Dictionary<string, TMP_Text>();
 
-    [Header("Referências aos cards")]
-    public CardEscolhas cardEscolhas;
-    public CardImprevistos cardImprevistos;
+    // TODO: Melhorar a forma de referenciar os scores na UI
+    [Header("Referências aos scores na UI")]
+    public TMP_Text scoreText_1;
+    public TMP_Text scoreText_2;
+    public TMP_Text scoreText_3;
+    public static ScoreManager Instance { get; private set; }
+
+    private void Awake()
+    {
+        if (Instance != null && Instance != this)
+        {
+            Destroy(gameObject); // Garante que só haverá uma instância
+            return;
+        }
+
+        Instance = this;
+        DontDestroyOnLoad(gameObject); // Se quiser manter entre cenas
+    }
+
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        loadScoreVariables(gameDifficulty);
-        Debug.Log("Pontuações carregadas com sucesso.");
-        foreach (var varName in scores.Keys)
+        if (scoreText_1 == null || scoreText_2 == null || scoreText_3 == null)
         {
-            Debug.Log($"Pontuação inicial: {varName} = {scores[varName]}");
-        }
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-
-    }
-
-    void loadScoreVariables(Difficulty difficulty)
-    {
-        TextAsset scoreFile = Resources.Load<TextAsset>(scoreVarPath);
-        if (scoreFile == null)
-        {
-            Debug.LogWarning("Arquivo de pontuação não encontrado em: " + scoreVarPath);
+            Debug.LogError("Referências de texto da UI não atribuídas!");
             return;
         }
+        scoreTexts[ScoreType.Entrosamento.ToString()] = scoreText_1;
+        scoreTexts[ScoreType.Produtividade.ToString()] = scoreText_2;
+        scoreTexts[ScoreType.Expectativa.ToString()] = scoreText_3;
 
-        string[] lines = scoreFile.text.Split(new[] { '\n', '\r' }, System.StringSplitOptions.RemoveEmptyEntries);
-
-        if (lines.Length == 0)
+        loadScore(gameDifficulty);
+        Debug.Log("ScoreManager iniciado com dificuldade: " + gameDifficulty);
+        foreach (var score in scoreboard)
         {
-            Debug.LogWarning("Arquivo de pontuação está vazio: " + scoreVarPath);
-            return;
-        }
-
-        int scorePoints = (int)difficulty;
-        foreach (string line in lines)
-        {
-            string varName = line.Trim();
-            if (!scores.ContainsKey(varName))
-            {
-                scores.Add(varName, scorePoints);
-            }
+            Debug.Log($"Pontuação inicial: {score.Key} = {score.Value}");
         }
     }
 
-    public Dictionary<string, int> GetScoreVariables()
+    void loadScore(Difficulty difficulty)
     {
-        return new Dictionary<string, int>(scores);
-    }
-    
-    public int GetScore(string varName)
-    {
-        if (scores.TryGetValue(varName, out int score))
+        scoreboard.Clear();
+        foreach (ScoreType type in Enum.GetValues(typeof(ScoreType)))
         {
-            return score;
-        }
-        else
-        {
-            Debug.LogWarning($"Variável de pontuação '{varName}' não encontrada.");
-            return 0;
+            string key = type.ToString();
+            int value = (int)difficulty; // Atribui a dificuldade como valor inicial
+            scoreboard[key] = value;
+            UpdateScoreTexts(key, value);
         }
     }
-    
+
     public void UpdateScore(string varName, int value)
     {
-        if (scores.ContainsKey(varName))
+        if (scoreboard.ContainsKey(varName))
         {
-            scores[varName] += value;
-            Debug.Log($"Pontuação atualizada: {varName} = {scores[varName]}");
+            scoreboard[varName] += value;
+            Debug.Log($"Pontuação atualizada: {varName} = {scoreboard[varName]}");
+            UpdateScoreTexts(varName, scoreboard[varName]);
         }
         else
         {
             Debug.LogWarning($"Variável de pontuação '{varName}' não encontrada.");
+        }
+    }
+
+    public void UpdateScoreTexts(string varName, int value)
+    {
+        if (scoreTexts.ContainsKey(varName))
+        {
+            scoreTexts[varName].text = $"{varName}: {value}";
+            Debug.Log($"Texto atualizado para {varName}: {value}");
+        }
+        else
+        {
+            Debug.LogWarning($"Texto de pontuação '{varName}' não encontrado.");
         }
     }
 }

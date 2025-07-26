@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using TMPro;
 using UnityEngine;
+using UnityEngine.SocialPlatforms.Impl;
 using UnityEngine.UI;
 using Random = UnityEngine.Random;
 
@@ -18,19 +19,13 @@ public class CardImprevistos : MonoBehaviour
     [Header("Caminho do material branco usado para preencher espaços vazios")]
     public string whiteMaterialPath = "Materials/White";
     public MeshRenderer[] meshRenderers;
-
-    [Header("Caminho do arquivo de variáveis de pontuação")]
-    public string scoreVarPath = "ScoreVars/scoreVars";
     [Header("Pontuação máxima para atribuição aleatória")]
     public int maxScore = -1;
 
-    public Dictionary<string, int> scores = new Dictionary<string, int>();
-    private string[] selectedScoreVars = new string[2];
+    private Dictionary<string, int> scores = new Dictionary<string, int>();
     [Header("Botoes com os handlers para as pontuações")]
     public Button scoreButton_1;
     public Button scoreButton_2;
-
-    public static event Action<string, int> OnScoreButtonClicked;
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
@@ -38,25 +33,13 @@ public class CardImprevistos : MonoBehaviour
         randomText();
         randomImages();
         loadScoreVariables();
-        assignRandomScores(2);
         if (scoreButton_1 == null || scoreButton_2 == null)
         {
             Debug.LogWarning("Botões de pontuação não atribuídos. Verifique se estão configurados no Inspector.");
             return;
         }
-        setupScoreButton(scoreButton_1, selectedScoreVars[0]);
-        setupScoreButton(scoreButton_2, selectedScoreVars[1]);
-    }
-    // TODO: Remover este método se não for necessário
-    void OnMouseDown()
-    {
-        //Destroy(gameObject); // Destroi o objeto quando clicado
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-
+        setupScoreButton(scoreButton_1, scores.Keys.ElementAt(0));
+        setupScoreButton(scoreButton_2, scores.Keys.ElementAt(1));
     }
 
     void randomText()
@@ -101,72 +84,60 @@ public class CardImprevistos : MonoBehaviour
         Texture[] randomTextures = textures.OrderBy(x => random.Next()).ToArray();
 
         for (int i = 0; i < meshRenderers.Length; i++)
-    {
-        if (i < quantity)
         {
-            // Aplica textura aleatória
-            Material mat = new Material(meshRenderers[i].material);
-            mat.mainTexture = randomTextures[i % randomTextures.Length];
-            meshRenderers[i].material = mat;
-        }
-        else
-        {
-            // Preenche com branco
-            meshRenderers[i].material = whiteMaterial;
-        }
-    }
-    }
-    
-    void loadScoreVariables()
-    {
-        TextAsset scoreFile = Resources.Load<TextAsset>(scoreVarPath);
-        if (scoreFile == null)
-        {
-            Debug.LogWarning("Arquivo de pontuação não encontrado em: " + scoreVarPath);
-            return;
-        }
-
-        string[] lines = scoreFile.text.Split(new[] { '\n', '\r' }, System.StringSplitOptions.RemoveEmptyEntries);
-
-        if (lines.Length == 0)
-        {
-            Debug.LogWarning("Arquivo de pontuação está vazio: " + scoreVarPath);
-            return;
-        }
-
-        foreach (string line in lines)
-        {
-            string varName = line.Trim();
-            if (!scores.ContainsKey(varName))
+            if (i < quantity)
             {
-                scores.Add(varName, 0);
+                // Aplica textura aleatória
+                Material mat = new Material(meshRenderers[i].material);
+                mat.mainTexture = randomTextures[i % randomTextures.Length];
+                meshRenderers[i].material = mat;
+            }
+            else
+            {
+                // Preenche com branco
+                meshRenderers[i].material = whiteMaterial;
             }
         }
     }
 
-    void assignRandomScores(int count)
+    void loadScoreVariables()
     {
-        if (scores.Count < count)
+        ScoreManager.ScoreType[] randomTypes = GetTwoRandomScoreTypes();
+        if (randomTypes.Length < 2)
         {
-            Debug.LogWarning("Não há pontuações suficientes para atribuir.");
+            Debug.LogWarning("Não há pontuações suficientes para selecionar aleatoriamente.");
             return;
         }
-
-        if (count <= 0)
+        scores.Clear();
+        foreach (var type in randomTypes)
         {
-            Debug.LogWarning("O número de pontuações a serem atribuídas deve ser maior que zero.");
-            return;
+            string varName = type.ToString();
+            if (!scores.ContainsKey(varName))
+            {
+                scores.Add(varName, maxScore);
+            }
+        }
+    }
+
+    ScoreManager.ScoreType[] GetTwoRandomScoreTypes()
+    {
+        ScoreManager.ScoreType[] values = (ScoreManager.ScoreType[])Enum.GetValues(typeof(ScoreManager.ScoreType));
+        if (values.Length < 2)
+        {
+            Debug.LogWarning("Não há pontuações suficientes para selecionar aleatoriamente.");
+            return new ScoreManager.ScoreType[0];
+        }
+        List<ScoreManager.ScoreType> list = new List<ScoreManager.ScoreType>(values);
+
+        // Embaralha a lista
+        for (int i = list.Count - 1; i > 0; i--)
+        {
+            int j = UnityEngine.Random.Range(0, i + 1);
+            (list[i], list[j]) = (list[j], list[i]); // Troca
         }
 
-        // Randomiza as chaves do dicionário e seleciona 'count' chaves
-        System.Random random = new System.Random();
-        var selectedKeys = scores.Keys.OrderBy(x => random.Next()).Take(count).ToArray();
-        foreach (var key in selectedKeys)
-        {
-            scores[key] = maxScore;
-        }
-
-        selectedScoreVars = selectedKeys;
+        // Pega os dois primeiros elementos
+        return new ScoreManager.ScoreType[] { list[0], list[1] };
     }
 
     void setupScoreButton(Button button, string varName)
@@ -179,8 +150,10 @@ public class CardImprevistos : MonoBehaviour
         button.onClick.AddListener(() =>
         {
             Debug.Log($"Clicou no botão de pontuação: {varName} com valor {value}");
-            OnScoreButtonClicked?.Invoke(varName, value);
+            ScoreManager.Instance.UpdateScore(varName, value);
             Destroy(gameObject); // Exemplo de ação ao clicar no botão
         });
     }
+
+    
 }
