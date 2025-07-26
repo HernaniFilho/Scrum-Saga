@@ -1,7 +1,10 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
+using Random = UnityEngine.Random;
 
 public class CardImprevistos : MonoBehaviour
 {
@@ -21,23 +24,33 @@ public class CardImprevistos : MonoBehaviour
     [Header("Pontuação máxima para atribuição aleatória")]
     public int maxScore = -1;
 
-    private Dictionary<string, int> scores = new Dictionary<string, int>();
-    [SerializeField] private string[] selectedScoreVars = new string[2];
-    [Header("Textos de pontuação que será atualizado com as pontuações aleatórias")]
-    public TMP_Text scoreTextUI_1;
-    public TMP_Text scoreTextUI_2;
+    public Dictionary<string, int> scores = new Dictionary<string, int>();
+    private string[] selectedScoreVars = new string[2];
+    [Header("Botoes com os handlers para as pontuações")]
+    public Button scoreButton_1;
+    public Button scoreButton_2;
+
+    public static event Action<string, int> OnScoreButtonClicked;
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
         randomText();
         randomImages();
-        randomScoreText();
+        loadScoreVariables();
+        assignRandomScores(2);
+        if (scoreButton_1 == null || scoreButton_2 == null)
+        {
+            Debug.LogWarning("Botões de pontuação não atribuídos. Verifique se estão configurados no Inspector.");
+            return;
+        }
+        setupScoreButton(scoreButton_1, selectedScoreVars[0]);
+        setupScoreButton(scoreButton_2, selectedScoreVars[1]);
     }
     // TODO: Remover este método se não for necessário
     void OnMouseDown()
     {
-        Destroy(gameObject); // Destroi o objeto quando clicado
+        //Destroy(gameObject); // Destroi o objeto quando clicado
     }
 
     // Update is called once per frame
@@ -156,33 +169,18 @@ public class CardImprevistos : MonoBehaviour
         selectedScoreVars = selectedKeys;
     }
 
-    void randomScoreText()
+    void setupScoreButton(Button button, string varName)
     {
-        loadScoreVariables();
-        assignRandomScores(2);
+        int value = scores[varName];
+        var buttonText = button.GetComponentInChildren<TMP_Text>();
+        buttonText.text = (value > 0 ? "+" : "") + value + " " + varName;
 
-        if (scoreTextUI_1 != null)
+        button.onClick.RemoveAllListeners();
+        button.onClick.AddListener(() =>
         {
-            if (scores[selectedScoreVars[0]] > 0)
-            {
-                scoreTextUI_1.text = $"+{scores[selectedScoreVars[0]]} {selectedScoreVars[0]}";
-            }
-            else
-            {
-                scoreTextUI_1.text = $"{scores[selectedScoreVars[0]]} {selectedScoreVars[0]}";
-            }
-        }
-        
-        if (scoreTextUI_2 != null)
-        {
-            if (scores[selectedScoreVars[1]] > 0)
-            {
-                scoreTextUI_2.text = $"+{scores[selectedScoreVars[1]]} {selectedScoreVars[1]}";
-            }
-            else
-            {
-                scoreTextUI_2.text = $"{scores[selectedScoreVars[1]]} {selectedScoreVars[1]}";
-            }
-        }
+            Debug.Log($"Clicou no botão de pontuação: {varName} com valor {value}");
+            OnScoreButtonClicked?.Invoke(varName, value);
+            Destroy(gameObject); // Exemplo de ação ao clicar no botão
+        });
     }
 }

@@ -26,13 +26,14 @@ public class DeckTarefas : MonoBehaviour
             return;
         }
 
-        Debug.Log("Deck de tarefas clicada. Instanciando...");
+        Debug.Log("Deck de tarefas clicada. Comprando carta de tarefa...");
         // Calcula a posição para spawnar: na frente da câmera
         Vector3 spawnPosition = playerCamera.transform.position + playerCamera.transform.forward * spawnDistance;
 
         Quaternion rotation = Quaternion.Euler(-180, 0, 0);
         // Instancia o prefab nessa posição com a rotação padrão (sem rotações extras)
         Instantiate(prefabToSpawn, spawnPosition, rotation);
+        Debug.Log("Carta de tarefa comprada e instanciada na posição: " + spawnPosition);
     }
     // Update is called once per frame
     void Update()

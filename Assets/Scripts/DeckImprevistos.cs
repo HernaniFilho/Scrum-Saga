@@ -26,13 +26,14 @@ public class DeckImprevistos : MonoBehaviour
             return;
         }
 
-        Debug.Log("Deck de imprevistos clicada. Instanciando...");
+        Debug.Log("Deck de imprevistos clicada. Comprando carta de imprevisto...");
         // Calcula a posição para spawnar: na frente da câmera
         Vector3 spawnPosition = playerCamera.transform.position + playerCamera.transform.forward * spawnDistance;
 
         Quaternion rotation = Quaternion.Euler(-180, 0, 0);
         // Instancia o prefab nessa posição com a rotação padrão (sem rotações extras)
         Instantiate(prefabToSpawn, spawnPosition, rotation);
+        Debug.Log("Carta de imprevisto comprada e instanciada na posição: " + spawnPosition);
     }
 
     // Update is called once per frame
