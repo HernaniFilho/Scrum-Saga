@@ -8,6 +8,7 @@ public class CardAprendizagens : MonoBehaviour
 {
     [Header("Caminho dos textos usados na descrição")]
     public string textFolder = "Texts/Aprendizagens";
+    [Header("Texto que será atualizado com o texto aleatório")]
     public TMP_Text textUI;
 
     [Header("Caminho das imagens de natureza usadas no card")]
@@ -16,8 +17,8 @@ public class CardAprendizagens : MonoBehaviour
     public string whiteMaterialPath = "Materials/White";
     [Header("Natureza que será atualizada com a imagem aleatória")]
     public MeshRenderer meshRenderer;
-
-    
+    [Header("Natureza do card")]
+    public string nature;
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
@@ -28,6 +29,8 @@ public class CardAprendizagens : MonoBehaviour
     // TODO: Remover este método se não for necessário
     void OnMouseDown()
     {
+        ScoreManager.Instance.UpdateScore(nature, 1);
+        Debug.Log("Pontuação de " + nature + " aumentada em 1.");
         Destroy(gameObject); // Destroi o objeto quando clicado
     }
     // Update is called once per frame
@@ -74,8 +77,16 @@ public class CardAprendizagens : MonoBehaviour
         System.Random random = new System.Random();
         Texture[] randomTextures = textures.OrderBy(x => random.Next()).ToArray();
 
+        // Seleciona primeira textura aleatória
+        Texture selectedTexture = randomTextures[0];
+
+        // Cria novo material com essa textura
         Material material = new Material(meshRenderer.material);
-        material.mainTexture = randomTextures[0];
+        material.mainTexture = selectedTexture;
         meshRenderer.material = material;
+
+        // Salva o nome da imagem na variável 'nature', sem extensão
+        nature = selectedTexture.name;
+        Debug.Log("Natureza selecionada: " + nature);
     }
 }

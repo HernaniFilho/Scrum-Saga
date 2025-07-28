@@ -11,6 +11,12 @@ public class ScoreManager : MonoBehaviour
         Produtividade,
         Expectativa
     }
+    public enum Natures
+    {
+        Adaptacao,
+        Inspecao,
+        Transparencia
+    }
     public enum Difficulty
     {
         Easy = 7,
@@ -20,14 +26,22 @@ public class ScoreManager : MonoBehaviour
 
     [Header("Dificuldade do jogo")]
     public Difficulty gameDifficulty = Difficulty.Easy;
+    // Vai ter uma pontuação inicial baseada na dificuldade
+    // e será atualizada conforme o jogo avança.
+    // Também terá uma pontuação para cada tipo de natureza.
     public Dictionary<string, int> scoreboard = new Dictionary<string, int>();
-    public Dictionary<string, TMP_Text> scoreTexts = new Dictionary<string, TMP_Text>();
 
-    // TODO: Melhorar a forma de referenciar os scores na UI
-    [Header("Referências aos scores na UI")]
+    [Header("Referências aos Textos de Natureza e Pontuação na UI")]
+    public Dictionary<string, TMP_Text> scoreTexts = new Dictionary<string, TMP_Text>();
+    [Header("Referências aos ScoresTypes na UI")]
     public TMP_Text scoreText_1;
     public TMP_Text scoreText_2;
     public TMP_Text scoreText_3;
+    [Header("Referências de Natureza")]
+    public TMP_Text natureText_1;
+    public TMP_Text natureText_2;
+    public TMP_Text natureText_3;
+
     public static ScoreManager Instance { get; private set; }
 
     private void Awake()
@@ -54,6 +68,15 @@ public class ScoreManager : MonoBehaviour
         scoreTexts[ScoreType.Produtividade.ToString()] = scoreText_2;
         scoreTexts[ScoreType.Expectativa.ToString()] = scoreText_3;
 
+        if (natureText_1 == null || natureText_2 == null || natureText_3 == null)
+        {
+            Debug.LogError("Referências de natureza da UI não atribuídas!");
+            return;
+        }
+        scoreTexts[Natures.Adaptacao.ToString()] = natureText_1;
+        scoreTexts[Natures.Inspecao.ToString()] = natureText_2;
+        scoreTexts[Natures.Transparencia.ToString()] = natureText_3;
+
         loadScore(gameDifficulty);
         Debug.Log("ScoreManager iniciado com dificuldade: " + gameDifficulty);
         foreach (var score in scoreboard)
@@ -69,6 +92,13 @@ public class ScoreManager : MonoBehaviour
         {
             string key = type.ToString();
             int value = (int)difficulty; // Atribui a dificuldade como valor inicial
+            scoreboard[key] = value;
+            UpdateScoreTexts(key, value);
+        }
+        foreach (Natures nature in Enum.GetValues(typeof(Natures)))
+        {
+            string key = nature.ToString();
+            int value = 0; // Inicializa as naturezas com 0
             scoreboard[key] = value;
             UpdateScoreTexts(key, value);
         }

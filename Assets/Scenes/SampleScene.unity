@@ -545,6 +545,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: CardImprevistos
       objectReference: {fileID: 0}
+    - target: {fileID: 5386467518017784698, guid: 34f3584411545db45841bc3ef2bea25c, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 6625849535754083636, guid: 34f3584411545db45841bc3ef2bea25c, type: 3}
       propertyPath: m_Camera
       value: 
@@ -715,6 +719,10 @@ PrefabInstance:
     - target: {fileID: 3030867448559018308, guid: 82222119a51a12746a99388b640556c5, type: 3}
       propertyPath: m_Name
       value: CardTarefas
+      objectReference: {fileID: 0}
+    - target: {fileID: 3030867448559018308, guid: 82222119a51a12746a99388b640556c5, type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8332130045520305128, guid: 82222119a51a12746a99388b640556c5, type: 3}
       propertyPath: m_LocalScale.x
@@ -923,6 +931,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: CardAprendizagens
       objectReference: {fileID: 0}
+    - target: {fileID: 7654413081007464182, guid: 852bbf1f0b91f2042886e3fb3ae3c67e, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 8999003955425348173, guid: 852bbf1f0b91f2042886e3fb3ae3c67e, type: 3}
       propertyPath: m_LocalPosition.x
       value: 12
@@ -1101,6 +1113,10 @@ PrefabInstance:
     - target: {fileID: 314340598803089708, guid: 06740a67542c55b42ae562ba4c406b23, type: 3}
       propertyPath: m_Name
       value: CardEscolhas
+      objectReference: {fileID: 0}
+    - target: {fileID: 314340598803089708, guid: 06740a67542c55b42ae562ba4c406b23, type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1862434182585392163, guid: 06740a67542c55b42ae562ba4c406b23, type: 3}
       propertyPath: m_Camera
