@@ -26,6 +26,18 @@ public class DeckImprevistos : MonoBehaviour
             return;
         }
 
+        if (GameStateManager.Instance == null)
+        {
+            Debug.LogError("GameStateManager não encontrado!");
+            return;
+        }
+
+        if (GameStateManager.Instance.GetCurrentState() != GameStateManager.GameState.Imprevisto)
+        {
+            Debug.Log("Cartas de imprevisto só podem ser pegas durante o estado de Imprevisto!");
+            return;
+        }
+
         Debug.Log("Deck de imprevistos clicada. Comprando carta de imprevisto...");
         // Calcula a posição para spawnar: na frente da câmera
         Vector3 spawnPosition = playerCamera.transform.position + playerCamera.transform.forward * spawnDistance;

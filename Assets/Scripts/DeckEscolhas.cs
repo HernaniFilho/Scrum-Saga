@@ -26,6 +26,18 @@ public class DeckEscolhas : MonoBehaviour
             return;
         }
 
+        if (GameStateManager.Instance == null)
+        {
+            Debug.LogError("GameStateManager não encontrado!");
+            return;
+        }
+
+        if (GameStateManager.Instance.GetCurrentState() != GameStateManager.GameState.Escolha)
+        {
+            Debug.Log("Cartas de escolha só podem ser pegas durante o estado de Escolha!");
+            return;
+        }
+
         Debug.Log("Deck de escolhas clicada. Comprando carta de escolha...");
         // Calcula a posição para spawnar: na frente da câmera
         Vector3 spawnPosition = playerCamera.transform.position + playerCamera.transform.forward * spawnDistance;

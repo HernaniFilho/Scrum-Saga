@@ -26,6 +26,18 @@ public class DeckTarefas : MonoBehaviour
             return;
         }
 
+        if (GameStateManager.Instance == null)
+        {
+            Debug.LogError("GameStateManager não encontrado!");
+            return;
+        }
+
+        if (GameStateManager.Instance.GetCurrentState() != GameStateManager.GameState.SprintPlanning)
+        {
+            Debug.Log("Cartas de tarefa só podem ser pegas durante o Sprint Planning!");
+            return;
+        }
+
         Debug.Log("Deck de tarefas clicada. Comprando carta de tarefa...");
         // Calcula a posição para spawnar: na frente da câmera
         Vector3 spawnPosition = playerCamera.transform.position + playerCamera.transform.forward * spawnDistance;

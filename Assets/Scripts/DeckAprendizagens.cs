@@ -26,6 +26,18 @@ public class DeckAprendizagens : MonoBehaviour
             return;
         }
 
+        if (GameStateManager.Instance == null)
+        {
+            Debug.LogError("GameStateManager não encontrado!");
+            return;
+        }
+
+        if (GameStateManager.Instance.GetCurrentState() != GameStateManager.GameState.SprintRetrospective)
+        {
+            Debug.Log("Cartas de aprendizagem só podem ser pegas durante o Sprint Retrospective!");
+            return;
+        }
+
         Debug.Log("Deck de aprendizagem clicada. Instanciando...");
         // Calcula a posição para spawnar: na frente da câmera
         Vector3 spawnPosition = playerCamera.transform.position + playerCamera.transform.forward * spawnDistance;
