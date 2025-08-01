@@ -35,6 +35,8 @@ public class ShapeDrawer : MonoBehaviour, IPointerDownHandler, IDragHandler, IPo
     private ColorPickerPopup colorPickerPopup;
     private bool bucketModeActive = false;
     private Color selectedBucketColor = Color.red;
+    
+    private UndoSystem undoSystem;
 
     void Start()
     {
@@ -42,6 +44,7 @@ public class ShapeDrawer : MonoBehaviour, IPointerDownHandler, IDragHandler, IPo
         InitializeShapeContainer();
         InitializeHandlers();
         InitializeColorPicker();
+        InitializeUndoSystem();
     }
     
     private void InitializeCanvas()
@@ -102,6 +105,15 @@ public class ShapeDrawer : MonoBehaviour, IPointerDownHandler, IDragHandler, IPo
             Debug.LogError($"Error initializing color picker: {e.Message}");
         }
     }
+    
+    private void InitializeUndoSystem()
+    {
+        undoSystem = GetComponent<UndoSystem>();
+        if (undoSystem == null)
+        {
+            Debug.LogWarning("UndoSystem not found on this GameObject. Add UndoSystem component to enable undo functionality.");
+        }
+    }
 
     public void OnPointerDown(PointerEventData eventData)
     {
@@ -123,12 +135,30 @@ public class ShapeDrawer : MonoBehaviour, IPointerDownHandler, IDragHandler, IPo
 
         if (bucketModeActive)
         {
+            // Salva estado antes do flood fill
+            if (undoSystem != null)
+            {
+                undoSystem.SaveStateBeforeAction();
+            }
+                
             PerformFloodFill(localPoint, selectedBucketColor);
+            
+            // Notifica que foi realizado flood fill
+            if (undoSystem != null)
+            {
+                undoSystem.OnFloodFillPerformed();
+            }
             return;
         }
         
         if (currentShape != ShapeType.Bucket)
         {
+            // Salva estado antes de começar a desenhar
+            if (undoSystem != null)
+            {
+                undoSystem.SaveStateBeforeAction();
+            }
+                
             previewHandler.CreatePreview(localPoint, currentShape, drawingConfig);
         }
     }
@@ -181,11 +211,17 @@ public class ShapeDrawer : MonoBehaviour, IPointerDownHandler, IDragHandler, IPo
             return;
         }
 
-        CreatePermanentShape();
+        GameObject createdShape = CreatePermanentShape();
         previewHandler.DestroyPreview();
+        
+        // Notifica o UndoSystem sobre a nova forma criada
+        if (undoSystem != null && createdShape != null)
+        {
+            undoSystem.OnShapeCreated(createdShape);
+        }
     }
 
-    private void CreatePermanentShape()
+    private GameObject CreatePermanentShape()
     {
         GameObject shape = ShapeFactory.CreatePermanentShape(
             previewHandler.Preview, 
@@ -210,6 +246,8 @@ public class ShapeDrawer : MonoBehaviour, IPointerDownHandler, IDragHandler, IPo
                 textureHandler.DrawLineOnTexture(rt, drawingConfig);
                 break;
         }
+        
+        return shape;
     }
     
     public void ClearAll()
@@ -223,6 +261,12 @@ public class ShapeDrawer : MonoBehaviour, IPointerDownHandler, IDragHandler, IPo
         }
 
         textureHandler.ClearTexture(Color.white);
+        
+        // Limpa histórico do undo ao fazer clear all
+        if (undoSystem != null)
+        {
+            undoSystem.ClearUndoHistory();
+        }
         
         bucketModeActive = false;
         if (colorPickerPopup != null && colorPickerPopup.IsVisible)
