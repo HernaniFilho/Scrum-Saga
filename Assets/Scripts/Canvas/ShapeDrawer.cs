@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
+using System.Collections.Generic;
 
 public class ShapeDrawer : MonoBehaviour, IPointerDownHandler, IDragHandler, IPointerUpHandler {
     [Header("Drawing Settings")]
@@ -279,6 +280,159 @@ public class ShapeDrawer : MonoBehaviour, IPointerDownHandler, IDragHandler, IPo
     
     public bool IsBucketModeActive() => bucketModeActive;
     public Color GetSelectedBucketColor() => selectedBucketColor;
+    
+    /// <summary>
+    /// Força a renderização de todas as formas na textura (para salvar)
+    /// </summary>
+    public void RenderAllShapesToTexture()
+    {
+        if (finalShapeContainer == null || textureHandler == null) return;
+        
+        int shapesRendered = 0;
+        Debug.Log($"Iniciando renderização de formas. Container tem {finalShapeContainer.transform.childCount} filhos");
+        
+        // Re-renderiza todas as formas na textura
+        foreach (Transform child in finalShapeContainer.transform)
+        {
+            GameObject shape = child.gameObject;
+            RectTransform rt = shape.GetComponent<RectTransform>();
+            ShapeData shapeData = shape.GetComponent<ShapeData>();
+            
+            if (shapeData == null) 
+            {
+                Debug.LogWarning($"Forma {shape.name} não tem ShapeData! Tentando identificar pelo nome...");
+                
+                // Fallback: tenta identificar pelo nome para formas antigas
+                if (shape.name.Contains("Rectangle"))
+                {
+                    textureHandler.DrawRectangleOnTexture(rt, drawingConfig);
+                    shapesRendered++;
+                }
+                else if (shape.name.Contains("Circle"))
+                {
+                    textureHandler.DrawCircleOnTexture(rt, drawingConfig);
+                    shapesRendered++;
+                }
+                else if (shape.name.Contains("Ellipse"))
+                {
+                    textureHandler.DrawEllipseOnTexture(rt, drawingConfig);
+                    shapesRendered++;
+                }
+                else if (shape.name.Contains("Line"))
+                {
+                    textureHandler.DrawLineOnTexture(rt, drawingConfig);
+                    shapesRendered++;
+                }
+                continue;
+            }
+            
+            Debug.Log($"Renderizando forma {shapeData.shapeType} na textura com cor {shapeData.config.shapeColor}");
+            
+            // Usa as informações corretas da forma
+            switch (shapeData.shapeType)
+            {
+                case ShapeType.Rectangle:
+                    textureHandler.DrawRectangleOnTexture(rt, shapeData.config);
+                    break;
+                case ShapeType.Circle:
+                    textureHandler.DrawCircleOnTexture(rt, shapeData.config);
+                    break;
+                case ShapeType.Ellipse:
+                    textureHandler.DrawEllipseOnTexture(rt, shapeData.config);
+                    break;
+                case ShapeType.Line:
+                    textureHandler.DrawLineOnTexture(rt, shapeData.config);
+                    break;
+            }
+            shapesRendered++;
+        }
+        
+        Debug.Log($"Renderizou {shapesRendered} formas na textura");
+    }
+    
+    /// <summary>
+    /// Coleta dados de todas as formas para salvamento
+    /// </summary>
+    public SavedShape[] GetAllShapesData()
+    {
+        if (finalShapeContainer == null) return new SavedShape[0];
+        
+        List<SavedShape> shapesData = new List<SavedShape>();
+        
+        foreach (Transform child in finalShapeContainer.transform)
+        {
+            GameObject shape = child.gameObject;
+            RectTransform rt = shape.GetComponent<RectTransform>();
+            ShapeData shapeData = shape.GetComponent<ShapeData>();
+            
+            if (shapeData != null && rt != null)
+            {
+                SavedShape savedShape = new SavedShape(shapeData, rt);
+                shapesData.Add(savedShape);
+            }
+        }
+        
+        Debug.Log($"Coletou dados de {shapesData.Count} formas para salvamento");
+        return shapesData.ToArray();
+    }
+    
+    /// <summary>
+    /// Recria formas visuais a partir de dados salvos
+    /// </summary>
+    public void RestoreShapesFromData(SavedShape[] shapesData)
+    {
+        if (shapesData == null || finalShapeContainer == null) return;
+        
+        Debug.Log($"Restaurando {shapesData.Length} formas visuais...");
+        
+        foreach (SavedShape savedShape in shapesData)
+        {
+            // Cria DrawingConfig a partir dos dados salvos
+            DrawingConfig config = new DrawingConfig
+            {
+                shapeColor = savedShape.color,
+                lineThickness = savedShape.lineThickness
+            };
+            
+            // Cria GameObject da forma
+            GameObject shape = new GameObject($"Shape_{savedShape.shapeType}_{Time.time}");
+            shape.transform.SetParent(finalShapeContainer.transform, false);
+            
+            // Configura RectTransform
+            RectTransform rt = shape.AddComponent<RectTransform>();
+            rt.anchoredPosition = savedShape.position;
+            rt.sizeDelta = savedShape.size;
+            rt.localRotation = Quaternion.Euler(0f, 0f, savedShape.rotation);
+            rt.pivot = new Vector2(0.5f, 0.5f);
+            rt.anchorMin = new Vector2(0.5f, 0.5f);
+            rt.anchorMax = new Vector2(0.5f, 0.5f);
+            
+            // Adiciona componente ShapeData
+            ShapeData shapeData = shape.AddComponent<ShapeData>();
+            shapeData.Initialize(savedShape.shapeType, config);
+            
+            // Cria elementos visuais da forma
+            switch (savedShape.shapeType)
+            {
+                case ShapeType.Rectangle:
+                    ShapeOutlineCreator.CreateRectangleOutline(shape, config);
+                    break;
+                case ShapeType.Circle:
+                    ShapeOutlineCreator.CreateCircleOutline(shape, config);
+                    break;
+                case ShapeType.Ellipse:
+                    ShapeOutlineCreator.CreateEllipseOutline(shape, config);
+                    break;
+                case ShapeType.Line:
+                    UnityEngine.UI.Image newImage = shape.AddComponent<UnityEngine.UI.Image>();
+                    newImage.color = config.shapeColor;
+                    newImage.raycastTarget = false;
+                    break;
+            }
+        }
+        
+        Debug.Log($"Formas visuais restauradas com sucesso!");
+    }
     
     private void Update()
     {

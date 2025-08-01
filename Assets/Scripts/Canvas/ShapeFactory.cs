@@ -16,6 +16,10 @@ public static class ShapeFactory
         rt.anchorMin = previewTransform.anchorMin;
         rt.anchorMax = previewTransform.anchorMax;
 
+        // Adiciona componente com dados da forma
+        ShapeData shapeData = shape.AddComponent<ShapeData>();
+        shapeData.Initialize(shapeType, config);
+
         switch (shapeType)
         {
             case ShapeType.Rectangle:
