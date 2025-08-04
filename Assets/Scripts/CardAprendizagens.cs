@@ -59,34 +59,37 @@ public class CardAprendizagens : MonoBehaviour
             Debug.LogWarning("Nenhum MeshRenderer atribuído para receber as imagens aleatórias.");
             return;
         }
-        Texture[] textures = Resources.LoadAll<Texture>(imageFolder);
-        Material whiteMaterial = Resources.Load<Material>(whiteMaterialPath);
-
-        if (textures.Length == 0)
+        
+        // Teste direto com nomes das imagens
+        string[] imageNames = { "Adaptacao", "Inspecao", "Transparencia" };
+        string selectedImageName = imageNames[Random.Range(0, imageNames.Length)];
+        
+        Debug.Log("Tentando carregar: " + imageFolder + "/" + selectedImageName);
+        Texture2D selectedTexture = Resources.Load<Texture2D>(imageFolder + "/" + selectedImageName);
+        
+        if (selectedTexture == null)
         {
-            Debug.LogWarning("Nenhuma textura encontrada em: " + imageFolder);
+            Debug.LogError("Textura não encontrada: " + imageFolder + "/" + selectedImageName);
             return;
         }
-
-        if (whiteMaterial == null)
-        {
-            Debug.LogWarning("Material branco não encontrado em: " + whiteMaterialPath);
-            return;
-        }
-
-        System.Random random = new System.Random();
-        Texture[] randomTextures = textures.OrderBy(x => random.Next()).ToArray();
-
-        // Seleciona primeira textura aleatória
-        Texture selectedTexture = randomTextures[0];
-
-        // Cria novo material com essa textura
-        Material material = new Material(meshRenderer.material);
+        
+        Debug.Log("Textura carregada: " + selectedTexture.name + " - Tamanho: " + selectedTexture.width + "x" + selectedTexture.height);
+        
+        // Criar material novo com shader simples para WebGL
+        Material material = new Material(Shader.Find("Unlit/Texture"));
+        
+        Debug.Log("Shader encontrado: " + (material.shader != null ? material.shader.name : "NULL"));
+        
+        // Aplicar textura
         material.mainTexture = selectedTexture;
+        material.SetTexture("_MainTex", selectedTexture);
+        
+        // Aplicar ao renderer
         meshRenderer.material = material;
-
-        // Salva o nome da imagem na variável 'nature', sem extensão
-        nature = selectedTexture.name;
+        
+        Debug.Log("Material aplicado - Textura principal: " + (material.mainTexture != null ? material.mainTexture.name : "NULL"));
+        
+        nature = selectedImageName;
         Debug.Log("Natureza selecionada: " + nature);
     }
 }
