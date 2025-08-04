@@ -62,7 +62,7 @@ public class CardImprevistos : MonoBehaviour
             Debug.LogWarning("Nenhum MeshRenderer atribuído para receber as imagens aleatórias.");
             return;
         }
-        Texture[] textures = Resources.LoadAll<Texture>(imageFolder);
+        Texture2D[] textures = Resources.LoadAll<Texture2D>(imageFolder);
         Material whiteMaterial = Resources.Load<Material>(whiteMaterialPath);
 
         if (textures.Length == 0)
@@ -81,15 +81,16 @@ public class CardImprevistos : MonoBehaviour
 
 
         System.Random random = new System.Random();
-        Texture[] randomTextures = textures.OrderBy(x => random.Next()).ToArray();
+        Texture2D[] randomTextures = textures.OrderBy(x => random.Next()).ToArray();
 
         for (int i = 0; i < meshRenderers.Length; i++)
         {
             if (i < quantity)
             {
-                // Aplica textura aleatória
-                Material mat = new Material(meshRenderers[i].material);
+                // Aplica textura aleatória com shader compatível WebGL
+                Material mat = new Material(Shader.Find("Unlit/Texture"));
                 mat.mainTexture = randomTextures[i % randomTextures.Length];
+                mat.SetTexture("_MainTex", randomTextures[i % randomTextures.Length]);
                 meshRenderers[i].material = mat;
             }
             else
