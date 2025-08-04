@@ -23,14 +23,19 @@ public class CardTarefas : MonoBehaviour
     }
     void randomTexture()
     {
-        Texture[] textures = Resources.LoadAll<Texture>(imageFolder);
+        Texture2D[] textures = Resources.LoadAll<Texture2D>(imageFolder);
         if (textures.Length == 0)
         {
             Debug.LogWarning("Nenhuma textura encontrada em: " + imageFolder);
             return;
         }
 
-        Texture randomTexture = textures[Random.Range(0, textures.Length)];
-        meshRenderer.material.mainTexture = randomTexture;
+        Texture2D randomTexture = textures[Random.Range(0, textures.Length)];
+        
+        // Criar material com shader compatível WebGL
+        Material material = new Material(Shader.Find("Unlit/Texture"));
+        material.mainTexture = randomTexture;
+        material.SetTexture("_MainTex", randomTexture);
+        meshRenderer.material = material;
     }
 }
