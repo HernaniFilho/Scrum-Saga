@@ -1,0 +1,80 @@
+{
+  "headers": [
+    {
+      "source": "/Build/(.*)\\.wasm\\.gz",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "application/wasm"
+        },
+        {
+          "key": "Content-Encoding",
+          "value": "gzip"
+        }
+      ]
+    },
+    {
+      "source": "/Build/(.*)\\.data\\.gz",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "application/octet-stream"
+        },
+        {
+          "key": "Content-Encoding",
+          "value": "gzip"
+        }
+      ]
+    },
+    {
+      "source": "/Build/(.*)\\.js\\.gz",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "application/javascript"
+        },
+        {
+          "key": "Content-Encoding",
+          "value": "gzip"
+        }
+      ]
+    },
+    {
+      "source": "/Build/(.*)\\.js",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "application/javascript"
+        }
+      ]
+    },
+    {
+      "source": "/TemplateData/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000"
+        }
+      ]
+    },
+    {
+      "source": "/(.*\\.loader\\.js)",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "application/javascript"
+        }
+      ]
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/Build/(.*)",
+      "destination": "/Build/$1"
+    },
+    {
+      "source": "/TemplateData/(.*)",
+      "destination": "/TemplateData/$1"
+    }
+  ]
+}
