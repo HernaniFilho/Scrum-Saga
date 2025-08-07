@@ -68,6 +68,12 @@ public class GameStateManager : MonoBehaviour
         currentState = newState;
         UpdateStateText();
         Debug.Log($"Estado alterado para: {currentState}");
+
+        // Se NetworkGameStateManager existir, notificar outros jogadores
+        if (NetworkGameStateManager.Instance != null)
+        {
+            NetworkGameStateManager.Instance.BroadcastStateChange(newState);
+        }
     }
 
     public void ChangeState(string stateName)
