@@ -4,6 +4,9 @@ using UnityEngine.UI;
 
 public class MultiplayerSetup : MonoBehaviour
 {
+    [Header("Multiplayer Settings")]
+    [SerializeField] private bool enableMultiplayer = true;
+    
     [Header("Configuração Automática")]
     [SerializeField] private bool autoSetupOnStart = true;
     
@@ -20,15 +23,28 @@ public class MultiplayerSetup : MonoBehaviour
 
     void Start()
     {
-        if (autoSetupOnStart)
+        if (autoSetupOnStart && enableMultiplayer)
         {
             SetupMultiplayerScene();
+        }
+
+        if (!enableMultiplayer)
+        {
+            if (connectionStatusText != null)
+            {
+                connectionStatusText.gameObject.SetActive(false);
+            }
+
+            if (roomInfoText != null)
+            {
+                roomInfoText.gameObject.SetActive(false);
+            }
         }
     }
 
     [ContextMenu("Setup Multiplayer Scene")]
     public void SetupMultiplayerScene()
-    {
+    {        
         Debug.Log("Configurando SampleScene para Multiplayer...");
         
         SetupCanvas();
@@ -106,19 +122,19 @@ public class MultiplayerSetup : MonoBehaviour
         {
             GameObject connectionTextObj = new GameObject("ConnectionStatusText");
             connectionTextObj.transform.SetParent(uiCanvas.transform, false);
-            
+
             connectionStatusText = connectionTextObj.AddComponent<TextMeshProUGUI>();
             connectionStatusText.text = "Conectando...";
             connectionStatusText.fontSize = 16;
             connectionStatusText.color = Color.yellow;
             connectionStatusText.alignment = TextAlignmentOptions.TopLeft;
-            
+
             RectTransform connectionRect = connectionStatusText.GetComponent<RectTransform>();
             connectionRect.anchorMin = new Vector2(0, 1);
             connectionRect.anchorMax = new Vector2(0, 1);
             connectionRect.anchoredPosition = new Vector2(10, -10);
             connectionRect.sizeDelta = new Vector2(300, 30);
-            
+
             Debug.Log("Connection Status Text criado automaticamente");
         }
         else
