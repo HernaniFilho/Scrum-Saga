@@ -23,6 +23,9 @@ public class GameStateManager : MonoBehaviour
 
     [Header("Referência ao Texto de Estado na UI")]
     public TMP_Text stateText;
+    
+    [Header("Referência ao Tabuleiro")]
+    public GameObject tabuleiro;
 
     private static readonly Dictionary<GameState, string> stateDisplayNames = new Dictionary<GameState, string>
     {
@@ -59,6 +62,7 @@ public class GameStateManager : MonoBehaviour
             return;
         }
 
+        PositionTabuleiro();
         UpdateStateText();
         Debug.Log("GameStateManager iniciado com estado: " + currentState);
     }
@@ -115,6 +119,7 @@ public class GameStateManager : MonoBehaviour
 
     public void NextState()
     {
+        PositionTabuleiro();
         GameState[] states = (GameState[])Enum.GetValues(typeof(GameState));
         int currentIndex = Array.IndexOf(states, currentState);
         
@@ -142,5 +147,40 @@ public class GameStateManager : MonoBehaviour
         {
             Debug.Log("Já está no primeiro estado!");
         }
+    }
+
+    void PositionTabuleiro()
+    {
+        return;
+        if (tabuleiro == null)
+        {
+            // Tenta encontrar o tabuleiro automaticamente se não foi atribuído
+            tabuleiro = GameObject.Find("Tabuleiro");
+            if (tabuleiro == null)
+            {
+                Debug.LogWarning("Tabuleiro não encontrado!");
+                return;
+            }
+        }
+
+        Camera playerCamera = Camera.main;
+        if (playerCamera == null)
+        {
+            Debug.LogError("Câmera principal não encontrada. Certifique-se de que há uma câmera com a tag 'MainCamera'.");
+        }
+
+        Vector3 tabuleiroPosition = new Vector3(
+            (-10.4f + 17.4f) / 2,
+            -1083.62f,
+            -512f
+        );
+
+        float pixelsToUnits = 160f / Camera.main.pixelWidth * Camera.main.orthographicSize * 2f;
+
+        // Adicione ao eixo X (direita)
+        tabuleiroPosition.x -= pixelsToUnits;
+
+        // Aplique a nova posição
+        // tabuleiro.transform.position = tabuleiroPosition;
     }
 }

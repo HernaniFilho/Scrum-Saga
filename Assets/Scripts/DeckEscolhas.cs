@@ -39,10 +39,13 @@ public class DeckEscolhas : MonoBehaviour
         }
 
         Debug.Log("Deck de escolhas clicada. Comprando carta de escolha...");
-        // Calcula a posição para spawnar: na frente da câmera
-        Vector3 spawnPosition = playerCamera.transform.position + playerCamera.transform.forward * spawnDistance;
+        
+        // Calcula a posição para spawnar: na frente da câmera + 160px para a direita
+        Vector3 screenPos = playerCamera.WorldToScreenPoint(playerCamera.transform.position + playerCamera.transform.forward * spawnDistance);
+        screenPos.x += 160;
+        Vector3 spawnPosition = playerCamera.ScreenToWorldPoint(screenPos);
 
-        Quaternion rotation = Quaternion.Euler(-180, 0, 0);
+        Quaternion rotation = Quaternion.Euler(-90, 0, 180);
         // Instancia o prefab nessa posição com a rotação padrão (sem rotações extras)
         Instantiate(prefabToSpawn, spawnPosition, rotation);
         Debug.Log("Carta de escolha comprada e instanciada na posição: " + spawnPosition);

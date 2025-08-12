@@ -88,7 +88,7 @@ public class NetworkManager : MonoBehaviourPunCallbacks
                 string players = "";
                 foreach (var player in PhotonNetwork.PlayerList)
                 {
-                    players += player.NickName + " ";
+                    players += "\n- " + player.NickName;
                 }
                 roomInfoText.text = $"Sala: {PhotonNetwork.CurrentRoom.Name}\nJogadores ({PhotonNetwork.CurrentRoom.PlayerCount}/{PhotonNetwork.CurrentRoom.MaxPlayers}): {players}";
             }
