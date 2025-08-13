@@ -1,6 +1,7 @@
 using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
+using Photon.Pun;
 
 public class MultiplayerSetup : MonoBehaviour
 {
@@ -12,6 +13,7 @@ public class MultiplayerSetup : MonoBehaviour
     
     [Header("UI Elements to Create")]
     [SerializeField] private bool createConnectionUI = true;
+    [SerializeField] private bool enableNameInput = true;
     
     [Header("UI References (Optional - se não atribuído, será criado automaticamente)")]
     [SerializeField] private TextMeshProUGUI connectionStatusText;
@@ -20,12 +22,18 @@ public class MultiplayerSetup : MonoBehaviour
     private Canvas uiCanvas;
     private NetworkGameStateManager gameStateManager;
     private NetworkManager networkManager;
+    private NameInputManager nameInputManager;
 
     void Start()
     {
         if (autoSetupOnStart && enableMultiplayer)
         {
             SetupMultiplayerScene();
+            
+            if (enableNameInput)
+            {
+                SetupNameInputManager();
+            }
         }
 
         if (!enableMultiplayer)
@@ -111,6 +119,12 @@ public class MultiplayerSetup : MonoBehaviour
         {
             Debug.Log("NetworkManager já existe");
         }
+        
+        // Se enableNameInput for true, impedir conexão automática
+        if (enableNameInput && networkManager != null)
+        {
+            networkManager.autoConnect = false;
+        }
     }
 
 
@@ -177,7 +191,52 @@ public class MultiplayerSetup : MonoBehaviour
         Debug.Log("Connection UI configurada");
     }
 
+    void SetupNameInputManager()
+    {
+        // Criar o componente NameInputManager se não existir
+        if (nameInputManager == null)
+        {
+            GameObject nameInputObj = new GameObject("NameInputManager");
+            nameInputManager = nameInputObj.AddComponent<NameInputManager>();
+        }
+        
+        // Configurar evento para quando o nome for confirmado
+        nameInputManager.OnNameConfirmed += OnPlayerNameConfirmed;
+        
+        // Mostrar tela de nome
+        ShowNameInputScreen();
+        
+        // Esconder outros elementos da UI
+        if (connectionStatusText != null) connectionStatusText.gameObject.SetActive(false);
+        if (roomInfoText != null) roomInfoText.gameObject.SetActive(false);
+    }
 
+    void ShowNameInputScreen()
+    {
+        if (nameInputManager != null)
+        {
+            nameInputManager.ShowNameInputScreen();
+        }
+    }
+
+    void OnPlayerNameConfirmed(string playerName)
+    {
+        // Definir o nickname no NetworkManager se disponível
+        if (networkManager != null)
+        {
+            networkManager.SetNickname(playerName);
+        }
+
+        // Mostrar UI normal
+        if (connectionStatusText != null) connectionStatusText.gameObject.SetActive(true);
+        if (roomInfoText != null) roomInfoText.gameObject.SetActive(true);
+        
+        // Agora que o nome foi escolhido, conectar à sala
+        if (networkManager != null)
+        {
+            networkManager.ConnectToPhoton();
+        }
+    }
 
     [ContextMenu("Remove All UI")]
     public void RemoveAllUI()
