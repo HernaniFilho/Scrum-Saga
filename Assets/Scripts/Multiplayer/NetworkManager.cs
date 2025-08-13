@@ -14,18 +14,31 @@ public class NetworkManager : MonoBehaviourPunCallbacks
     public TMP_Text roomInfoText;
     public GameObject[] uiToHideWhenConnected;
     public GameObject[] uiToShowWhenConnected;
+    
+    [Header("Loading Screen")]
+    private LoadingScreenManager loadingScreen;
 
     [Header("Auto Connect")]
     public bool autoConnect = true;
 
     void Start()
     {
+        // Inicializar LoadingScreen
+        loadingScreen = FindObjectOfType<LoadingScreenManager>();
+        if (loadingScreen == null)
+        {
+            GameObject loadingScreenObj = new GameObject("LoadingScreenManager");
+            loadingScreen = loadingScreenObj.AddComponent<LoadingScreenManager>();
+        }
+
         PhotonNetwork.GameVersion = gameVersion;
         
         if (string.IsNullOrEmpty(PhotonNetwork.NickName))
         {
             PhotonNetwork.NickName = "Jogador_" + Random.Range(1000, 9999);
         }
+
+        // Não mostrar loading screen no Start - só quando o nome for confirmado
 
         UpdateUI();
 
@@ -44,6 +57,7 @@ public class NetworkManager : MonoBehaviourPunCallbacks
         else
         {
             Debug.Log("Conectando ao Photon...");
+            loadingScreen?.ShowLoadingScreen("Conectando...");
             UpdateConnectionStatus("Conectando...");
             PhotonNetwork.ConnectUsingSettings();
         }
@@ -66,6 +80,7 @@ public class NetworkManager : MonoBehaviourPunCallbacks
             return;
         }
 
+        loadingScreen?.UpdateLoadingMessage("Procurando sala...");
         UpdateConnectionStatus("Procurando sala...");
         PhotonNetwork.JoinRandomRoom();
     }
@@ -130,6 +145,7 @@ public class NetworkManager : MonoBehaviourPunCallbacks
     public override void OnConnectedToMaster()
     {
         Debug.Log("Conectado ao Master Server");
+        loadingScreen?.UpdateLoadingMessage("Conectado ao Master Server");
         UpdateConnectionStatus("Conectado ao Master Server");
         JoinRandomOrCreateRoom();
     }
@@ -144,6 +160,7 @@ public class NetworkManager : MonoBehaviourPunCallbacks
     public override void OnJoinRandomFailed(short returnCode, string message)
     {
         Debug.Log("Não foi possível encontrar uma sala. Criando uma nova...");
+        loadingScreen?.UpdateLoadingMessage("Criando sala...");
         UpdateConnectionStatus("Criando sala...");
         
         RoomOptions roomOptions = new RoomOptions();
@@ -159,6 +176,10 @@ public class NetworkManager : MonoBehaviourPunCallbacks
     {
         Debug.Log($"Entrou na sala: {PhotonNetwork.CurrentRoom.Name}");
         UpdateConnectionStatus("Conectado à sala!");
+        
+        // Esconder tela de loading quando entrar na sala
+        loadingScreen?.HideLoadingScreen();
+        
         UpdateUI();
     }
 
@@ -166,6 +187,10 @@ public class NetworkManager : MonoBehaviourPunCallbacks
     {
         Debug.Log("Saiu da sala");
         UpdateConnectionStatus("Não está em uma sala");
+        
+        // Mostrar tela de loading quando sair da sala
+        loadingScreen?.ShowLoadingScreen("Conectando...");
+        
         UpdateUI();
     }
 

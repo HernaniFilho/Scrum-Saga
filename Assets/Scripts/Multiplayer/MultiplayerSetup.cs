@@ -232,6 +232,7 @@ public class MultiplayerSetup : MonoBehaviour
         if (roomInfoText != null) roomInfoText.gameObject.SetActive(true);
         
         // Agora que o nome foi escolhido, conectar à sala
+        // A loading screen será mostrada automaticamente pelo NetworkManager.ConnectToPhoton()
         if (networkManager != null)
         {
             networkManager.ConnectToPhoton();
