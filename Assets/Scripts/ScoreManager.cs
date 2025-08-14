@@ -111,6 +111,12 @@ public class ScoreManager : MonoBehaviour
             scoreboard[varName] += value;
             Debug.Log($"Pontuação atualizada: {varName} = {scoreboard[varName]}");
             UpdateScoreTexts(varName, scoreboard[varName]);
+            
+            // Sincronizar com outros jogadores se NetworkScoreManager existir
+            if (NetworkScoreManager.Instance != null)
+            {
+                NetworkScoreManager.Instance.BroadcastScoreUpdate(varName, scoreboard[varName]);
+            }
         }
         else
         {

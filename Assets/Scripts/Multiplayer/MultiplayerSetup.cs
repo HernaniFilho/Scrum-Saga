@@ -22,6 +22,7 @@ public class MultiplayerSetup : MonoBehaviour
     private Canvas uiCanvas;
     private NetworkGameStateManager gameStateManager;
     private NetworkManager networkManager;
+    private NetworkScoreManager networkScoreManager;
     private NameInputManager nameInputManager;
 
     void Start()
@@ -58,6 +59,8 @@ public class MultiplayerSetup : MonoBehaviour
         SetupCanvas();
         
         SetupNetworkGameStateManager();
+        
+        SetupNetworkScoreManager();
         
         SetupNetworkManager();
         
@@ -103,6 +106,22 @@ public class MultiplayerSetup : MonoBehaviour
         {
             gameStateManager = NetworkGameStateManager.Instance;
             Debug.Log("NetworkGameStateManager já existe");
+        }
+    }
+
+    void SetupNetworkScoreManager()
+    {
+        if (NetworkScoreManager.Instance == null)
+        {
+            GameObject scoreManagerObj = new GameObject("NetworkScoreManager");
+            networkScoreManager = scoreManagerObj.AddComponent<NetworkScoreManager>();
+            
+            Debug.Log("NetworkScoreManager criado (ponte para ScoreManager)");
+        }
+        else
+        {
+            networkScoreManager = NetworkScoreManager.Instance;
+            Debug.Log("NetworkScoreManager já existe");
         }
     }
 
