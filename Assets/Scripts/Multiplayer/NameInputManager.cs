@@ -105,6 +105,7 @@ public class NameInputManager : MonoBehaviour
         nameInputField = inputObj.AddComponent<TMP_InputField>();
         nameInputField.textComponent = CreateInputTextComponent(inputObj);
         nameInputField.placeholder = CreatePlaceholderComponent(inputObj);
+        nameInputField.characterLimit = 25;
         
         // Configurar cores de transição
         ColorBlock colors = nameInputField.colors;

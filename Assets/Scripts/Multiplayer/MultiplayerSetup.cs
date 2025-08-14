@@ -127,8 +127,6 @@ public class MultiplayerSetup : MonoBehaviour
         }
     }
 
-
-
     void CreateConnectionUI()
     {
         // Cria o Connection Status Text se não tiver sido atribuído

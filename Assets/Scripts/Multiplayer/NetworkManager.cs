@@ -20,6 +20,9 @@ public class NetworkManager : MonoBehaviourPunCallbacks
 
     [Header("Auto Connect")]
     public bool autoConnect = true;
+    
+    [Header("Product Owner")]
+    private ProductOwnerManager productOwnerManager;
 
     void Start()
     {
@@ -30,6 +33,9 @@ public class NetworkManager : MonoBehaviourPunCallbacks
             GameObject loadingScreenObj = new GameObject("LoadingScreenManager");
             loadingScreen = loadingScreenObj.AddComponent<LoadingScreenManager>();
         }
+        
+        // Inicializar ProductOwnerManager
+        productOwnerManager = FindObjectOfType<ProductOwnerManager>();
 
         PhotonNetwork.GameVersion = gameVersion;
         
@@ -94,7 +100,7 @@ public class NetworkManager : MonoBehaviourPunCallbacks
         Debug.Log($"Status de conexão: {status}");
     }
 
-    private void UpdateRoomInfo()
+    public void UpdateRoomInfo()
     {
         if (roomInfoText != null)
         {
@@ -103,7 +109,12 @@ public class NetworkManager : MonoBehaviourPunCallbacks
                 string players = "";
                 foreach (var player in PhotonNetwork.PlayerList)
                 {
-                    players += "\n- " + player.NickName;
+                    string playerName = player.NickName;
+                    if (productOwnerManager != null && productOwnerManager.IsPlayerProductOwner(player))
+                    {
+                        playerName += " (PO)";
+                    }
+                    players += "\n- " + playerName;
                 }
                 roomInfoText.text = $"Sala: {PhotonNetwork.CurrentRoom.Name}\nJogadores ({PhotonNetwork.CurrentRoom.PlayerCount}/{PhotonNetwork.CurrentRoom.MaxPlayers}): {players}";
             }
