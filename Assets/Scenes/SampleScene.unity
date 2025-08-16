@@ -3783,6 +3783,14 @@ PrefabInstance:
       propertyPath: m_Colors.m_HighlightedColor.r
       value: 0.3428828
       objectReference: {fileID: 0}
+    - target: {fileID: 2777548628742796072, guid: 964db72f22499b0469a62ce15906a05e, type: 3}
+      propertyPath: m_Name
+      value: Container
+      objectReference: {fileID: 0}
+    - target: {fileID: 2777548628742796072, guid: 964db72f22499b0469a62ce15906a05e, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 2805442323181726743, guid: 964db72f22499b0469a62ce15906a05e, type: 3}
       propertyPath: tabuleiro
       value: 

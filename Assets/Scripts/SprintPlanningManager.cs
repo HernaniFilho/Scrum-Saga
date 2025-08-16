@@ -23,7 +23,8 @@ public class SprintPlanningManager : MonoBehaviour
     public UnityEngine.UI.Button startButton;
     
     [Header("Positioning")]
-    public float spawnDistance = 1f; // Câmera: -297f, Cards: -296.19
+    public float spawnDistance = 1f; // Câmera: -297f, Cards: -296f
+    public float selectedCardSpawnDistance = 0.67f; // Câmera: -297f, Card: -296.33
     public float cardSpacing = 0.8f;
     
     private List<GameObject> spawnedCards = new List<GameObject>();
@@ -131,10 +132,16 @@ public class SprintPlanningManager : MonoBehaviour
             
             newCard.transform.localScale = new Vector3(0.51f, 0.0001f, 0.65f);
             
+            // Ativar o componente Censura quando mostrar as 4 cartas
+            Transform censuraTransform = FindChildByName(newCard.transform, "Censura");
+            if (censuraTransform != null)
+            {
+                censuraTransform.gameObject.SetActive(true);
+                Debug.Log($"Censura ativada para carta {i + 1}");
+            }
+            
             CardSelector cardSelector = newCard.AddComponent<CardSelector>();
             cardSelector.Initialize(this, i);
-            
-
             
             spawnedCards.Add(newCard);
             
@@ -203,14 +210,14 @@ public class SprintPlanningManager : MonoBehaviour
     {
         if (cardTarefasPrefab == null || playerCamera == null || selectedCardData == null) return;
         
-        Vector3 screenCenter = new Vector3(Screen.width / 2f + 160f, Screen.height / 2f, spawnDistance);
+        Vector3 screenCenter = new Vector3(Screen.width / 2f + 160f, Screen.height / 2f, selectedCardSpawnDistance);
         Vector3 centerPosition = playerCamera.ScreenToWorldPoint(screenCenter);
         
         Quaternion rotation = Quaternion.Euler(-90, 0, 180);
         
         selectedCard = Instantiate(cardTarefasPrefab, centerPosition, rotation);
         selectedCard.transform.localScale = new Vector3(0.51f, 0.0001f, 0.65f);
-        
+    
         ApplyCardData(selectedCard, selectedCardData);
         
         CardSelector selector = selectedCard.GetComponent<CardSelector>();
@@ -281,6 +288,20 @@ public class SprintPlanningManager : MonoBehaviour
         ClearSpawnedCards();
 
         // Aqui começa o momento do rascunho
+    }
+
+    private Transform FindChildByName(Transform parent, string name)
+    {
+        foreach (Transform child in parent)
+        {
+            if (child.name == name)
+                return child;
+            
+            Transform found = FindChildByName(child, name);
+            if (found != null)
+                return found;
+        }
+        return null;
     }
 
     void OnDestroy()
