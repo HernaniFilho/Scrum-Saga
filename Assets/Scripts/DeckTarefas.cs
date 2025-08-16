@@ -38,6 +38,14 @@ public class DeckTarefas : MonoBehaviour
             return;
         }
 
+        // Check if player is Product Owner
+        ProductOwnerManager poManager = FindObjectOfType<ProductOwnerManager>();
+        if (poManager == null || !poManager.IsLocalPlayerProductOwner())
+        {
+            Debug.Log("Apenas o Product Owner pode pegar cartas de tarefa durante o Sprint Planning!");
+            return;
+        }
+
         Debug.Log("Deck de tarefas clicada. Comprando carta de tarefa...");
         
         // Calcula a posição para spawnar: na frente da câmera + 160px para a direita

@@ -18,18 +18,32 @@ public class CardTarefas : MonoBehaviour
     public TMP_Text scoreText_2;
     public TMP_Text scoreText_3;
     public TMP_Text scoreText_4;
+    
+    [Header("Estado da carta")]
+    public bool isSelected = false;
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
         randomTexture();
-        loadScoreVariables();
+        
+        // Só gera novas pontuações se a carta não foi selecionada
+        if (!isSelected && scores.Count == 0)
+        {
+            loadScoreVariables();
+        }
+        
         if (scoreText_1 == null || scoreText_2 == null || scoreText_3 == null || scoreText_4 == null)
         {
             Debug.LogWarning("Textos de pontuação não atribuídos. Verifique se estão configurados no Inspector.");
             return;
         }
         
+        UpdateScoreTexts();
+    }
+    
+    public void UpdateScoreTexts()
+    {
         scoreText_1.text = "";
         scoreText_2.text = "";
         scoreText_3.text = "";
@@ -59,7 +73,11 @@ public class CardTarefas : MonoBehaviour
 
     void OnMouseDown()
     {
-        Destroy(gameObject); // Destroi o objeto quando clicado
+        // Só destrói se não foi selecionada
+        if (!isSelected)
+        {
+            Destroy(gameObject);
+        }
     }
 
     void loadScoreVariables()

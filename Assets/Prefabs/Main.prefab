@@ -668,6 +668,7 @@ GameObject:
   - component: {fileID: 1932924777835151575}
   - component: {fileID: 8702914381964408519}
   - component: {fileID: 8842153429967092201}
+  - component: {fileID: 2805442323181726743}
   - component: {fileID: 8616815159430684280}
   m_Layer: 0
   m_Name: Main
@@ -710,7 +711,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   currentState: 0
   stateText: {fileID: 0}
-  tabuleiro: {fileID: 0}
 --- !u!114 &8842153429967092201
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -724,6 +724,24 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   startPhaseButton: {fileID: 2621968441007319272}
+--- !u!114 &2805442323181726743
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8540178464200607484}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9142b3f7f9ef2a841b90ee28c254c10c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  cardTarefasPrefab: {fileID: 0}
+  cardSpawnPositions:
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
 --- !u!114 &8616815159430684280
 MonoBehaviour:
   m_ObjectHideFlags: 0
