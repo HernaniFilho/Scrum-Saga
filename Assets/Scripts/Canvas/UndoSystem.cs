@@ -9,6 +9,7 @@ public class UndoSystem : MonoBehaviour
     public string buttonText = "⬅";
     
     [Header("Visual Settings")]
+    public bool createUI = true;
     public Color buttonColor = new Color(0.9607844f, 0.9607844f, 0.9607844f);
     public Color textColor = Color.black;
     public int fontSize = 42;
@@ -36,8 +37,11 @@ public class UndoSystem : MonoBehaviour
         }
         
         drawingBoard = FindObjectOfType<RawImage>();
-        
-        CreateUndoButton();
+
+        if (createUI)
+        {
+            CreateUndoButton();
+        }
     }
     
     private void CreateUndoButton()

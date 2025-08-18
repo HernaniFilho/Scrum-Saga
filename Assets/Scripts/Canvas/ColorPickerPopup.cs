@@ -90,7 +90,7 @@ public class ColorPickerPopup : MonoBehaviour
             panelRect.anchorMax = new Vector2(0.5f, 0f);
             panelRect.pivot = new Vector2(0.5f, 0f);
             panelRect.sizeDelta = new Vector2(containerWidth, containerHeight);
-            panelRect.anchoredPosition = new Vector2(0, 110);
+            panelRect.anchoredPosition = new Vector2(160, 110);
             
             CreateColorButtons();
             

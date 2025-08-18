@@ -5,6 +5,7 @@ using TMPro;
 public class DrawingSaveUI : MonoBehaviour
 {
     [Header("UI Settings")]
+    public bool createUI = true;
     public float padding = 12f;
     public float spacing = 10f;
     public Vector2 buttonSize = new Vector2(60f, 60f);
@@ -19,10 +20,14 @@ public class DrawingSaveUI : MonoBehaviour
     void Start()
     {
         saveSystem = FindObjectOfType<DrawingSaveSystem>();
-        CreateSimpleUI();
+
+        if (createUI)
+        {
+            CreateSimpleUI();
+        }
     }
     
-    private void CreateSimpleUI()
+    public void CreateSimpleUI()
     {
         try
         {

@@ -1,6 +1,9 @@
 using UnityEngine;
 using System.Collections.Generic;
 using System;
+using System.Linq;
+using Photon.Pun;
+using ExitGames.Client.Photon;
 
 [System.Serializable]
 public class SavedShape
@@ -52,7 +55,7 @@ public class SavedDrawing
     }
 }
 
-public class DrawingSaveSystem : MonoBehaviour
+public class DrawingSaveSystem : MonoBehaviourPunCallbacks
 {
     [Header("Save Settings")]
     [SerializeField] private int maxSavedDrawings = 4;
@@ -60,8 +63,14 @@ public class DrawingSaveSystem : MonoBehaviour
     private List<SavedDrawing> savedDrawings = new List<SavedDrawing>();
     private ShapeDrawer shapeDrawer;
     
+    [Header("Network Sync")]
+    private SavedDrawing[] allPlayerDrawings = new SavedDrawing[4];
+    private int drawingsSyncCount = 0;
+    private const string DRAWING_DATA_KEY = "PlayerDrawingData";
+    
     public List<SavedDrawing> SavedDrawings => savedDrawings;
     public int MaxSavedDrawings => maxSavedDrawings;
+    public SavedDrawing[] AllPlayerDrawings => allPlayerDrawings;
     
     void Start()
     {
@@ -203,6 +212,123 @@ public class DrawingSaveSystem : MonoBehaviour
     public int GetSavedDrawingsCount()
     {
         return savedDrawings.Count;
+    }
+    
+    /// <summary>
+    /// Salva e sincroniza desenhos de todos os players via rede
+    /// </summary>
+    public void SaveAndSyncAllPlayerDrawings()
+    {
+        // Salva o desenho atual do player local
+        SaveCurrentPlayerDrawing();
+    }
+    
+    private void SaveCurrentPlayerDrawing()
+    {
+        // Força o salvamento do desenho atual
+        string playerDrawingName = $"Player_{PhotonNetwork.LocalPlayer.UserId}_Drawing";
+        SaveCurrentDrawing(playerDrawingName);
+        
+        // Pega o desenho mais recente salvo
+        if (HasSavedDrawings())
+        {
+            SavedDrawing latestDrawing = savedDrawings[savedDrawings.Count - 1];
+            
+            // Envia o desenho via Photon custom properties
+            SendDrawingToAllPlayers(latestDrawing);
+            Debug.Log($"Desenho do jogador {PhotonNetwork.LocalPlayer.UserId} salvo e enviado!");
+        }
+    }
+    
+    private void SendDrawingToAllPlayers(SavedDrawing drawing)
+    {
+        if (PhotonNetwork.InRoom && drawing != null)
+        {
+            // Serializa o desenho em uma string JSON
+            string drawingJson = JsonUtility.ToJson(drawing);
+            
+            // Cria um identificador único baseado no player ID
+            string playerDrawingKey = DRAWING_DATA_KEY + "_" + PhotonNetwork.LocalPlayer.UserId;
+            
+            Hashtable props = new Hashtable();
+            props[playerDrawingKey] = drawingJson;
+            
+            // Envia via room custom properties para sincronização
+            PhotonNetwork.CurrentRoom.SetCustomProperties(props);
+            
+            Debug.Log($"Desenho enviado para todos os players com chave: {playerDrawingKey}");
+        }
+    }
+    
+    public override void OnRoomPropertiesUpdate(Hashtable propertiesThatChanged)
+    {
+        foreach (var prop in propertiesThatChanged)
+        {
+            string key = prop.Key.ToString();
+            
+            // Verifica se é um desenho de player
+            if (key.StartsWith(DRAWING_DATA_KEY))
+            {
+                string playerId = key.Replace(DRAWING_DATA_KEY + "_", "");
+                string drawingJson = prop.Value.ToString();
+                
+                try
+                {
+                    SavedDrawing receivedDrawing = JsonUtility.FromJson<SavedDrawing>(drawingJson);
+                    
+                    // Determina o índice do array baseado na ordem dos players
+                    int playerIndex = GetPlayerIndex(playerId);
+                    if (playerIndex >= 0 && playerIndex < allPlayerDrawings.Length)
+                    {
+                        allPlayerDrawings[playerIndex] = receivedDrawing;
+                        drawingsSyncCount++;
+                        
+                        Debug.Log($"Desenho do player {playerId} recebido e armazenado no índice {playerIndex}");
+                        
+                        // Atualiza a lista local de desenhos salvos
+                        UpdateLocalSavedDrawings();
+                    }
+                }
+                catch (System.Exception e)
+                {
+                    Debug.LogError($"Erro ao deserializar desenho do player {playerId}: {e.Message}");
+                }
+            }
+        }
+    }
+    
+    private int GetPlayerIndex(string playerId)
+    {
+        if (PhotonNetwork.InRoom)
+        {
+            var players = PhotonNetwork.PlayerList;
+            for (int i = 0; i < players.Length && i < 4; i++)
+            {
+                if (players[i].UserId == playerId)
+                {
+                    return i;
+                }
+            }
+        }
+        return -1;
+    }
+    
+    private void UpdateLocalSavedDrawings()
+    {
+        // Limpa os desenhos atuais exceto o último (que é o do player atual)
+        var currentPlayerDrawing = savedDrawings.LastOrDefault();
+        savedDrawings.Clear();
+        
+        // Adiciona todos os desenhos recebidos dos players
+        foreach (SavedDrawing drawing in allPlayerDrawings)
+        {
+            if (drawing != null)
+            {
+                savedDrawings.Add(drawing);
+            }
+        }
+        
+        Debug.Log($"Sistema local atualizado com {savedDrawings.Count} desenhos de todos os players");
     }
     
     // Métodos públicos para UI
