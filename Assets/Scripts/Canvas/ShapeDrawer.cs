@@ -29,7 +29,7 @@ public class ShapeDrawer : MonoBehaviour, IPointerDownHandler, IDragHandler, IPo
     private Camera canvasCamera;
     
     private TextureDrawingHandler textureHandler;
-    private FloodFillHandler floodFillHandler;
+    public FloodFillHandler floodFillHandler;
     private ShapePreviewHandler previewHandler;
     
     private ColorPickerPopup colorPickerPopup;
@@ -143,6 +143,12 @@ public class ShapeDrawer : MonoBehaviour, IPointerDownHandler, IDragHandler, IPo
                 
             PerformFloodFill(localPoint, selectedBucketColor);
             
+            // Grava o comando de flood fill
+            if (CommandRecorder.Instance != null)
+            {
+                CommandRecorder.Instance.RecordFloodFill(localPoint, selectedBucketColor);
+            }
+            
             // Notifica que foi realizado flood fill
             if (undoSystem != null)
             {
@@ -218,6 +224,12 @@ public class ShapeDrawer : MonoBehaviour, IPointerDownHandler, IDragHandler, IPo
         if (undoSystem != null && createdShape != null)
         {
             undoSystem.OnShapeCreated(createdShape);
+        }
+        
+        // Grava o comando no CommandRecorder
+        if (CommandRecorder.Instance != null && createdShape != null)
+        {
+            CommandRecorder.Instance.RecordShapeFromGameObject(createdShape);
         }
     }
 
@@ -394,89 +406,8 @@ public class ShapeDrawer : MonoBehaviour, IPointerDownHandler, IDragHandler, IPo
         Debug.Log($"Renderizou {shapesRendered} formas na textura");
     }
     
-    /// <summary>
-    /// Coleta dados de todas as formas para salvamento
-    /// </summary>
-    public SavedShape[] GetAllShapesData()
-    {
-        if (finalShapeContainer == null) return new SavedShape[0];
-        
-        List<SavedShape> shapesData = new List<SavedShape>();
-        
-        foreach (Transform child in finalShapeContainer.transform)
-        {
-            GameObject shape = child.gameObject;
-            RectTransform rt = shape.GetComponent<RectTransform>();
-            ShapeData shapeData = shape.GetComponent<ShapeData>();
-            
-            if (shapeData != null && rt != null)
-            {
-                SavedShape savedShape = new SavedShape(shapeData, rt);
-                shapesData.Add(savedShape);
-            }
-        }
-        
-        Debug.Log($"Coletou dados de {shapesData.Count} formas para salvamento");
-        return shapesData.ToArray();
-    }
-    
-    /// <summary>
-    /// Recria formas visuais a partir de dados salvos
-    /// </summary>
-    public void RestoreShapesFromData(SavedShape[] shapesData)
-    {
-        if (shapesData == null || finalShapeContainer == null) return;
-        
-        Debug.Log($"Restaurando {shapesData.Length} formas visuais...");
-        
-        foreach (SavedShape savedShape in shapesData)
-        {
-            // Cria DrawingConfig a partir dos dados salvos
-            DrawingConfig config = new DrawingConfig
-            {
-                shapeColor = savedShape.color,
-                lineThickness = savedShape.lineThickness
-            };
-            
-            // Cria GameObject da forma
-            GameObject shape = new GameObject($"Shape_{savedShape.shapeType}_{Time.time}");
-            shape.transform.SetParent(finalShapeContainer.transform, false);
-            
-            // Configura RectTransform
-            RectTransform rt = shape.AddComponent<RectTransform>();
-            rt.anchoredPosition = savedShape.position;
-            rt.sizeDelta = savedShape.size;
-            rt.localRotation = Quaternion.Euler(0f, 0f, savedShape.rotation);
-            rt.pivot = new Vector2(0.5f, 0.5f);
-            rt.anchorMin = new Vector2(0.5f, 0.5f);
-            rt.anchorMax = new Vector2(0.5f, 0.5f);
-            
-            // Adiciona componente ShapeData
-            ShapeData shapeData = shape.AddComponent<ShapeData>();
-            shapeData.Initialize(savedShape.shapeType, config);
-            
-            // Cria elementos visuais da forma
-            switch (savedShape.shapeType)
-            {
-                case ShapeType.Rectangle:
-                    ShapeOutlineCreator.CreateRectangleOutline(shape, config);
-                    break;
-                case ShapeType.Circle:
-                    ShapeOutlineCreator.CreateCircleOutline(shape, config);
-                    break;
-                case ShapeType.Ellipse:
-                    ShapeOutlineCreator.CreateEllipseOutline(shape, config);
-                    break;
-                case ShapeType.Line:
-                    UnityEngine.UI.Image newImage = shape.AddComponent<UnityEngine.UI.Image>();
-                    newImage.color = config.shapeColor;
-                    newImage.raycastTarget = false;
-                    break;
-            }
-        }
-        
-        Debug.Log($"Formas visuais restauradas com sucesso!");
-    }
+    // Métodos GetAllShapesData() e RestoreShapesFromData() removidos
+    // Agora usado CommandRecorder + CommandReplaySystem
     
     private void Update()
     {

@@ -45,6 +45,16 @@ MonoBehaviour:
   - StartTimerRPC
   - StopTimerRPC
   - SetTimerCallback
+  - ReceivePlayerDrawing
+  - RequestDrawingSave
+  - PrepareForChunks
+  - ReceiveDrawingChunk
+  - ReceivePlayerSession
+  - ReceiveSessionChunk
+  - ReceiveFinalSessionsList
+  - ReceiveSessionForPO
+  - LoadFirstDrawingForAll
+  - ClearAllDrawingsForEveryone
   DisableAutoOpenWizard: 1
   ShowSettings: 0
   DevRegionSetOnce: 1

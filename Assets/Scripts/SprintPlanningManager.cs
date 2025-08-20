@@ -290,7 +290,7 @@ public class SprintPlanningManager : MonoBehaviour
     // Momento do rascunho - iniciar timer de 1:40 para todos os players
     if (TimerManager.Instance != null)
     {
-      TimerManager.Instance.StartTimer(100f, OnDraftTimeComplete, "DraftTimer");
+      TimerManager.Instance.StartTimer(10f, OnDraftTimeComplete, "DraftTimer");
     }
 
     if (CanvasManager.Instance != null)
@@ -305,14 +305,10 @@ public class SprintPlanningManager : MonoBehaviour
   {
     Debug.Log("Timer do rascunho encerrado!");
 
-    DrawingSaveSystem drawingSaveSystem = FindObjectOfType<DrawingSaveSystem>();
-    if (drawingSaveSystem != null)
-    {
-      drawingSaveSystem.SaveAndSyncAllPlayerDrawings();
-    }
-
     if (CanvasManager.Instance != null)
     {
+      CanvasManager.Instance.SaveAndSyncAllPlayerDrawings();
+      CanvasManager.Instance.ClearCanvasForAll();
       CanvasManager.Instance.DeactivateCanvasForAll();
     }
 

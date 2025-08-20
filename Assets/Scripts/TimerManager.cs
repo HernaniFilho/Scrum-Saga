@@ -43,9 +43,6 @@ public class TimerManager : MonoBehaviourPunCallbacks
     
     public void StartTimer(float duration, Action onComplete = null, string timerKey = "DefaultTimer")
     {
-        if (!PhotonNetwork.IsMasterClient) return;
-        
-        // Usar Room Properties para sincronizar timer
         Hashtable props = new Hashtable();
         props[TIMER_START_TIME_KEY] = PhotonNetwork.ServerTimestamp;
         props[TIMER_DURATION_KEY] = duration + 1;
@@ -60,7 +57,6 @@ public class TimerManager : MonoBehaviourPunCallbacks
     {
         if (!isTimerActive) return;
         
-        // Calcular tempo restante usando ServerTimestamp
         if (PhotonNetwork.CurrentRoom.CustomProperties.TryGetValue(TIMER_START_TIME_KEY, out object startTimeObj) &&
             PhotonNetwork.CurrentRoom.CustomProperties.TryGetValue(TIMER_DURATION_KEY, out object durationObj))
         {
@@ -105,22 +101,17 @@ public class TimerManager : MonoBehaviourPunCallbacks
         
         Debug.Log($"Timer '{currentTimerKey}' encerrado!");
         
-        // Executar callback apenas no Master Client
-        if (PhotonNetwork.IsMasterClient && onTimerComplete != null)
+        if (onTimerComplete != null)
         {
             onTimerComplete.Invoke();
             onTimerComplete = null;
             
-            // Limpar timer das room properties
             StopTimer();
         }
     }
     
     public void StopTimer()
     {
-        if (!PhotonNetwork.IsMasterClient) return;
-        
-        // Limpar timer das room properties
         Hashtable props = new Hashtable();
         props[TIMER_START_TIME_KEY] = null;
         props[TIMER_DURATION_KEY] = null;
