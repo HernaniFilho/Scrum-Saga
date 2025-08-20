@@ -290,7 +290,7 @@ public class SprintPlanningManager : MonoBehaviour
     // Momento do rascunho - iniciar timer de 1:40 para todos os players
     if (TimerManager.Instance != null)
     {
-      TimerManager.Instance.StartTimer(10f, OnDraftTimeComplete, "DraftTimer");
+      TimerManager.Instance.StartTimer(100f, OnDraftTimeComplete, "DraftTimer");
     }
 
     if (CanvasManager.Instance != null)
@@ -299,6 +299,7 @@ public class SprintPlanningManager : MonoBehaviour
     }
 
     draftText.gameObject.SetActive(true);
+    draftText.text = "Descreva o desenho, o Dev Team está rascunhando...";
   }
 
   private void OnDraftTimeComplete()

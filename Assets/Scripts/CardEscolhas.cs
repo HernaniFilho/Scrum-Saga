@@ -4,6 +4,7 @@ using System.Linq;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.EventSystems;
 using Random = UnityEngine.Random;
 
 public class CardEscolhas : MonoBehaviour
@@ -20,18 +21,99 @@ public class CardEscolhas : MonoBehaviour
     public Button scoreButton_1;
     public Button scoreButton_2;
 
+    [Header("Networking")]
+    public bool isSyncedCard = false; // Flag para cartas sincronizadas
+
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        randomText();
-        loadScoreVariables();
-        if (scoreButton_1 == null || scoreButton_2 == null)
+        // Apenas gerar dados aleatórios se não for carta sincronizada
+        if (!isSyncedCard)
         {
-            Debug.LogWarning("Botões de pontuação não atribuídos. Verifique se estão configurados no Inspector.");
-            return;
+            randomText();
+            loadScoreVariables();
+            if (scoreButton_1 == null || scoreButton_2 == null)
+            {
+                Debug.LogWarning("Botões de pontuação não atribuídos. Verifique se estão configurados no Inspector.");
+                return;
+            }
+            setupScoreButton(scoreButton_1, scores.Keys.ElementAt(0));
+            setupScoreButton(scoreButton_2, scores.Keys.ElementAt(1));
         }
-        setupScoreButton(scoreButton_1, scores.Keys.ElementAt(0));
-        setupScoreButton(scoreButton_2, scores.Keys.ElementAt(1));
+    }
+
+    // Método para configurar carta sincronizada
+    public void SetupSyncedCard(string texto, string[] trilhas, int[] pontos, bool isPO)
+    {
+        isSyncedCard = true;
+        
+        // Configurar texto
+        if (textUI != null)
+            textUI.text = texto;
+            
+        // Configurar pontuações
+        scores.Clear();
+        for (int i = 0; i < trilhas.Length && i < pontos.Length; i++)
+        {
+            scores[trilhas[i]] = pontos[i];
+        }
+        
+        // Configurar botões
+        if (scoreButton_1 != null && scoreButton_2 != null && trilhas.Length >= 2)
+        {
+            // Configurar textos dos botões
+            var buttonText1 = scoreButton_1.GetComponentInChildren<TMP_Text>();
+            var buttonText2 = scoreButton_2.GetComponentInChildren<TMP_Text>();
+            
+            buttonText1.text = (pontos[0] > 0 ? "+" : "") + pontos[0] + " " + trilhas[0];
+            buttonText2.text = (pontos[1] > 0 ? "+" : "") + pontos[1] + " " + trilhas[1];
+            
+            // Remover listeners existentes
+            scoreButton_1.onClick.RemoveAllListeners();
+            scoreButton_2.onClick.RemoveAllListeners();
+            
+            // Configurar interatividade e visual apenas para PO
+            scoreButton_1.interactable = isPO;
+            scoreButton_2.interactable = isPO;
+            
+            // Desabilitar highlight para não-PO
+            if (!isPO)
+            {
+                DisableButtonHighlight(scoreButton_1);
+                DisableButtonHighlight(scoreButton_2);
+            }
+        }
+    }
+    
+    void DisableButtonHighlight(Button button)
+    {
+        // Desabilitar cores de highlight
+        var colors = button.colors;
+        colors.highlightedColor = colors.normalColor;
+        colors.pressedColor = colors.normalColor;
+        colors.selectedColor = colors.normalColor;
+        button.colors = colors;
+        
+        // Desabilitar navegação
+        var nav = button.navigation;
+        nav.mode = Navigation.Mode.None;
+        button.navigation = nav;
+        
+        // Desabilitar Event Triggers (OnPointerEnter, OnPointerExit, etc.)
+        EventTrigger eventTrigger = button.GetComponent<EventTrigger>();
+        if (eventTrigger != null)
+        {
+            eventTrigger.enabled = false;
+            Debug.Log("Event Trigger desabilitado para botão na carta");
+        }
+        
+        // Remover todos os triggers
+        EventTrigger trigger = button.gameObject.GetComponent<EventTrigger>();
+        if (trigger != null)
+        {
+            trigger.triggers.Clear();
+            Debug.Log("Event Triggers removidos do botão na carta");
+        }
     }
 
     void randomText()

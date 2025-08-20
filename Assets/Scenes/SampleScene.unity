@@ -119,6 +119,17 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
+--- !u!114 &104662301 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 1026829784057494010, guid: 964db72f22499b0469a62ce15906a05e, type: 3}
+  m_PrefabInstance: {fileID: 3761204002797785133}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &105810113
 GameObject:
   m_ObjectHideFlags: 0
@@ -6622,6 +6633,14 @@ PrefabInstance:
       propertyPath: m_IsActive
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 395866952194786793, guid: 964db72f22499b0469a62ce15906a05e, type: 3}
+      propertyPath: m_Name
+      value: Texto
+      objectReference: {fileID: 0}
+    - target: {fileID: 395866952194786793, guid: 964db72f22499b0469a62ce15906a05e, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 452778184388326246, guid: 964db72f22499b0469a62ce15906a05e, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
@@ -6645,6 +6664,10 @@ PrefabInstance:
     - target: {fileID: 652548509806664424, guid: 964db72f22499b0469a62ce15906a05e, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
       value: NextState
+      objectReference: {fileID: 0}
+    - target: {fileID: 1026829784057494010, guid: 964db72f22499b0469a62ce15906a05e, type: 3}
+      propertyPath: m_text
+      value: Texto
       objectReference: {fileID: 0}
     - target: {fileID: 1229639670258275414, guid: 964db72f22499b0469a62ce15906a05e, type: 3}
       propertyPath: m_AnchorMax.y
@@ -6782,6 +6805,18 @@ PrefabInstance:
       propertyPath: m_ConstrainProportionsScale
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 2034086609283537876, guid: 964db72f22499b0469a62ce15906a05e, type: 3}
+      propertyPath: deckEscolhas
+      value: 
+      objectReference: {fileID: 492575112}
+    - target: {fileID: 2034086609283537876, guid: 964db72f22499b0469a62ce15906a05e, type: 3}
+      propertyPath: resultShowDuration
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 2034086609283537876, guid: 964db72f22499b0469a62ce15906a05e, type: 3}
+      propertyPath: resultadoEscolhaText
+      value: 
+      objectReference: {fileID: 104662301}
     - target: {fileID: 2261146774918459604, guid: 964db72f22499b0469a62ce15906a05e, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
@@ -6818,6 +6853,10 @@ PrefabInstance:
       propertyPath: m_IsActive
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 2805442323181726743, guid: 964db72f22499b0469a62ce15906a05e, type: 3}
+      propertyPath: draftText
+      value: 
+      objectReference: {fileID: 104662301}
     - target: {fileID: 2805442323181726743, guid: 964db72f22499b0469a62ce15906a05e, type: 3}
       propertyPath: tabuleiro
       value: 
@@ -6944,7 +6983,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3805845179401520422, guid: 964db72f22499b0469a62ce15906a05e, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 3831768436113922558, guid: 964db72f22499b0469a62ce15906a05e, type: 3}
       propertyPath: m_text
@@ -7266,6 +7305,7 @@ PrefabInstance:
     m_RemovedGameObjects:
     - {fileID: 5415113363024815601, guid: 964db72f22499b0469a62ce15906a05e, type: 3}
     - {fileID: 5705627401973530499, guid: 964db72f22499b0469a62ce15906a05e, type: 3}
+    - {fileID: 3805845179401520422, guid: 964db72f22499b0469a62ce15906a05e, type: 3}
     m_AddedGameObjects: []
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 8540178464200607484, guid: 964db72f22499b0469a62ce15906a05e, type: 3}

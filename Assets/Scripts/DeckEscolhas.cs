@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections;
 
 public class DeckEscolhas : MonoBehaviour
 {
@@ -38,6 +39,13 @@ public class DeckEscolhas : MonoBehaviour
             return;
         }
 
+        // Verificar se pode pegar carta (networking)
+        if (EscolhaManager.Instance != null && !EscolhaManager.Instance.CanPegarCarta())
+        {
+            Debug.Log("Carta já foi pega por outro jogador!");
+            return;
+        }
+
         Debug.Log("Deck de escolhas clicada. Comprando carta de escolha...");
         
         // Calcula a posição para spawnar: na frente da câmera + 160px para a direita
@@ -46,10 +54,30 @@ public class DeckEscolhas : MonoBehaviour
         Vector3 spawnPosition = playerCamera.ScreenToWorldPoint(screenPos);
 
         Quaternion rotation = Quaternion.Euler(-90, 0, 180);
-        // Instancia o prefab nessa posição com a rotação padrão (sem rotações extras)
-        Instantiate(prefabToSpawn, spawnPosition, rotation);
+        
+        // Instancia o prefab localmente
+        GameObject carta = Instantiate(prefabToSpawn, spawnPosition, rotation);
         Debug.Log("Carta de escolha comprada e instanciada na posição: " + spawnPosition);
+        
+        // Aguardar um frame para garantir que a carta foi inicializada
+        StartCoroutine(ConfigureCartaAfterFrame(carta, spawnPosition, rotation));
     }
+    IEnumerator ConfigureCartaAfterFrame(GameObject carta, Vector3 spawnPosition, Quaternion rotation)
+    {
+        // Aguardar um frame para garantir que Start() da carta foi chamado
+        yield return new WaitForEndOfFrame();
+        
+        // Configurar a carta para networking
+        CardEscolhas cardComponent = carta.GetComponent<CardEscolhas>();
+        if (cardComponent != null && EscolhaManager.Instance != null)
+        {
+            EscolhaManager.Instance.ConfigureCardForNetworking(cardComponent);
+            
+            // Notificar EscolhaManager para sincronizar com outros jogadores
+            EscolhaManager.Instance.NotifyCartaPega(carta, spawnPosition, rotation);
+        }
+    }
+
     // Update is called once per frame
     void Update()
     {
