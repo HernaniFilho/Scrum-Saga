@@ -23,13 +23,12 @@ public class ColorPickerPopup : MonoBehaviour
     
     private readonly Color[] availableColors = new Color[]
     {
-        new Color(1f, 0f, 0f, 1f),      // Vermelho
-        new Color(1f, 0.5f, 0f, 1f),    // Laranja
-        new Color(1f, 1f, 0f, 1f),      // Amarelo
-        new Color(0f, 1f, 0f, 1f),      // Verde
-        new Color(0.3f, 0.7f, 1f, 1f),  // Azul claro
-        new Color(0.561f, 0f, 1f, 1f),  // Violeta
-        Color.white,                    // Branco
+        new Color(0.36f, 0.56f, 0.99f, 1f), // Azul
+        new Color(0.45f, 0.36f, 0.94f, 1f), // Roxo
+        new Color(0.87f, 0.13f, 0.49f, 1f), // Rosa
+        new Color(1.00f, 0.37f, 0.00f, 1f), // Laranja
+        new Color(1.00f, 0.69f, 0.05f, 1f), // Amarelo
+        Color.white,
     };
     
     public event Action<Color> OnColorSelected;

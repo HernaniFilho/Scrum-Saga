@@ -7221,6 +7221,14 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: -65
       objectReference: {fileID: 0}
+    - target: {fileID: 8106075268707583193, guid: 964db72f22499b0469a62ce15906a05e, type: 3}
+      propertyPath: deckAprendizagens
+      value: 
+      objectReference: {fileID: 206830781}
+    - target: {fileID: 8106075268707583193, guid: 964db72f22499b0469a62ce15906a05e, type: 3}
+      propertyPath: resultadoAprendizagemText
+      value: 
+      objectReference: {fileID: 104662301}
     - target: {fileID: 8193500205955496467, guid: 964db72f22499b0469a62ce15906a05e, type: 3}
       propertyPath: m_SizeDelta.x
       value: 229.66
@@ -7273,6 +7281,10 @@ PrefabInstance:
       propertyPath: stateText
       value: 
       objectReference: {fileID: 1579298752}
+    - target: {fileID: 8702914381964408519, guid: 964db72f22499b0469a62ce15906a05e, type: 3}
+      propertyPath: currentState
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 8757715958049582836, guid: 964db72f22499b0469a62ce15906a05e, type: 3}
       propertyPath: tabuleiro
       value: 

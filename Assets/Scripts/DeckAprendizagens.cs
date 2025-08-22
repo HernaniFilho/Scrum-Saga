@@ -38,6 +38,13 @@ public class DeckAprendizagens : MonoBehaviour
             return;
         }
 
+        // Verificar se pode pegar carta através do SprintRetrospectiveManager
+        if (SprintRetrospectiveManager.Instance != null && !SprintRetrospectiveManager.Instance.CanPegarCarta())
+        {
+            Debug.Log("Carta já foi pega ou removida!");
+            return;
+        }
+
         Debug.Log("Deck de aprendizagem clicada. Instanciando...");
         
         // Calcula a posição para spawnar: na frente da câmera + 160px para a direita
@@ -47,7 +54,13 @@ public class DeckAprendizagens : MonoBehaviour
 
         Quaternion rotation = Quaternion.Euler(-90, 0, 180);
         // Instancia o prefab nessa posição com a rotação padrão (sem rotações extras)
-        Instantiate(prefabToSpawn, spawnPosition, rotation);
+        GameObject cartaInstanciada = Instantiate(prefabToSpawn, spawnPosition, rotation);
+        
+        // Notificar o SprintRetrospectiveManager sobre a carta pega
+        if (SprintRetrospectiveManager.Instance != null)
+        {
+            SprintRetrospectiveManager.Instance.NotifyCartaPega(cartaInstanciada, spawnPosition, rotation);
+        }
     }
 
     // Update is called once per frame

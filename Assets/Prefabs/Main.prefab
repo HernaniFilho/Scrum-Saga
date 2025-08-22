@@ -3635,6 +3635,7 @@ GameObject:
   - component: {fileID: 2805442323181726743}
   - component: {fileID: 6425077751758272564}
   - component: {fileID: 2034086609283537876}
+  - component: {fileID: 8106075268707583193}
   - component: {fileID: 8616815159430684280}
   m_Layer: 0
   m_Name: Main
@@ -3773,6 +3774,21 @@ MonoBehaviour:
   deckEscolhas: {fileID: 0}
   resultadoEscolhaText: {fileID: 0}
   resultShowDuration: 3
+--- !u!114 &8106075268707583193
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8540178464200607484}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2a51b5aa613da1343832e7475643ff23, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  deckAprendizagens: {fileID: 0}
+  resultadoAprendizagemText: {fileID: 0}
+  cardShowDuration: 5
 --- !u!114 &8616815159430684280
 MonoBehaviour:
   m_ObjectHideFlags: 0

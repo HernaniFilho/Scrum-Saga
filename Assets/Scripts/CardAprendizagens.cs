@@ -19,19 +19,108 @@ public class CardAprendizagens : MonoBehaviour
     public MeshRenderer meshRenderer;
     [Header("Natureza do card")]
     public string nature;
+    
+    [Header("Networking")]
+    public bool isSyncedCard = false; // Flag para cartas sincronizadas
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        randomText();
-        randomImages();
+        // Apenas gerar dados aleatórios se não for carta sincronizada
+        if (!isSyncedCard)
+        {
+            randomText();
+            randomImages();
+        }
     }
-    // TODO: Remover este método se não for necessário
+    
+    // Método para configurar carta sincronizada
+    public void SetupSyncedCard(string texto, string natureza)
+    {
+        Debug.Log($"SetupSyncedCard chamado - Texto: '{texto}', Natureza: '{natureza}'");
+        
+        isSyncedCard = true;
+        
+        // Configurar texto
+        if (textUI != null)
+        {
+            textUI.text = texto;
+            Debug.Log($"Texto configurado: '{textUI.text}'");
+        }
+        else
+        {
+            Debug.LogError("textUI é null!");
+        }
+            
+        // Configurar natureza
+        nature = natureza;
+        Debug.Log($"Natureza configurada: '{nature}'");
+        
+        // Aplicar textura correspondente à natureza
+        ApplySyncedNatureTexture(natureza);
+    }
+    
+    void ApplySyncedNatureTexture(string natureza)
+    {
+        if (meshRenderer == null) 
+        {
+            Debug.LogError("MeshRenderer não encontrado para aplicar textura sincronizada!");
+            return;
+        }
+        
+        Debug.Log($"Tentando carregar textura sincronizada para natureza: '{natureza}'");
+        
+        string imageFolder = "Images/Naturezas";
+        string texturePath = imageFolder + "/" + natureza;
+        Texture2D texture = Resources.Load<Texture2D>(texturePath);
+        
+        if (texture != null)
+        {
+            Debug.Log($"Textura carregada com sucesso: {texture.name} - Tamanho: {texture.width}x{texture.height}");
+            
+            Material material = new Material(Shader.Find("Unlit/Texture"));
+            if (material.shader != null)
+            {
+                material.mainTexture = texture;
+                material.SetTexture("_MainTex", texture);
+                meshRenderer.material = material;
+                
+                Debug.Log($"Textura sincronizada aplicada com sucesso: {natureza}");
+                Debug.Log($"Material aplicado - Textura principal: {(material.mainTexture != null ? material.mainTexture.name : "NULL")}");
+            }
+            else
+            {
+                Debug.LogError("Shader 'Unlit/Texture' não encontrado!");
+            }
+        }
+        else
+        {
+            Debug.LogError($"Textura não encontrada no caminho: {texturePath}");
+            
+            // Listar texturas disponíveis para debug
+            Texture2D[] availableTextures = Resources.LoadAll<Texture2D>(imageFolder);
+            Debug.Log($"Texturas disponíveis em {imageFolder}:");
+            foreach (var tex in availableTextures)
+            {
+                Debug.Log($"- {tex.name}");
+            }
+        }
+    }
     void OnMouseDown()
     {
+        // Durante a fase de Sprint Retrospective, apenas o PO pode clicar na carta
+        if (GameStateManager.Instance != null && 
+            GameStateManager.Instance.GetCurrentState() == GameStateManager.GameState.SprintRetrospective &&
+            SprintRetrospectiveManager.Instance != null)
+        {
+            // O clique será tratado pelo POClickHandler adicionado pelo SprintRetrospectiveManager
+            return;
+        }
+        
+        // Comportamento padrão para outras fases
         ScoreManager.Instance.UpdateScore(nature, 1);
         Debug.Log("Pontuação de " + nature + " aumentada em 1.");
-        Destroy(gameObject); // Destroi o objeto quando clicado
+        Destroy(gameObject);
     }
     // Update is called once per frame
     void Update()
@@ -52,7 +141,7 @@ public class CardAprendizagens : MonoBehaviour
         textUI.text = randomText.text;
     }
 
-    void randomImages()
+    public void randomImages()
     {
         if (meshRenderer == null)
         {
