@@ -1,48 +1,38 @@
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
+using TMPro;
 using System;
 
 public class ColorPickerPopup : MonoBehaviour
 {
     public static ColorPickerPopup Instance { get; private set; }
     
-    [Header("Popup Settings")]
-    private GameObject popupPanel;
-    private Canvas popupCanvas;
-    private bool isVisible = false;
-
-    public float padding = 12f;
-    public float spacing = 12f;
-    public Vector2 buttonSize = new Vector2(50f, 50f);
+    [Header("UI Components")]
+    public GameObject popupContainer;
+    public Button[] colorButtons;
+    public TMP_Text colorNameText;
+    
+    [Header("Visual Settings")]
     public Color buttonOutlineColor = Color.black;
     public Color selectedButtonOutlineColor = Color.black;
     public Vector2 buttonOutlineSize = new Vector2(2f, 2f);
     public Vector2 hoverButtonOutlineSize = new Vector2(3f, 3f);
     public Vector2 selectedButtonOutlineSize = new Vector2(4f, 4f);
     
-    private readonly Color[] availableColors = new Color[]
-    {
-        new Color(0.36f, 0.56f, 0.99f, 1f), // Azul
-        new Color(0.45f, 0.36f, 0.94f, 1f), // Roxo
-        new Color(0.87f, 0.13f, 0.49f, 1f), // Rosa
-        new Color(1.00f, 0.37f, 0.00f, 1f), // Laranja
-        new Color(1.00f, 0.69f, 0.05f, 1f), // Amarelo
-        Color.white,
-    };
-    
     public event Action<Color> OnColorSelected;
     public event Action OnPopupClosed;
     
-    private GameObject selectedColorIndicator;
+    public Button selectedColorButton;
     private Color currentSelectedColor = Color.red;
+    private bool isVisible = false;
     
     private void Awake()
     {
         if (Instance == null)
         {
             Instance = this;
-            CreatePopupUI();
+            InitializeColorPicker();
         }
         else
         {
@@ -50,143 +40,102 @@ public class ColorPickerPopup : MonoBehaviour
         }
     }
     
-    private void CreatePopupUI()
+    private void InitializeColorPicker()
     {
-        try
+        if (colorButtons == null || colorButtons.Length == 0)
         {
-            Canvas mainCanvas = FindObjectOfType<Canvas>();
-            if (mainCanvas == null)
+            Debug.LogError("Color buttons array is empty! Please assign buttons in the inspector.");
+            return;
+        }
+        
+        // Configura os botões usando a cor do Image de cada botão
+        for (int i = 0; i < colorButtons.Length; i++)
+        {
+            SetupColorButton(colorButtons[i], i == 0);
+        }
+        
+        // Define o primeiro botão como selecionado por padrão
+        if (colorButtons.Length > 0)
+        {
+            selectedColorButton = colorButtons[0];
+            Image firstButtonImage = colorButtons[0].GetComponent<Image>();
+            if (firstButtonImage != null)
             {
-                return;
+                currentSelectedColor = firstButtonImage.color;
             }
-            
-            GameObject canvasGO = new GameObject("ColorPickerCanvas");
-            canvasGO.transform.SetParent(mainCanvas.transform, false);
-            
-            popupCanvas = canvasGO.AddComponent<Canvas>();
-            popupCanvas.overrideSorting = true;
-            popupCanvas.sortingOrder = 1000;
-            
-            canvasGO.AddComponent<GraphicRaycaster>();
-            
-            RectTransform canvasRect = canvasGO.GetComponent<RectTransform>();
-            canvasRect.anchorMin = Vector2.zero;
-            canvasRect.anchorMax = Vector2.one;
-            canvasRect.offsetMin = Vector2.zero;
-            canvasRect.offsetMax = Vector2.zero;
-            
-            popupPanel = new GameObject("ColorPickerPanel");
-            popupPanel.transform.SetParent(canvasGO.transform, false);
-            
-            Image panelImage = popupPanel.AddComponent<Image>();
-            panelImage.color = new Color(0.4339623f, 0.4278213f, 0.4278213f, 1f);
-            
-            float containerWidth = (availableColors.Length * buttonSize.x) + ((availableColors.Length - 1) * spacing) + (padding * 2);
-            float containerHeight = buttonSize.y + (padding * 2);
-            
-            RectTransform panelRect = popupPanel.GetComponent<RectTransform>();
-            panelRect.anchorMin = new Vector2(0.5f, 0f);
-            panelRect.anchorMax = new Vector2(0.5f, 0f);
-            panelRect.pivot = new Vector2(0.5f, 0f);
-            panelRect.sizeDelta = new Vector2(containerWidth, containerHeight);
-            panelRect.anchoredPosition = new Vector2(160, 110);
-            
-            CreateColorButtons();
-            
-            canvasGO.SetActive(false);
+            UpdateColorNameText(colorButtons[0].name);
         }
-        catch (System.Exception e)
+        
+        // Inicia com o popup invisível
+        if (popupContainer != null)
         {
-            Debug.LogError($"Error creating popup UI: {e.Message}\n{e.StackTrace}");
+            popupContainer.SetActive(false);
         }
     }
     
-    private void CreateColorButtons()
-    {        
-        GameObject buttonContainer = new GameObject("ButtonContainer");
-        buttonContainer.transform.SetParent(popupPanel.transform, false);
-        
-        RectTransform containerRect = buttonContainer.AddComponent<RectTransform>();
-        containerRect.anchorMin = Vector2.zero;
-        containerRect.anchorMax = Vector2.one;
-        containerRect.offsetMin = new Vector2(padding, padding);
-        containerRect.offsetMax = new Vector2(-padding, -padding);
-        
-        HorizontalLayoutGroup horizontalLayout = buttonContainer.AddComponent<HorizontalLayoutGroup>();
-        horizontalLayout.spacing = spacing;
-        horizontalLayout.childAlignment = TextAnchor.MiddleCenter;
-        horizontalLayout.childControlWidth = false;
-        horizontalLayout.childControlHeight = false;
-        horizontalLayout.childForceExpandWidth = false;
-        horizontalLayout.childForceExpandHeight = false;
-        
-        for (int i = 0; i < availableColors.Length; i++)
-        {
-            CreateColorButton(availableColors[i], buttonContainer.transform, i == 0);
-        }
-    }
-    
-    private void CreateColorButton(Color color, Transform parent, bool isSelected = false)
+    private void SetupColorButton(Button button, bool isSelected = false)
     {
-        GameObject buttonGO = new GameObject($"ColorButton_{color.ToString()}");
-        buttonGO.transform.SetParent(parent, false);
+        if (button == null) return;
         
-        RectTransform buttonRect = buttonGO.AddComponent<RectTransform>();
-        buttonRect.sizeDelta = buttonSize;
+        // Pega a cor do botão do componente Image
+        Image buttonImage = button.GetComponent<Image>();
+        Color buttonColor = buttonImage != null ? buttonImage.color : Color.white;
         
-        Image buttonImage = buttonGO.AddComponent<Image>();
-        buttonImage.color = color;
+        // Adiciona ou atualiza o Outline
+        Outline outline = button.GetComponent<Outline>();
+        if (outline == null)
+        {
+            outline = button.gameObject.AddComponent<Outline>();
+        }
         
-        Outline outline = buttonGO.AddComponent<Outline>();
         outline.effectColor = isSelected ? selectedButtonOutlineColor : buttonOutlineColor;
         outline.effectDistance = isSelected ? selectedButtonOutlineSize : buttonOutlineSize;
         
-        Button button = buttonGO.AddComponent<Button>();
-        button.targetGraphic = buttonImage;
-        
-        ColorButtonHover hoverHandler = buttonGO.AddComponent<ColorButtonHover>();
-        hoverHandler.Initialize(outline, buttonOutlineSize, hoverButtonOutlineSize, selectedButtonOutlineSize, isSelected);
-        
-        if (isSelected)
+        // Adiciona ou atualiza o ColorButtonHover
+        ColorButtonHover hoverHandler = button.GetComponent<ColorButtonHover>();
+        if (hoverHandler == null)
         {
-            selectedColorIndicator = buttonGO;
-            currentSelectedColor = color;
+            hoverHandler = button.gameObject.AddComponent<ColorButtonHover>();
         }
         
+        hoverHandler.Initialize(outline, buttonOutlineSize, hoverButtonOutlineSize, selectedButtonOutlineSize, isSelected);
+        hoverHandler.SetColorPicker(this);
+        
+        // Remove listeners antigos e adiciona o novo
+        button.onClick.RemoveAllListeners();
         button.onClick.AddListener(() => {
-            SelectColor(color, buttonGO);
+            SelectColor(buttonColor, button);
         });
     }
     
     public void ShowPopup()
     {
-        if (popupCanvas == null) 
+        if (popupContainer == null) 
         {
-            Debug.LogError("PopupCanvas is null!");
+            Debug.LogError("PopupContainer is null!");
             return;
         }
         
-        popupCanvas.gameObject.SetActive(true);
+        popupContainer.SetActive(true);
         isVisible = true;
-        
-        Canvas.ForceUpdateCanvases();
     }
     
     public void ClosePopup()
     {
-        if (popupCanvas == null) return;
+        if (popupContainer == null) return;
         
-        popupCanvas.gameObject.SetActive(false);
+        popupContainer.SetActive(false);
         isVisible = false;
         OnPopupClosed?.Invoke();
     }
     
-    private void SelectColor(Color selectedColor, GameObject buttonGO)
+    private void SelectColor(Color selectedColor, Button buttonComponent)
     {
-        if (selectedColorIndicator != null)
+        // Remove seleção do botão anterior
+        if (selectedColorButton != null)
         {
-            Outline prevOutline = selectedColorIndicator.GetComponent<Outline>();
-            ColorButtonHover prevHover = selectedColorIndicator.GetComponent<ColorButtonHover>();
+            Outline prevOutline = selectedColorButton.GetComponent<Outline>();
+            ColorButtonHover prevHover = selectedColorButton.GetComponent<ColorButtonHover>();
             if (prevOutline != null && prevHover != null)
             {
                 prevHover.SetSelected(false);
@@ -195,10 +144,13 @@ public class ColorPickerPopup : MonoBehaviour
             }
         }
         
-        selectedColorIndicator = buttonGO;
+        // Define o novo botão selecionado
+        selectedColorButton = buttonComponent;
         currentSelectedColor = selectedColor;
-        Outline newOutline = buttonGO.GetComponent<Outline>();
-        ColorButtonHover newHover = buttonGO.GetComponent<ColorButtonHover>();
+        
+        // Aplica visual de selecionado
+        Outline newOutline = buttonComponent.GetComponent<Outline>();
+        ColorButtonHover newHover = buttonComponent.GetComponent<ColorButtonHover>();
         if (newOutline != null && newHover != null)
         {
             newHover.SetSelected(true);
@@ -206,7 +158,18 @@ public class ColorPickerPopup : MonoBehaviour
             newOutline.effectDistance = selectedButtonOutlineSize;
         }
         
+        // Atualiza o texto da cor usando o nome do botão
+        UpdateColorNameText(buttonComponent.name);
+        
         OnColorSelected?.Invoke(selectedColor);
+    }
+    
+    public void UpdateColorNameText(string colorName)
+    {
+        if (colorNameText != null)
+        {
+            colorNameText.text = colorName;
+        }
     }
     
     public bool IsVisible => isVisible;
@@ -230,6 +193,8 @@ public class ColorButtonHover : MonoBehaviour, IPointerEnterHandler, IPointerExi
     private Vector2 selectedOutlineSize;
     private bool isSelected = false;
     
+    private ColorPickerPopup colorPicker;
+    
     public void Initialize(Outline outlineComponent, Vector2 normalSize, Vector2 hoverSize, Vector2 selectedSize, bool selected = false)
     {
         outline = outlineComponent;
@@ -237,6 +202,11 @@ public class ColorButtonHover : MonoBehaviour, IPointerEnterHandler, IPointerExi
         hoverOutlineSize = hoverSize;
         selectedOutlineSize = selectedSize;
         isSelected = selected;
+    }
+    
+    public void SetColorPicker(ColorPickerPopup picker)
+    {
+        colorPicker = picker;
     }
     
     public void SetSelected(bool selected)
@@ -250,6 +220,12 @@ public class ColorButtonHover : MonoBehaviour, IPointerEnterHandler, IPointerExi
         {
             outline.effectDistance = hoverOutlineSize;
         }
+        
+        // Mostra o nome da cor (nome do botão) quando o mouse está em cima
+        if (colorPicker != null)
+        {
+            colorPicker.UpdateColorNameText(gameObject.name);
+        }
     }
     
     public void OnPointerExit(PointerEventData eventData)
@@ -257,6 +233,12 @@ public class ColorButtonHover : MonoBehaviour, IPointerEnterHandler, IPointerExi
         if (outline != null && !isSelected)
         {
             outline.effectDistance = normalOutlineSize;
+        }
+        
+        // Volta para a cor selecionada quando o mouse sai
+        if (colorPicker != null && colorPicker.selectedColorButton != null)
+        {
+            colorPicker.UpdateColorNameText(colorPicker.selectedColorButton.name);
         }
     }
 }

@@ -93,9 +93,14 @@ public class ShapeDrawer : MonoBehaviour, IPointerDownHandler, IDragHandler, IPo
     {
         try
         {
-            GameObject popupGO = new GameObject("ColorPickerPopup");
-            popupGO.transform.SetParent(transform);
-            colorPickerPopup = popupGO.AddComponent<ColorPickerPopup>();
+            // Busca pelo ColorPickerPopup existente na cena
+            colorPickerPopup = FindObjectOfType<ColorPickerPopup>();
+            
+            if (colorPickerPopup == null)
+            {
+                Debug.LogError("ColorPickerPopup not found! Please add a ColorPickerPopup component to the scene.");
+                return;
+            }
             
             colorPickerPopup.OnColorSelected += OnBucketColorSelected;
             colorPickerPopup.OnPopupClosed += OnBucketColorPickerClosed;
