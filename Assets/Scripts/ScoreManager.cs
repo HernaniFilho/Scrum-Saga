@@ -104,18 +104,25 @@ public class ScoreManager : MonoBehaviour
         }
     }
 
-    public void UpdateScore(string varName, int value)
+    public bool UpdateScore(string varName, int value)
     {
         if (scoreboard.ContainsKey(varName))
         {
+            if (scoreboard[varName] + value < 0)
+            {
+                Debug.LogWarning($"Tentativa de reduzir '{varName}' abaixo de zero. Operação ignorada.");
+                return false;
+            }
             scoreboard[varName] += value;
             Debug.Log($"Pontuação atualizada: {varName} = {scoreboard[varName]}");
             UpdateScoreTexts(varName, scoreboard[varName]);
+            return true;
         }
         else
         {
             Debug.LogWarning($"Variável de pontuação '{varName}' não encontrada.");
         }
+        return false;
     }
 
     public void UpdateScoreTexts(string varName, int value)
