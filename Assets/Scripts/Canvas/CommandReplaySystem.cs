@@ -157,6 +157,12 @@ public class CommandReplaySystem : MonoBehaviour
         Debug.Log($"Reprodução sequencial concluída: {sortedCommands.Count} comandos");
     }
     
+    public void ReplayCommand(DrawingCommand command)
+    {
+        if (command == null) return;
+        ExecuteCommand(command);
+    }
+
     private void ExecuteCommand(DrawingCommand command)
     {
         // Se é um comando de flood fill, executa diferente

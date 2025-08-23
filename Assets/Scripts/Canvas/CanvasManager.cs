@@ -288,7 +288,7 @@ public class CanvasManager : MonoBehaviourPunCallbacks, IPunObservable
         }
     }
 
-    private void DeactivateDrawingLocal()
+    public void DeactivateDrawingLocal()
     {
         ShapeDrawer shapeDrawer = FindObjectOfType<ShapeDrawer>();
         if (shapeDrawer != null)
@@ -298,7 +298,7 @@ public class CanvasManager : MonoBehaviourPunCallbacks, IPunObservable
         }
     }
 
-    private void ActivateDrawingLocal()
+    public void ActivateDrawingLocal()
     {
         ShapeDrawer shapeDrawer = FindObjectOfType<ShapeDrawer>();
         if (shapeDrawer != null)
@@ -369,6 +369,12 @@ public class CanvasManager : MonoBehaviourPunCallbacks, IPunObservable
         if (canvasToolbar != null)
         {
             canvasToolbar.SetActive(isActive);
+        }
+
+        // Fechar ColorPickerPopup quando toolbar for desativada
+        if (!isActive && ColorPickerPopup.Instance != null)
+        {
+            ColorPickerPopup.Instance.ClosePopup();
         }
         
         Debug.Log($"Canvas Toolbar {(isActive ? "ativada" : "desativada")}!");
@@ -683,6 +689,45 @@ public class CanvasManager : MonoBehaviourPunCallbacks, IPunObservable
         if (PhotonNetwork.InRoom)
         {
             GetComponent<PhotonView>().RPC("LoadFirstDrawingForAll", RpcTarget.All);
+        }
+    }
+
+    public void ReplayLastCommandForAll()
+    {
+        // Sincronizar último comando para todos os players
+        if (PhotonNetwork.InRoom && CommandRecorder.Instance != null)
+        {
+            DrawingSession currentSession = CommandRecorder.Instance.GetCurrentSession();
+            if (currentSession != null && currentSession.GetCommandCount() > 0)
+            {
+                DrawingCommand lastCommand = currentSession.GetLastCommand();
+                if (lastCommand != null)
+                {
+                    GetComponent<PhotonView>().RPC("ReceiveRealtimeCommand", RpcTarget.Others, 
+                        JsonUtility.ToJson(lastCommand));
+                }
+            }
+        }
+    }
+
+    [PunRPC]
+    void ReceiveRealtimeCommand(string commandJson)
+    {
+        try
+        {
+            DrawingCommand command = JsonUtility.FromJson<DrawingCommand>(commandJson);
+            
+            CommandReplaySystem replaySystem = FindObjectOfType<CommandReplaySystem>();
+            if (replaySystem != null)
+            {
+                // Replay apenas este comando
+                replaySystem.ReplayCommand(command);
+                Debug.Log($"Comando em tempo real replicado: {command.shapeType}");
+            }
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError($"Erro ao processar comando em tempo real: {e.Message}");
         }
     }
     

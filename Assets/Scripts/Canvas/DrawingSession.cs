@@ -42,6 +42,19 @@ public class DrawingSession
         return commands.Count;
     }
     
+    public DrawingCommand GetLastCommand()
+    {
+        if (commands.Count > 0)
+            return commands[commands.Count - 1];
+        return null;
+    }
+    
+    public void RemoveLastCommand()
+    {
+        if (commands.Count > 0)
+            commands.RemoveAt(commands.Count - 1);
+    }
+    
     public string ToJson()
     {
         return JsonUtility.ToJson(this);

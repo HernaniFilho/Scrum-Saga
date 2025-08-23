@@ -186,16 +186,21 @@ public class UndoSystem : MonoBehaviour
         }
         
         // Restaura a textura anterior
+
+        if (drawingBoard == null)
+            drawingBoard = FindObjectOfType<RawImage>();
+
         if (lastTexture != null && drawingBoard != null)
-        {
-            Texture2D currentTexture = shapeDrawer.GetDrawingTexture();
-            if (currentTexture != null)
             {
-                currentTexture.SetPixels(lastTexture.GetPixels());
-                currentTexture.Apply();
+                Texture2D currentTexture = shapeDrawer.GetDrawingTexture();
+                if (currentTexture != null)
+                {
+                    currentTexture.SetPixels(lastTexture.GetPixels());
+                    currentTexture.Apply();
+                }
             }
-        }
         
+        Debug.Log("foi");
         hasActionToUndo = false;
         HideUndoButton();
     }

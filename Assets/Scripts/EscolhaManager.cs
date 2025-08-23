@@ -338,10 +338,10 @@ public class EscolhaManager : MonoBehaviourPunCallbacks
         DestroyAllCards();
         
         // Mostrar resultado para todos
-        StartCoroutine(MostrarResultadoEscolha(trilhaEscolhida, pontos));
+        MostrarResultadoEscolha(trilhaEscolhida, pontos);
     }
 
-    IEnumerator MostrarResultadoEscolha(string trilhaEscolhida, int pontos)
+    void MostrarResultadoEscolha(string trilhaEscolhida, int pontos)
     {
         Debug.Log($"Mostrando resultado: {trilhaEscolhida} +{pontos}");
         
@@ -357,39 +357,30 @@ public class EscolhaManager : MonoBehaviourPunCallbacks
             Debug.LogError("ResultadoEscolhaText não atribuído!");
         }
 
-        // Aguardar por alguns segundos
-        yield return new WaitForSeconds(resultShowDuration);
-
-        // Esconder resultado
-        if (resultadoEscolhaText != null)
+        // Iniciar timer de auto-remoção usando TimerManager (apenas Master Client)
+        if (TimerManager.Instance != null && PhotonNetwork.IsMasterClient)
         {
-            resultadoEscolhaText.gameObject.SetActive(false);
-            Debug.Log("Resultado UI escondido");
-        }
-
-        // Avançar para próximo estado (apenas o PO pode fazer isso)
-        if (productOwnerManager != null && productOwnerManager.IsLocalPlayerProductOwner())
-        {
-            Debug.Log("PO avançando para próximo estado...");
-            yield return new WaitForSeconds(0.5f); // Pequena pausa adicional
-            AdvanceToNextState();
-        }
-        else
-        {
-            Debug.Log("Player não é PO ou ProductOwnerManager não encontrado");
+            TimerManager.Instance.StartTimer(resultShowDuration, onTimerComplete, "ResultadoEscolhaTimer");
         }
     }
 
-    void AdvanceToNextState()
+    void onTimerComplete()
     {
+        photonView.RPC("EsconderResultadoEscolha", RpcTarget.All);
+
         if (gameStateManager != null)
         {
             gameStateManager.NextState();
             Debug.Log("Avançando para o próximo estado do jogo: " + gameStateManager.GetCurrentState());
         }
-        else
+    }
+
+    [PunRPC]
+    void EsconderResultadoEscolha()
+    {
+        if (resultadoEscolhaText != null)
         {
-            Debug.LogError("GameStateManager não encontrado para avançar estado!");
+            resultadoEscolhaText.gameObject.SetActive(false);
         }
     }
 
@@ -407,6 +398,12 @@ public class EscolhaManager : MonoBehaviourPunCallbacks
     {
         cartaJaCriada = false; // Reset da flag de duplicação
         hasStartedEscolhaPhase = false; // Reset da flag de fase
+
+        // Parar timer se estiver ativo
+        if (TimerManager.Instance != null && PhotonNetwork.InRoom)
+        {
+            TimerManager.Instance.StopTimer();
+        }
         
         if (PhotonNetwork.IsMasterClient)
         {

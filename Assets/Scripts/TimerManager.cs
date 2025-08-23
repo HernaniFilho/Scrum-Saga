@@ -90,7 +90,7 @@ public class TimerManager : MonoBehaviourPunCallbacks
         return string.Format("{0:0}:{1:00}", minutes, seconds);
     }
     
-    private void EndTimer()
+    public void EndTimer()
     {
         isTimerActive = false;
         

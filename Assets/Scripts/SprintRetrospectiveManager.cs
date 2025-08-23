@@ -238,8 +238,6 @@ public class SprintRetrospectiveManager : MonoBehaviourPunCallbacks
         }
     }
 
-
-
     public void OnPOClickCard()
     {
         if (!productOwnerManager.IsLocalPlayerProductOwner()) return;

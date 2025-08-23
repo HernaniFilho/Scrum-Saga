@@ -159,6 +159,16 @@ public class ShapeDrawer : MonoBehaviour, IPointerDownHandler, IDragHandler, IPo
             {
                 undoSystem.OnFloodFillPerformed();
             }
+
+            // Notifica RealizacaoTarefaManager que o balde foi usado
+            if (RealizacaoTarefaManager.Instance != null)
+            {
+                RealizacaoTarefaManager.Instance.OnPlayerFinishedDrawing(() =>
+                {
+                    // Sincronizar flood fill em tempo real
+                    RealizacaoTarefaManager.Instance.SyncFloodFillInRealTime(localPoint, selectedBucketColor);
+                });
+            }
             return;
         }
         
@@ -235,6 +245,16 @@ public class ShapeDrawer : MonoBehaviour, IPointerDownHandler, IDragHandler, IPo
         if (CommandRecorder.Instance != null && createdShape != null)
         {
             CommandRecorder.Instance.RecordShapeFromGameObject(createdShape);
+        }
+
+        // Notifica RealizacaoTarefaManager que o desenho foi completado
+        if (RealizacaoTarefaManager.Instance != null && createdShape != null)
+        {
+            RealizacaoTarefaManager.Instance.OnPlayerFinishedDrawing(() =>
+            {
+                // Sincronizar desenho em tempo real para todos os players
+                RealizacaoTarefaManager.Instance.SyncDrawingInRealTime(createdShape);
+            });
         }
     }
 
