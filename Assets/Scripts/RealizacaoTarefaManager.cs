@@ -43,6 +43,7 @@ public class RealizacaoTarefaManager : MonoBehaviourPunCallbacks
     private int currentPlayerIndex = 0;
     private int commandCountBeforeTurn = 0; // Para rastrear comandos da vez atual
     private Action onConfirmFunction = null;
+    private ShapeType lastSelectedShape = ShapeType.Rectangle; // Para restaurar o shape após cancelamento
 
     public static RealizacaoTarefaManager Instance { get; private set; }
 
@@ -85,6 +86,8 @@ public class RealizacaoTarefaManager : MonoBehaviourPunCallbacks
         {
             if (hasStartedRealizacao)
             {
+                // Clear room properties when leaving RealizacaoTarefa phase
+                ResetRealizacaoState();
                 hasStartedRealizacao = false;
                 timerRunning = false;
             }
@@ -163,7 +166,11 @@ public class RealizacaoTarefaManager : MonoBehaviourPunCallbacks
 
     public void StartRealizacaoPhase()
     {
-        ResetRealizacaoState();
+        // Reset local state but don't clear room properties yet
+        hasStartedRealizacao = false;
+        timerRunning = false;
+        currentPlayerIndex = 0;
+        playersOrder.Clear();
 
         // Ativar canvas para todos, mas sem toolbar e desenho desabilitado
         if (canvasManager != null)
@@ -174,15 +181,19 @@ public class RealizacaoTarefaManager : MonoBehaviourPunCallbacks
         }
 
         bool isPO = productOwnerManager != null && productOwnerManager.IsLocalPlayerProductOwner();
-        bool realizacaoJaIniciada = PhotonNetwork.CurrentRoom.CustomProperties.ContainsKey(REALIZACAO_INICIADA_KEY);
+        bool realizacaoJaIniciada = PhotonNetwork.CurrentRoom.CustomProperties.ContainsKey(REALIZACAO_INICIADA_KEY) &&
+                                   (bool)PhotonNetwork.CurrentRoom.CustomProperties[REALIZACAO_INICIADA_KEY];
 
         if (isPO && !realizacaoJaIniciada)
         {
             // Mostrar botão para PO
             if (startRealizacaoButton != null)
                 startRealizacaoButton.gameObject.SetActive(true);
+                
+            if (aguardandoText != null)
+                aguardandoText.gameObject.SetActive(false);
         }
-        else
+        else if (!isPO)
         {
             // Mostrar texto de aguardo para outros players
             if (aguardandoText != null)
@@ -190,6 +201,9 @@ public class RealizacaoTarefaManager : MonoBehaviourPunCallbacks
                 aguardandoText.gameObject.SetActive(true);
                 aguardandoText.text = "Aguardando PO começar...";
             }
+            
+            if (startRealizacaoButton != null)
+                startRealizacaoButton.gameObject.SetActive(false);
         }
 
         // Se já iniciou, continuar processo
@@ -241,19 +255,16 @@ public class RealizacaoTarefaManager : MonoBehaviourPunCallbacks
         }
 
         // Sincronizar ordem dos players
-        if (PhotonNetwork.IsMasterClient)
+        int[] playerActorNumbers = new int[playersOrder.Count];
+        for (int i = 0; i < playersOrder.Count; i++)
         {
-            int[] playerActorNumbers = new int[playersOrder.Count];
-            for (int i = 0; i < playersOrder.Count; i++)
-            {
-                playerActorNumbers[i] = playersOrder[i].ActorNumber;
-            }
-
-            Hashtable props = new Hashtable();
-            props[PLAYERS_ORDER_KEY] = playerActorNumbers;
-            props[CURRENT_PLAYER_INDEX_KEY] = 0;
-            PhotonNetwork.CurrentRoom.SetCustomProperties(props);
+            playerActorNumbers[i] = playersOrder[i].ActorNumber;
         }
+
+        Hashtable props = new Hashtable();
+        props[PLAYERS_ORDER_KEY] = playerActorNumbers;
+        props[CURRENT_PLAYER_INDEX_KEY] = 0;
+        PhotonNetwork.CurrentRoom.SetCustomProperties(props);
     }
 
     [PunRPC]
@@ -404,6 +415,13 @@ public class RealizacaoTarefaManager : MonoBehaviourPunCallbacks
         // Apenas o player atual pode finalizar seu turno
         if (!isMyTurn) return;
 
+        // Salvar o shape atual antes de desativar
+        ShapeDrawer shapeDrawer = FindObjectOfType<ShapeDrawer>();
+        if (shapeDrawer != null)
+        {
+            lastSelectedShape = shapeDrawer.currentShape;
+        }
+
         // IMEDIATAMENTE desativar desenho para evitar múltiplas ações
         if (canvasManager != null)
         {
@@ -452,6 +470,16 @@ public class RealizacaoTarefaManager : MonoBehaviourPunCallbacks
         {
             canvasManager.ActivateToolbar();
             canvasManager.ActivateDrawingLocal();
+        }
+
+        // Restaurar o shape que estava selecionado
+        ShapeDrawer shapeDrawer = FindObjectOfType<ShapeDrawer>();
+        ButtonStateManager buttonManager = FindObjectOfType<ButtonStateManager>();
+        
+        if (shapeDrawer != null && buttonManager != null)
+        {
+            shapeDrawer.SetShape(lastSelectedShape);
+            buttonManager.UpdateSelection(lastSelectedShape);
         }
     }
 

@@ -113,7 +113,8 @@ public class CardAprendizagens : MonoBehaviour
             GameStateManager.Instance.GetCurrentState() == GameStateManager.GameState.SprintRetrospective &&
             SprintRetrospectiveManager.Instance != null)
         {
-            // O clique será tratado pelo POClickHandler adicionado pelo SprintRetrospectiveManager
+            // Chamar diretamente o método do SprintRetrospectiveManager
+            SprintRetrospectiveManager.Instance.OnPOClickCard();
             return;
         }
         

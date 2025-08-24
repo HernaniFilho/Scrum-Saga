@@ -7,7 +7,7 @@ using Random = UnityEngine.Random;
 
 public class CardTarefas : MonoBehaviour
 {
-    public string imageFolder = "Images/Tarefas";
+    public string imageFolder = "Images/Tarefas/Cartas";
     public MeshRenderer meshRenderer;
     [Header("Pontuação máxima para atribuição aleatória")]
     public int maxScore = 1;
@@ -25,7 +25,11 @@ public class CardTarefas : MonoBehaviour
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        randomTexture();
+        // Só aplica textura aleatória se não houver material definido (evita sobrescrever cartas selecionadas)
+        if (meshRenderer != null && (meshRenderer.material == null || meshRenderer.material.mainTexture == null))
+        {
+            randomTexture();
+        }
         
         // Só gera novas pontuações se a carta não foi selecionada
         if (!isSelected && scores.Count == 0)
@@ -61,7 +65,7 @@ public class CardTarefas : MonoBehaviour
             // +1 em duas trilhas
             setupScoreText(scoreText_1, scoreKeys[0]);
             setupScoreText(scoreText_2, scoreKeys[1]);
-            setupScoreText(scoreText_4, scoreKeys[1]);
+            setupScoreText(scoreText_4, scoreKeys[0]);
         }
     }
 

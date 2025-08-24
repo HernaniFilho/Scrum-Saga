@@ -223,17 +223,11 @@ public class SprintRetrospectiveManager : MonoBehaviourPunCallbacks
             // Configurar clique para PO
             bool isPO = productOwnerManager != null && productOwnerManager.IsLocalPlayerProductOwner();
             
-            if (isPO)
+            // CardAprendizagens já tem OnMouseDown que chama OnPOClickCard diretamente durante SprintRetrospective
+            // Garantir que há collider para o clique funcionar
+            if (carta.GetComponent<Collider>() == null)
             {
-                // Adicionar componente para detectar clique do PO
-                if (carta.GetComponent<Collider>() == null)
-                {
-                    carta.AddComponent<BoxCollider>();
-                }
-                
-                // Adicionar script de clique do PO
-                POClickHandler clickHandler = carta.AddComponent<POClickHandler>();
-                clickHandler.retrospectiveManager = this;
+                carta.AddComponent<BoxCollider>();
             }
         }
     }
@@ -406,16 +400,3 @@ public class SprintRetrospectiveManager : MonoBehaviourPunCallbacks
     #endregion
 }
 
-// Classe auxiliar para detectar clique do PO nas cartas
-public class POClickHandler : MonoBehaviour
-{
-    public SprintRetrospectiveManager retrospectiveManager;
-
-    void OnMouseDown()
-    {
-        if (retrospectiveManager != null)
-        {
-            retrospectiveManager.OnPOClickCard();
-        }
-    }
-}

@@ -95,7 +95,11 @@ public class SprintPlanningManager : MonoBehaviour
 
       if (productOwnerManager != null && productOwnerManager.IsLocalPlayerProductOwner() && tabuleiro != null)
       {
-        tabuleiro.SetActive(true);
+        // Don't reactivate tabuleiro if we're in SprintReview phase (let SprintReviewManager handle it)
+        if (currentState != GameStateManager.GameState.SprintReview)
+        {
+          tabuleiro.SetActive(true);
+        }
       }
 
       if (startDraftButton != null)
@@ -296,6 +300,7 @@ public class SprintPlanningManager : MonoBehaviour
     if (CanvasManager.Instance != null)
     {
       CanvasManager.Instance.ActivateCanvasForOthers();
+      CanvasManager.Instance.ActivateDrawingForAll();
     }
 
     draftText.gameObject.SetActive(true);
