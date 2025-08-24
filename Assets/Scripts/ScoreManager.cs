@@ -104,24 +104,44 @@ public class ScoreManager : MonoBehaviour
         }
     }
 
-    public void UpdateScore(string varName, int value)
+    public bool UpdateScore(string varName, int value)
     {
         if (scoreboard.ContainsKey(varName))
         {
-            scoreboard[varName] += value;
+            if (scoreboard[varName] + value < 0)
+            {
+                if (scoreboard[varName] == 0)
+                {
+                    Debug.LogWarning($"Tentativa de reduzir '{varName}' abaixo de zero. Operação ignorada.");
+                    return false;
+                }
+                else
+                {
+                    scoreboard[varName] = 0;
+                }
+            }
+            else
+            {
+                scoreboard[varName] += value;
+            }
+            
             Debug.Log($"Pontuação atualizada: {varName} = {scoreboard[varName]}");
             UpdateScoreTexts(varName, scoreboard[varName]);
-            
+
             // Sincronizar com outros jogadores se NetworkScoreManager existir
             if (NetworkScoreManager.Instance != null)
             {
                 NetworkScoreManager.Instance.BroadcastScoreUpdate(varName, scoreboard[varName]);
             }
+
+            return true;
         }
         else
         {
             Debug.LogWarning($"Variável de pontuação '{varName}' não encontrada.");
         }
+        
+        return false;
     }
 
     public void UpdateScoreTexts(string varName, int value)

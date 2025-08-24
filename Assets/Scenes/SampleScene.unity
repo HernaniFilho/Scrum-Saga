@@ -119,6 +119,11 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
+--- !u!23 &36487249 stripped
+MeshRenderer:
+  m_CorrespondingSourceObject: {fileID: 6632977370908169942, guid: 34f3584411545db45841bc3ef2bea25c, type: 3}
+  m_PrefabInstance: {fileID: 94577442220398301}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &43193437
 GameObject:
   m_ObjectHideFlags: 0
@@ -2360,7 +2365,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 279477143761408306, guid: 7802ee04431ec6a4487b74350fb74357, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 100
+      value: 101
       objectReference: {fileID: 0}
     - target: {fileID: 279477143761408306, guid: 7802ee04431ec6a4487b74350fb74357, type: 3}
       propertyPath: m_AnchoredPosition.x
@@ -2368,7 +2373,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 279477143761408306, guid: 7802ee04431ec6a4487b74350fb74357, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: -60
+      value: -60.5
       objectReference: {fileID: 0}
     - target: {fileID: 356863782949300464, guid: 7802ee04431ec6a4487b74350fb74357, type: 3}
       propertyPath: m_AnchorMax.y
@@ -2688,7 +2693,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2130628424164508932, guid: 7802ee04431ec6a4487b74350fb74357, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: -440
+      value: -441
       objectReference: {fileID: 0}
     - target: {fileID: 2158476306619154150, guid: 7802ee04431ec6a4487b74350fb74357, type: 3}
       propertyPath: m_AnchorMax.y
@@ -3320,7 +3325,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6616746483399487024, guid: 7802ee04431ec6a4487b74350fb74357, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: -145
+      value: -146
       objectReference: {fileID: 0}
     - target: {fileID: 6792319215294998938, guid: 7802ee04431ec6a4487b74350fb74357, type: 3}
       propertyPath: m_AnchorMax.y
@@ -3344,7 +3349,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6792319215294998938, guid: 7802ee04431ec6a4487b74350fb74357, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: -275
+      value: -276
       objectReference: {fileID: 0}
     - target: {fileID: 6877179385023704776, guid: 7802ee04431ec6a4487b74350fb74357, type: 3}
       propertyPath: m_AnchorMax.y
@@ -5115,6 +5120,11 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 906254184}
   m_CullTransparentMesh: 1
+--- !u!23 &924016556 stripped
+MeshRenderer:
+  m_CorrespondingSourceObject: {fileID: 3722996693655381498, guid: 34f3584411545db45841bc3ef2bea25c, type: 3}
+  m_PrefabInstance: {fileID: 94577442220398301}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &932686076
 GameObject:
   m_ObjectHideFlags: 0
@@ -9317,21 +9327,33 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 89744094863724896, guid: 34f3584411545db45841bc3ef2bea25c, type: 3}
+      propertyPath: m_Enabled
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2766931272623668945, guid: 34f3584411545db45841bc3ef2bea25c, type: 3}
+      propertyPath: 'meshRenderers.Array.data[0]'
+      value: 
+      objectReference: {fileID: 36487249}
+    - target: {fileID: 2766931272623668945, guid: 34f3584411545db45841bc3ef2bea25c, type: 3}
+      propertyPath: 'meshRenderers.Array.data[1]'
+      value: 
+      objectReference: {fileID: 924016556}
     - target: {fileID: 4394774441771769965, guid: 34f3584411545db45841bc3ef2bea25c, type: 3}
       propertyPath: m_LocalScale.x
       value: 6
       objectReference: {fileID: 0}
     - target: {fileID: 4394774441771769965, guid: 34f3584411545db45841bc3ef2bea25c, type: 3}
       propertyPath: m_LocalScale.z
-      value: 5
+      value: 6
       objectReference: {fileID: 0}
     - target: {fileID: 4394774441771769965, guid: 34f3584411545db45841bc3ef2bea25c, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 12
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4394774441771769965, guid: 34f3584411545db45841bc3ef2bea25c, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 4
+      value: 5.92
       objectReference: {fileID: 0}
     - target: {fileID: 4394774441771769965, guid: 34f3584411545db45841bc3ef2bea25c, type: 3}
       propertyPath: m_LocalPosition.z
@@ -9372,6 +9394,10 @@ PrefabInstance:
     - target: {fileID: 5386467518017784698, guid: 34f3584411545db45841bc3ef2bea25c, type: 3}
       propertyPath: m_IsActive
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6030701792422481799, guid: 34f3584411545db45841bc3ef2bea25c, type: 3}
+      propertyPath: m_Enabled
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 6625849535754083636, guid: 34f3584411545db45841bc3ef2bea25c, type: 3}
       propertyPath: m_Camera

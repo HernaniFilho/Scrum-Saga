@@ -47,7 +47,8 @@ public class DeckImprevistos : MonoBehaviour
 
         Quaternion rotation = Quaternion.Euler(-90, 0, 180);
         // Instancia o prefab nessa posição com a rotação padrão (sem rotações extras)
-        Instantiate(prefabToSpawn, spawnPosition, rotation);
+        GameObject spawnedCard = Instantiate(prefabToSpawn, spawnPosition, rotation);
+        spawnedCard.transform.localScale = new Vector3(6f, 0.1f, 6f);
         Debug.Log("Carta de imprevisto comprada e instanciada na posição: " + spawnPosition);
     }
 
