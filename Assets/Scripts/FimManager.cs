@@ -15,7 +15,8 @@ public class FimManager : MonoBehaviourPun
     public TMP_Text feedbackText;
 
     [Header("Configuration")]
-    public float fimPhaseDuration = 10f;
+    public float fimPhaseDefaultDuration = 10f;
+    public float fimPhaseFeedbackDuration = 20f;
 
     [Header("Game References")]
     [SerializeField] private GameObject tabuleiro;
@@ -103,7 +104,11 @@ public class FimManager : MonoBehaviourPun
       ResetFimState();
       
       if (tabuleiro != null)
-      tabuleiro.SetActive(true);
+        tabuleiro.SetActive(true);
+
+      bool isLastSprint = false;
+      if (startButtonManager != null && startButtonManager.GetCurrentSprint() == startButtonManager.sprintsMax)
+        isLastSprint = true;
 
       if (fimText != null && feedbackText != null)
       {
@@ -113,14 +118,12 @@ public class FimManager : MonoBehaviourPun
         fimText.gameObject.SetActive(true);
         feedbackText.gameObject.SetActive(true);
 
-        if (startButtonManager != null && startButtonManager.GetCurrentSprint() != startButtonManager.sprintsMax)
-        {
-          fimText.text = "Fim da Sprint! Prepare-se para a próxima!";
-        }
-        else if (ScoreManager.Instance != null)
+        fimText.text = "Fim da Sprint! Prepare-se para a próxima!";
+        if (isLastSprint && ScoreManager.Instance != null)
         {
           int lowestScore = ScoreManager.Instance.GetLowestScoreValue();
-      
+
+          fimText.text = "";
           if (tabuleiro != null)
             tabuleiro.SetActive(false);
 
@@ -137,32 +140,26 @@ public class FimManager : MonoBehaviourPun
             feedbackText.text = "Feedback do Cliente: Não estou satisfeito com o projeto entregue pela equipe! Que tal tentar de novo?";
           }
         }
-        else
-        {
-          fimText.text = "Fim da Sprint! Prepare-se para a próxima!";
-        }
       }
       
       if (TimerManager.Instance != null && PhotonNetwork.IsMasterClient)
       {
-        TimerManager.Instance.StartTimer(fimPhaseDuration, onTimerComplete, "FimTimer");
+        TimerManager.Instance.StartTimer(isLastSprint ? fimPhaseFeedbackDuration : fimPhaseDefaultDuration, onTimerComplete, "FimTimer");
       }
     }
 
     void onTimerComplete()
     {
-      photonView.RPC("EsconderTextos", RpcTarget.All);
-
-      if (tabuleiro != null)
-        tabuleiro.SetActive(true);
-
-      if (gameStateManager != null)
-      {
-        gameStateManager.NextState();
-      }
-        
+      bool isLastSprint = false;
       if (startButtonManager != null && startButtonManager.GetCurrentSprint() == startButtonManager.sprintsMax)
+        isLastSprint = true;
+
+      photonView.RPC("EsconderTextos", RpcTarget.All);
+        
+      if (isLastSprint)
       {
+        photonView.RPC("MostrarTabuleiro", RpcTarget.All);
+
         if (productOwnerManager != null)
         {
           productOwnerManager.ClearProductOwner();
@@ -172,6 +169,11 @@ public class FimManager : MonoBehaviourPun
         {
           ScoreManager.Instance.ResetScore();
         }
+      }
+
+      if (gameStateManager != null)
+      {
+        gameStateManager.NextState();
       }
     }
 
@@ -189,14 +191,18 @@ public class FimManager : MonoBehaviourPun
       }
     }
 
+    [PunRPC]
+    void MostrarTabuleiro()
+    {
+      if (tabuleiro != null)
+      {
+        tabuleiro.SetActive(true);
+      }
+    }
+
     public void ResetFimState()
     {
       hasStartedFimPhase = false;
-
-      if (TimerManager.Instance != null && PhotonNetwork.InRoom)
-      {
-        TimerManager.Instance.StopTimer();
-      }
 
       // Reset da UI local
       if (fimText != null)

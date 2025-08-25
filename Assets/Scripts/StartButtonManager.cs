@@ -3,7 +3,7 @@ using UnityEngine.UI;
 using Photon.Pun;
 using TMPro;
 
-public class StartButtonManager : MonoBehaviourPunCallbacks
+public class StartButtonManager : MonoBehaviourPun
 {
     [Header("UI References")]
     public Button startPhaseButton;
@@ -82,10 +82,10 @@ public class StartButtonManager : MonoBehaviourPunCallbacks
             return;
         }
 
-        currentSprint++;
+        setCurrentSprint(currentSprint + 1);
         if (currentSprint > sprintsMax)
         {
-            currentSprint = 0;
+            setCurrentSprint(1);
         }
         gameStateManager.NextState();
     }
@@ -93,5 +93,17 @@ public class StartButtonManager : MonoBehaviourPunCallbacks
     public int GetCurrentSprint()
     {
         return currentSprint;
+    }
+
+    private void setCurrentSprint(int sprint)
+    {
+        currentSprint = sprint;
+        photonView.RPC("UpdateCurrentSprint", RpcTarget.All, currentSprint);
+    }
+
+    [PunRPC]
+    void UpdateCurrentSprint(int sprint)
+    {
+        currentSprint = sprint;
     }
 }

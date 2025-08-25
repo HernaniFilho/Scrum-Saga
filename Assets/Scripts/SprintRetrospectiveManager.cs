@@ -15,7 +15,7 @@ public class SprintRetrospectiveManager : MonoBehaviourPunCallbacks
     public TMP_Text resultadoAprendizagemText;
 
     [Header("Configuration")]
-    public float cardShowDuration = 30f;
+    public float cardShowDuration = 7f;
 
     [Header("Game References")]
     private ProductOwnerManager productOwnerManager;
