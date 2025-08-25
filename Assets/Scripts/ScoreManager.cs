@@ -19,10 +19,17 @@ public class ScoreManager : MonoBehaviour
     }
     public enum Difficulty
     {
-        Easy = 7,
-        Medium = 6,
-        Hard = 5
+        Easy = 6,
+        Medium = 5,
+        Hard = 4
     }
+
+    private static readonly Dictionary<Natures, string> natureDisplayNames = new Dictionary<Natures, string>
+    {
+        { Natures.Adaptacao, "Adaptação" },
+        { Natures.Inspecao, "Inspeção" },
+        { Natures.Transparencia, "Transparência" }
+    };
 
     [Header("Dificuldade do jogo")]
     public Difficulty gameDifficulty = Difficulty.Easy;
@@ -88,10 +95,30 @@ public class ScoreManager : MonoBehaviour
     void loadScore(Difficulty difficulty)
     {
         scoreboard.Clear();
+
+        // Valores específicos para cada dificuldade e tipo de score
+        Dictionary<(Difficulty, ScoreType), int> difficultyValues = new Dictionary<(Difficulty, ScoreType), int>
+        {
+            // Fácil: Prod 6, Entrosa 7, Expec 5
+            { (Difficulty.Easy, ScoreType.Produtividade), 6 },
+            { (Difficulty.Easy, ScoreType.Entrosamento), 7 },
+            { (Difficulty.Easy, ScoreType.Expectativa), 5 },
+            
+            // Médio: Prod 5, Entrosa 6, Expec 4
+            { (Difficulty.Medium, ScoreType.Produtividade), 5 },
+            { (Difficulty.Medium, ScoreType.Entrosamento), 6 },
+            { (Difficulty.Medium, ScoreType.Expectativa), 4 },
+            
+            // Difícil: Prod 4, Entrosa 5, Expec 4
+            { (Difficulty.Hard, ScoreType.Produtividade), 4 },
+            { (Difficulty.Hard, ScoreType.Entrosamento), 5 },
+            { (Difficulty.Hard, ScoreType.Expectativa), 4 }
+        };
+
         foreach (ScoreType type in Enum.GetValues(typeof(ScoreType)))
         {
             string key = type.ToString();
-            int value = (int)difficulty; // Atribui a dificuldade como valor inicial
+            int value = difficultyValues[(difficulty, type)];
             scoreboard[key] = value;
             UpdateScoreTexts(key, value);
         }
@@ -124,7 +151,7 @@ public class ScoreManager : MonoBehaviour
             {
                 scoreboard[varName] += value;
             }
-            
+
             Debug.Log($"Pontuação atualizada: {varName} = {scoreboard[varName]}");
             UpdateScoreTexts(varName, scoreboard[varName]);
 
@@ -140,15 +167,28 @@ public class ScoreManager : MonoBehaviour
         {
             Debug.LogWarning($"Variável de pontuação '{varName}' não encontrada.");
         }
-        
+
         return false;
+    }
+
+    string GetNatureDisplayText(Natures nature)
+    {
+        return natureDisplayNames.TryGetValue(nature, out string displayName) ? displayName : nature.ToString();
     }
 
     public void UpdateScoreTexts(string varName, int value)
     {
         if (scoreTexts.ContainsKey(varName))
         {
-            scoreTexts[varName].text = $"{varName}: {value}";
+            string displayName = varName;
+
+            // Se for uma natureza, usar o nome com acento
+            if (Enum.TryParse<Natures>(varName, out Natures nature))
+            {
+                displayName = GetNatureDisplayText(nature);
+            }
+
+            scoreTexts[varName].text = $"{displayName}: {value}";
             Debug.Log($"Texto atualizado para {varName}: {value}");
         }
         else
@@ -156,4 +196,40 @@ public class ScoreManager : MonoBehaviour
             Debug.LogWarning($"Texto de pontuação '{varName}' não encontrado.");
         }
     }
+
+    public void ResetScore()
+    {
+        loadScore(gameDifficulty);
+
+        if (NetworkScoreManager.Instance != null)
+        {
+            foreach (var entry in scoreboard)
+            {
+                NetworkScoreManager.Instance.BroadcastScoreUpdate(entry.Key, entry.Value);
+            }
+        }
+    }
+
+    public int GetLowestScoreValue()
+    {
+        if (scoreboard.Count == 0)
+            return 0; // ou outro valor que faça sentido no seu jogo
+
+        int lowest = int.MaxValue;
+
+        foreach (ScoreType type in Enum.GetValues(typeof(ScoreType)))
+        {
+            string key = type.ToString();
+            if (scoreboard.TryGetValue(key, out int value))
+            {
+                if (value < lowest)
+                {
+                    lowest = value;
+                }
+            }
+        }
+
+        return lowest;
+    }
+
 }

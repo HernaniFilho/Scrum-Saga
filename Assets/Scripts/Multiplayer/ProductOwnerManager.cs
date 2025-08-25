@@ -10,15 +10,18 @@ public class ProductOwnerManager : MonoBehaviourPunCallbacks
     [Header("UI References")]
     public Button becomeProductOwnerButton;
     public TMP_Text buttonText;
+    public TMP_Text waitingText;
 
     [Header("Configuration")]
     public string productOwnerPropertyKey = "IsProductOwner";
     
     private NetworkManager networkManager;
+    private GameStateManager gameStateManager;
     
     void Start()
     {
         networkManager = FindObjectOfType<NetworkManager>();
+        gameStateManager = GameStateManager.Instance;
         
         if (becomeProductOwnerButton != null)
         {
@@ -104,23 +107,31 @@ public class ProductOwnerManager : MonoBehaviourPunCallbacks
         // Atualizar visibilidade do botão
         becomeProductOwnerButton.gameObject.SetActive(!hasProductOwner && PhotonNetwork.InRoom);
 
-        // Atualizar texto do botão
-        if (buttonText != null)
+        if (gameStateManager == null) return;
+
+        var currentState = gameStateManager.GetCurrentState();
+
+        if (currentState == GameStateManager.GameState.Inicio)
         {
-            if (hasProductOwner)
+            if (waitingText != null)
             {
-                if (isLocalPlayerPO)
+                waitingText.gameObject.SetActive(true);
+
+                if (hasProductOwner)
                 {
-                    buttonText.text = "Você é o Product Owner";
+                    if (!isLocalPlayerPO)
+                    {
+                        waitingText.text = "Aguardando PO começar a Sprint...";
+                    }
+                    else
+                    {
+                        waitingText.gameObject.SetActive(false);
+                    }
                 }
                 else
                 {
-                    buttonText.text = $"{currentPO.NickName} é o Product Owner";
+                    waitingText.text = "Para começar, alguém deve ser o PO!";
                 }
-            }
-            else
-            {
-                buttonText.text = "Tornar-se Product Owner";
             }
         }
 
@@ -181,9 +192,6 @@ public class ProductOwnerManager : MonoBehaviourPunCallbacks
 
     #region Public Utility Methods
 
-    /// <summary>
-    /// Obtém uma string formatada com o nome do jogador e indicador PO se aplicável
-    /// </summary>
     public string GetFormattedPlayerName(Player player)
     {
         if (player == null) return "";
@@ -197,9 +205,6 @@ public class ProductOwnerManager : MonoBehaviourPunCallbacks
         return playerName;
     }
 
-    /// <summary>
-    /// Força a remoção do status de Product Owner (para uso administrativo)
-    /// </summary>
     public void ClearProductOwner()
     {
         if (IsLocalPlayerProductOwner())

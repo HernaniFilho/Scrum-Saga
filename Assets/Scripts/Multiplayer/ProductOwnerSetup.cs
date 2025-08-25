@@ -21,6 +21,7 @@ public class ProductOwnerSetup : MonoBehaviour
     [Header("UI References (Optional - se não atribuído, será criado automaticamente)")]
     [SerializeField] private Button becomeProductOwnerButton;
     [SerializeField] private TextMeshProUGUI productOwnerStatusText;
+    [SerializeField] private TextMeshProUGUI productOwnerWaitingText;
     
     private Canvas uiCanvas;
     private ProductOwnerManager productOwnerManager;
@@ -166,6 +167,7 @@ public class ProductOwnerSetup : MonoBehaviour
         {
             productOwnerManager.becomeProductOwnerButton = becomeProductOwnerButton;
             productOwnerManager.buttonText = productOwnerStatusText;
+            productOwnerManager.waitingText = productOwnerWaitingText;
         }
         
         Debug.Log("Product Owner UI configurada");

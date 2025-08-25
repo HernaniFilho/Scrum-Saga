@@ -2,8 +2,10 @@ using System.Collections.Generic;
 using UnityEngine;
 using System.Collections;
 using TMPro;
+using Photon.Pun;
+using Photon.Realtime;
 
-public class SprintPlanningManager : MonoBehaviour
+public class SprintPlanningManager : MonoBehaviourPun
 {
   [Header("Card Prefab")]
   public GameObject cardTarefasPrefab;
@@ -35,6 +37,7 @@ public class SprintPlanningManager : MonoBehaviour
   private GameObject selectedCard = null;
   private bool cardSelectionCompleted = false;
   private CardTarefas selectedCardData = null;
+  private bool hasStartedDraft = false;
 
   void Start()
   {
@@ -73,6 +76,23 @@ public class SprintPlanningManager : MonoBehaviour
         tabuleiro.SetActive(false);
       }
 
+      if (draftText != null && productOwnerManager != null)
+      {
+        bool isLocalPlayerPO = productOwnerManager.IsLocalPlayerProductOwner();
+        if (!isLocalPlayerPO)
+        {
+          if (hasStartedDraft)
+          {
+            draftText.gameObject.SetActive(false);
+          }
+          else
+          {
+            draftText.gameObject.SetActive(true);
+            draftText.text = "Aguardando PO escolher a carta e começar o rascunho...";
+          }
+        }
+      }
+
       if (!hasSpawnedCardsThisPhase &&
           spawnedCards.Count == 0 &&
           productOwnerManager != null &&
@@ -96,7 +116,7 @@ public class SprintPlanningManager : MonoBehaviour
       if (productOwnerManager != null && productOwnerManager.IsLocalPlayerProductOwner() && tabuleiro != null)
       {
         // Don't reactivate tabuleiro if we're in SprintReview phase (let SprintReviewManager handle it)
-        if (currentState != GameStateManager.GameState.SprintReview)
+        if (currentState != GameStateManager.GameState.SprintReview && currentState != GameStateManager.GameState.Fim)
         {
           tabuleiro.SetActive(true);
         }
@@ -286,6 +306,8 @@ public class SprintPlanningManager : MonoBehaviour
   {
     Debug.Log("Botão de 'Começar' clicado!");
 
+    hasStartedDraft = true;
+
     if (startDraftButton != null)
     {
       startDraftButton.gameObject.SetActive(false);
@@ -305,6 +327,7 @@ public class SprintPlanningManager : MonoBehaviour
 
     draftText.gameObject.SetActive(true);
     draftText.text = "Descreva o desenho, o Dev Team está rascunhando...";
+    photonView.RPC("RascunhoIniciado", RpcTarget.All);
   }
 
   private void OnDraftTimeComplete()
@@ -324,6 +347,21 @@ public class SprintPlanningManager : MonoBehaviour
       draftText.gameObject.SetActive(false);
       gameStateManager.NextState();
     }
+
+    hasStartedDraft = false;
+    photonView.RPC("RascunhoTerminado", RpcTarget.All);
+  }
+
+  [PunRPC]
+  void RascunhoIniciado()
+  {
+    hasStartedDraft = true;
+  }
+
+  [PunRPC]
+  void RascunhoTerminado()
+  {
+    hasStartedDraft = false;
   }
 
   private Transform FindChildByName(Transform parent, string name)
