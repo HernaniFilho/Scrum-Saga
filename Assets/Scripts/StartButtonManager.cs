@@ -8,6 +8,8 @@ public class StartButtonManager : MonoBehaviourPun
     [Header("UI References")]
     public Button startPhaseButton;
     public TMP_Text buttonText;
+    private GameObject currentSprintContainer;
+    public TMP_Text currentSprintText;
 
     [Header("Sprint Infos")]
     [SerializeField] private int currentSprint = 0;
@@ -26,12 +28,18 @@ public class StartButtonManager : MonoBehaviourPun
             startPhaseButton.onClick.AddListener(OnStartPhaseClicked);
         }
 
+        if (currentSprintText != null)
+        {
+            currentSprintContainer = currentSprintText.transform.parent.gameObject;
+        }
+
         UpdateButtonVisibility();
     }
 
     void Update()
     {
         UpdateButtonVisibility();
+        UpdateCurrentSprint();
     }
 
     private void UpdateButtonVisibility()
@@ -61,6 +69,21 @@ public class StartButtonManager : MonoBehaviourPun
         }
     }
 
+    private void UpdateCurrentSprint()
+    {
+        if (currentSprintContainer == null || currentSprintText == null) return;
+
+        if (gameStateManager != null && gameStateManager.GetCurrentState() == GameStateManager.GameState.Inicio)
+        {
+            currentSprintContainer.SetActive(false);
+        }
+        else
+        {
+            currentSprintContainer.SetActive(true);
+            currentSprintText.text = $"Sprint: {currentSprint}/{sprintsMax}";
+        }
+    }
+
     private bool ShouldShowButton()
     {
         bool isLocalPlayerPO = productOwnerManager.IsLocalPlayerProductOwner();
@@ -82,10 +105,13 @@ public class StartButtonManager : MonoBehaviourPun
             return;
         }
 
-        setCurrentSprint(currentSprint + 1);
-        if (currentSprint > sprintsMax)
+        if ((currentSprint + 1) > sprintsMax)
         {
             setCurrentSprint(1);
+        }
+        else
+        {
+            setCurrentSprint(currentSprint + 1);
         }
         gameStateManager.NextState();
     }

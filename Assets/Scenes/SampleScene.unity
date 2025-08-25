@@ -885,6 +885,17 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 158029240}
   m_CullTransparentMesh: 1
+--- !u!114 &166348660 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 7461541635811303210, guid: 964db72f22499b0469a62ce15906a05e, type: 3}
+  m_PrefabInstance: {fileID: 3761204002797785133}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &200241488
 GameObject:
   m_ObjectHideFlags: 0
@@ -10157,6 +10168,10 @@ PrefabInstance:
       propertyPath: resultadoImprevistoText
       value: 
       objectReference: {fileID: 104662301}
+    - target: {fileID: 4050993486960420871, guid: 964db72f22499b0469a62ce15906a05e, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4060600123117546394, guid: 964db72f22499b0469a62ce15906a05e, type: 3}
       propertyPath: m_Name
       value: Button
@@ -10609,6 +10624,10 @@ PrefabInstance:
       propertyPath: startPhaseButton
       value: 
       objectReference: {fileID: 977488609}
+    - target: {fileID: 8842153429967092201, guid: 964db72f22499b0469a62ce15906a05e, type: 3}
+      propertyPath: currentSprintText
+      value: 
+      objectReference: {fileID: 166348660}
     m_RemovedComponents: []
     m_RemovedGameObjects:
     - {fileID: 5415113363024815601, guid: 964db72f22499b0469a62ce15906a05e, type: 3}
