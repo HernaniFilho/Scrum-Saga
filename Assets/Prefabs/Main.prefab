@@ -5145,6 +5145,7 @@ GameObject:
   - component: {fileID: 6910181295382095890}
   - component: {fileID: 2805442323181726743}
   - component: {fileID: 6425077751758272564}
+  - component: {fileID: 4050745912216720326}
   - component: {fileID: 2034086609283537876}
   - component: {fileID: 4903429362628227274}
   - component: {fileID: 4471870522578745055}
@@ -5272,6 +5273,21 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   startDailyButton: {fileID: 6522140654570254801}
+--- !u!114 &4050745912216720326
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8540178464200607484}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a1b52a2e00875da4f84fdb8a838c1d65, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  deckImprevistos: {fileID: 0}
+  resultadoImprevistoText: {fileID: 0}
+  cardShowDuration: 10
 --- !u!114 &2034086609283537876
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5327,6 +5343,7 @@ MonoBehaviour:
   toggleViewButton: {fileID: 0}
   displayText: {fileID: 0}
   resultShowDuration: 5
+  tabuleiro: {fileID: 0}
   cardSpawnDistance: 0.67
 --- !u!114 &8106075268707583193
 MonoBehaviour:

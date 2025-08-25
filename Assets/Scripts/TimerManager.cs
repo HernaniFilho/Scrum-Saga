@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Linq;
 using UnityEngine;
 using Photon.Pun;
 using Hashtable = ExitGames.Client.Photon.Hashtable;
@@ -14,11 +15,8 @@ public class TimerManager : MonoBehaviourPunCallbacks
     public TMP_Text timerDisplay;
     
     private bool isTimerActive = false;
-    private Action onTimerComplete;
-    private string currentTimerKey = "";
-    private const string TIMER_START_TIME_KEY = "TimerStartTime";
-    private const string TIMER_DURATION_KEY = "TimerDuration";
-    private const string TIMER_KEY_KEY = "TimerKey";
+    private System.Collections.Generic.Dictionary<string, Action> activeTimers = new System.Collections.Generic.Dictionary<string, Action>();
+    private string currentDisplayTimerKey = "";
     
     void Awake()
     {
@@ -43,22 +41,41 @@ public class TimerManager : MonoBehaviourPunCallbacks
     
     public void StartTimer(float duration, Action onComplete = null, string timerKey = "DefaultTimer")
     {
+        // Registrar timer ativo
+        if (onComplete != null)
+        {
+            activeTimers[timerKey] = onComplete;
+        }
+        
+        // Configurar propriedades específicas do timer
         Hashtable props = new Hashtable();
-        props[TIMER_START_TIME_KEY] = PhotonNetwork.ServerTimestamp;
-        props[TIMER_DURATION_KEY] = duration + 1;
-        props[TIMER_KEY_KEY] = timerKey;
+        props[$"Timer_{timerKey}_StartTime"] = PhotonNetwork.ServerTimestamp;
+        props[$"Timer_{timerKey}_Duration"] = duration + 1;
         PhotonNetwork.CurrentRoom.SetCustomProperties(props);
         
-        onTimerComplete = onComplete;
+        // Se for o primeiro timer, ativar display
+        if (!isTimerActive)
+        {
+            isTimerActive = true;
+            currentDisplayTimerKey = timerKey;
+            
+            if (timerDisplay != null)
+            {
+                timerContainer.gameObject.SetActive(true);
+                timerDisplay.gameObject.SetActive(true);
+            }
+        }
+        
         Debug.Log($"Timer '{timerKey}' iniciado: {FormatTime(duration)}");
     }
     
     private void UpdateTimer()
     {
-        if (!isTimerActive) return;
+        if (!isTimerActive || string.IsNullOrEmpty(currentDisplayTimerKey)) return;
         
-        if (PhotonNetwork.CurrentRoom.CustomProperties.TryGetValue(TIMER_START_TIME_KEY, out object startTimeObj) &&
-            PhotonNetwork.CurrentRoom.CustomProperties.TryGetValue(TIMER_DURATION_KEY, out object durationObj))
+        // Atualizar timer do display atual
+        if (PhotonNetwork.CurrentRoom.CustomProperties.TryGetValue($"Timer_{currentDisplayTimerKey}_StartTime", out object startTimeObj) &&
+            PhotonNetwork.CurrentRoom.CustomProperties.TryGetValue($"Timer_{currentDisplayTimerKey}_Duration", out object durationObj))
         {
             int startTime = (int)startTimeObj;
             float duration = (float)durationObj;
@@ -69,10 +86,36 @@ public class TimerManager : MonoBehaviourPunCallbacks
             if (timeRemaining <= 0)
             {
                 timeRemaining = 0;
-                EndTimer();
+                EndTimer(currentDisplayTimerKey);
             }
             
             UpdateDisplay(timeRemaining);
+        }
+        
+        // Verificar outros timers ativos
+        CheckOtherTimers();
+    }
+    
+    private void CheckOtherTimers()
+    {
+        foreach (var timerKey in activeTimers.Keys)
+        {
+            if (timerKey == currentDisplayTimerKey) continue;
+            
+            if (PhotonNetwork.CurrentRoom.CustomProperties.TryGetValue($"Timer_{timerKey}_StartTime", out object startTimeObj) &&
+                PhotonNetwork.CurrentRoom.CustomProperties.TryGetValue($"Timer_{timerKey}_Duration", out object durationObj))
+            {
+                int startTime = (int)startTimeObj;
+                float duration = (float)durationObj;
+                
+                int elapsed = PhotonNetwork.ServerTimestamp - startTime;
+                float timeRemaining = duration - (elapsed / 1000f);
+                
+                if (timeRemaining <= 0)
+                {
+                    EndTimer(timerKey);
+                }
+            }
         }
     }
     
@@ -90,35 +133,115 @@ public class TimerManager : MonoBehaviourPunCallbacks
         return string.Format("{0:0}:{1:00}", minutes, seconds);
     }
     
-    public void EndTimer()
+    public void EndTimer(string timerKey = "")
     {
-        isTimerActive = false;
-        
-        if (timerDisplay != null)
+        if (string.IsNullOrEmpty(timerKey))
         {
-            timerDisplay.gameObject.SetActive(false);
+            timerKey = currentDisplayTimerKey;
         }
         
-        Debug.Log($"Timer '{currentTimerKey}' encerrado!");
+        Debug.Log($"Timer '{timerKey}' encerrado!");
         
-        if (onTimerComplete != null)
+        // Executar callback se existir
+        if (activeTimers.ContainsKey(timerKey))
         {
-            onTimerComplete.Invoke();
-            onTimerComplete = null;
+            Action callback = activeTimers[timerKey];
+            activeTimers.Remove(timerKey);
             
-            StopTimer();
+            // Limpar propriedades específicas deste timer
+            StopSpecificTimer(timerKey);
+            
+            // Se era o timer do display, desativar display ou trocar para outro
+            if (currentDisplayTimerKey == timerKey)
+            {
+                if (activeTimers.Count > 0)
+                {
+                    // Trocar display para outro timer ativo
+                    currentDisplayTimerKey = activeTimers.Keys.First();
+                    Debug.Log($"Display trocado para timer '{currentDisplayTimerKey}'");
+                }
+                else
+                {
+                    // Nenhum timer ativo, desativar display
+                    isTimerActive = false;
+                    currentDisplayTimerKey = "";
+                    
+                    if (timerDisplay != null)
+                    {
+                        timerDisplay.gameObject.SetActive(false);
+                        timerContainer.gameObject.SetActive(false);
+                    }
+                }
+            }
+            
+            // Executar callback DEPOIS da limpeza
+            callback?.Invoke();
         }
     }
     
-    public void StopTimer()
+    private void StopSpecificTimer(string timerKey)
     {
         Hashtable props = new Hashtable();
-        props[TIMER_START_TIME_KEY] = null;
-        props[TIMER_DURATION_KEY] = null;
-        props[TIMER_KEY_KEY] = null;
+        props[$"Timer_{timerKey}_StartTime"] = null;
+        props[$"Timer_{timerKey}_Duration"] = null;
         PhotonNetwork.CurrentRoom.SetCustomProperties(props);
         
-        Debug.Log($"Timer '{currentTimerKey}' parado!");
+        Debug.Log($"Timer '{timerKey}' parado!");
+    }
+    
+    public void StopTimer(string timerKey = "")
+    {
+        if (string.IsNullOrEmpty(timerKey))
+        {
+            // Parar timer do display atual
+            if (!string.IsNullOrEmpty(currentDisplayTimerKey))
+            {
+                StopSpecificTimer(currentDisplayTimerKey);
+                activeTimers.Remove(currentDisplayTimerKey);
+                
+                // Trocar para outro timer se houver
+                if (activeTimers.Count > 0)
+                {
+                    currentDisplayTimerKey = activeTimers.Keys.First();
+                }
+                else
+                {
+                    isTimerActive = false;
+                    currentDisplayTimerKey = "";
+                    
+                    if (timerDisplay != null)
+                    {
+                        timerDisplay.gameObject.SetActive(false);
+                        timerContainer.gameObject.SetActive(false);
+                    }
+                }
+            }
+        }
+        else
+        {
+            // Parar timer específico
+            StopSpecificTimer(timerKey);
+            activeTimers.Remove(timerKey);
+            
+            if (currentDisplayTimerKey == timerKey)
+            {
+                if (activeTimers.Count > 0)
+                {
+                    currentDisplayTimerKey = activeTimers.Keys.First();
+                }
+                else
+                {
+                    isTimerActive = false;
+                    currentDisplayTimerKey = "";
+                    
+                    if (timerDisplay != null)
+                    {
+                        timerDisplay.gameObject.SetActive(false);
+                        timerContainer.gameObject.SetActive(false);
+                    }
+                }
+            }
+        }
     }
     
     public bool IsTimerActive()
@@ -126,10 +249,12 @@ public class TimerManager : MonoBehaviourPunCallbacks
         return isTimerActive;
     }
     
-    public float GetTimeRemaining()
+    public float GetTimeRemaining(string timerKey = "")
     {
-        if (PhotonNetwork.CurrentRoom.CustomProperties.TryGetValue(TIMER_START_TIME_KEY, out object startTimeObj) &&
-            PhotonNetwork.CurrentRoom.CustomProperties.TryGetValue(TIMER_DURATION_KEY, out object durationObj))
+        string keyToCheck = string.IsNullOrEmpty(timerKey) ? currentDisplayTimerKey : timerKey;
+        
+        if (PhotonNetwork.CurrentRoom.CustomProperties.TryGetValue($"Timer_{keyToCheck}_StartTime", out object startTimeObj) &&
+            PhotonNetwork.CurrentRoom.CustomProperties.TryGetValue($"Timer_{keyToCheck}_Duration", out object durationObj))
         {
             int startTime = (int)startTimeObj;
             float duration = (float)durationObj;
@@ -142,36 +267,59 @@ public class TimerManager : MonoBehaviourPunCallbacks
     
     public override void OnRoomPropertiesUpdate(Hashtable propertiesThatChanged)
     {
-        // Verificar se timer foi iniciado ou parado
-        if (propertiesThatChanged.ContainsKey(TIMER_START_TIME_KEY))
+        // Verificar novos timers iniciados
+        foreach (var prop in propertiesThatChanged)
         {
-            if (propertiesThatChanged[TIMER_START_TIME_KEY] != null)
+            string key = prop.Key.ToString();
+            
+            if (key.StartsWith("Timer_") && key.EndsWith("_StartTime"))
             {
-                // Timer iniciado
-                isTimerActive = true;
-                currentTimerKey = PhotonNetwork.CurrentRoom.CustomProperties[TIMER_KEY_KEY]?.ToString() ?? "";
+                string timerKey = key.Substring(6, key.Length - 16); // Remove "Timer_" e "_StartTime"
                 
-                if (timerDisplay != null)
+                if (prop.Value != null)
                 {
-                    timerContainer.gameObject.SetActive(true);
-                    timerDisplay.gameObject.SetActive(true);
+                    // Timer iniciado
+                    Debug.Log($"Timer '{timerKey}' sincronizado!");
+                    
+                    // Se não há timer no display, usar este
+                    if (!isTimerActive)
+                    {
+                        isTimerActive = true;
+                        currentDisplayTimerKey = timerKey;
+                        
+                        if (timerDisplay != null)
+                        {
+                            timerContainer.gameObject.SetActive(true);
+                            timerDisplay.gameObject.SetActive(true);
+                        }
+                    }
                 }
-                
-                Debug.Log($"Timer '{currentTimerKey}' sincronizado!");
-            }
-            else
-            {
-                // Timer parado
-                isTimerActive = false;
-                
-                if (timerDisplay != null)
+                else
                 {
-                    timerDisplay.gameObject.SetActive(false);
-                    timerContainer.gameObject.SetActive(false);
+                    // Timer parado
+                    Debug.Log($"Timer '{timerKey}' parado via sincronização!");
+                    
+                    activeTimers.Remove(timerKey);
+                    
+                    if (currentDisplayTimerKey == timerKey)
+                    {
+                        if (activeTimers.Count > 0)
+                        {
+                            currentDisplayTimerKey = activeTimers.Keys.First();
+                        }
+                        else
+                        {
+                            isTimerActive = false;
+                            currentDisplayTimerKey = "";
+                            
+                            if (timerDisplay != null)
+                            {
+                                timerDisplay.gameObject.SetActive(false);
+                                timerContainer.gameObject.SetActive(false);
+                            }
+                        }
+                    }
                 }
-                
-                onTimerComplete = null;
-                Debug.Log("Timer parado via sincronização!");
             }
         }
     }

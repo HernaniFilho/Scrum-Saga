@@ -302,20 +302,12 @@ public class SprintRetrospectiveManager : MonoBehaviourPunCallbacks
         {
             if (!string.IsNullOrEmpty(carta.nature))
             {
-                // Usar RPC para sincronizar pontuação para todos os players
-                photonView.RPC("BroadcastScoreUpdate", RpcTarget.All, carta.nature, 1);
+                if (ScoreManager.Instance != null)
+                {
+                    ScoreManager.Instance.UpdateScore(carta.nature, 1);
+                }
                 Debug.Log($"Enviando atualização de pontuação: {carta.nature} +1");
             }
-        }
-    }
-
-    [PunRPC]
-    void BroadcastScoreUpdate(string nature, int points)
-    {
-        if (ScoreManager.Instance != null)
-        {
-            ScoreManager.Instance.UpdateScore(nature, points);
-            Debug.Log($"Pontuação atualizada via RPC: {nature} +{points}");
         }
     }
 

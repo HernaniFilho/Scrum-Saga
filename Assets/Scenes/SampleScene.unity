@@ -2365,7 +2365,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 279477143761408306, guid: 7802ee04431ec6a4487b74350fb74357, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 101
+      value: 100
       objectReference: {fileID: 0}
     - target: {fileID: 279477143761408306, guid: 7802ee04431ec6a4487b74350fb74357, type: 3}
       propertyPath: m_AnchoredPosition.x
@@ -2373,7 +2373,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 279477143761408306, guid: 7802ee04431ec6a4487b74350fb74357, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: -60.5
+      value: -60
       objectReference: {fileID: 0}
     - target: {fileID: 356863782949300464, guid: 7802ee04431ec6a4487b74350fb74357, type: 3}
       propertyPath: m_AnchorMax.y
@@ -2693,7 +2693,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2130628424164508932, guid: 7802ee04431ec6a4487b74350fb74357, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: -441
+      value: -440
       objectReference: {fileID: 0}
     - target: {fileID: 2158476306619154150, guid: 7802ee04431ec6a4487b74350fb74357, type: 3}
       propertyPath: m_AnchorMax.y
@@ -3325,7 +3325,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6616746483399487024, guid: 7802ee04431ec6a4487b74350fb74357, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: -146
+      value: -145
       objectReference: {fileID: 0}
     - target: {fileID: 6792319215294998938, guid: 7802ee04431ec6a4487b74350fb74357, type: 3}
       propertyPath: m_AnchorMax.y
@@ -3349,7 +3349,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6792319215294998938, guid: 7802ee04431ec6a4487b74350fb74357, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: -276
+      value: -275
       objectReference: {fileID: 0}
     - target: {fileID: 6877179385023704776, guid: 7802ee04431ec6a4487b74350fb74357, type: 3}
       propertyPath: m_AnchorMax.y
@@ -10071,6 +10071,18 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 4050745912216720326, guid: 964db72f22499b0469a62ce15906a05e, type: 3}
+      propertyPath: deckImprevistos
+      value: 
+      objectReference: {fileID: 105810115}
+    - target: {fileID: 4050745912216720326, guid: 964db72f22499b0469a62ce15906a05e, type: 3}
+      propertyPath: cardShowDuration
+      value: 15
+      objectReference: {fileID: 0}
+    - target: {fileID: 4050745912216720326, guid: 964db72f22499b0469a62ce15906a05e, type: 3}
+      propertyPath: resultadoImprevistoText
+      value: 
+      objectReference: {fileID: 104662301}
     - target: {fileID: 4060600123117546394, guid: 964db72f22499b0469a62ce15906a05e, type: 3}
       propertyPath: m_Name
       value: Button

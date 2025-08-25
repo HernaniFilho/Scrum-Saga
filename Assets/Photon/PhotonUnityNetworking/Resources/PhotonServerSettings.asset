@@ -66,6 +66,9 @@ MonoBehaviour:
   - UndoLastCommands
   - SyncUndoAndRebuild
   - EsconderResultadoEscolha
+  - BroadcastImprevistoNeutralizado
+  - EsconderResultadoImprevisto
+  - BroadcastImprevistoRemovido
   DisableAutoOpenWizard: 1
   ShowSettings: 0
   DevRegionSetOnce: 1

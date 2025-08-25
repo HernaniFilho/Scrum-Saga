@@ -38,6 +38,13 @@ public class DeckImprevistos : MonoBehaviour
             return;
         }
 
+        // Verificar se já pode pegar carta
+        if (ImprevistoManager.Instance != null && !ImprevistoManager.Instance.CanPegarCarta())
+        {
+            Debug.Log("Não é possível pegar carta de imprevisto no momento!");
+            return;
+        }
+
         Debug.Log("Deck de imprevistos clicada. Comprando carta de imprevisto...");
         
         // Calcula a posição para spawnar: na frente da câmera + 160px para a direita
@@ -50,6 +57,19 @@ public class DeckImprevistos : MonoBehaviour
         GameObject spawnedCard = Instantiate(prefabToSpawn, spawnPosition, rotation);
         spawnedCard.transform.localScale = new Vector3(6f, 0.1f, 6f);
         Debug.Log("Carta de imprevisto comprada e instanciada na posição: " + spawnPosition);
+        
+        // Configurar carta para networking
+        CardImprevistos cardComponent = spawnedCard.GetComponent<CardImprevistos>();
+        if (cardComponent != null && ImprevistoManager.Instance != null)
+        {
+            ImprevistoManager.Instance.ConfigureCardForNetworking(cardComponent);
+        }
+        
+        // Notificar o ImprevistoManager
+        if (ImprevistoManager.Instance != null)
+        {
+            ImprevistoManager.Instance.NotifyCartaPega(spawnedCard, spawnPosition, rotation);
+        }
     }
 
     // Update is called once per frame

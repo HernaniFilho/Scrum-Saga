@@ -25,76 +25,94 @@ public class CardImprevistos : MonoBehaviour
     public int minDebuff = 1;
 
     [Header("Botoes com os handlers para as naturezas")]
-    private Dictionary<string, int> natures = new Dictionary<string, int>();
+    public Dictionary<string, int> natures = new Dictionary<string, int>();
     public Button natureButton_1;
     public Button natureButton_2;
 
     [Header("Textos com os debuffs")]
-    private Dictionary<string, int> debuffs = new Dictionary<string, int>();
+    public Dictionary<string, int> debuffs = new Dictionary<string, int>();
     public TMP_Text debuffText_1;
     public TMP_Text debuffText_2;
     public TMP_Text debuffText_3;
-    private bool useFirstOnly = false;
+    public bool useFirstOnly = false;
+    public bool isSyncedCard = false;
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        randomText();
-        randomImages();
-        loadScoreVariables();
-        if (natureButton_1 == null || natureButton_2 == null)
+        if (!isSyncedCard)
         {
-            Debug.LogWarning("Botões de pontuação não atribuídos. Verifique se estão configurados no Inspector.");
-            return;
+            randomText();
+            randomImages();
+            loadScoreVariables();
         }
+        if (!isSyncedCard)
+        {
+            if (natureButton_1 == null || natureButton_2 == null)
+            {
+                Debug.LogWarning("Botões de pontuação não atribuídos. Verifique se estão configurados no Inspector.");
+                return;
+            }
 
-        if (debuffText_1 == null || debuffText_2 == null || debuffText_3 == null)
-        {
-            Debug.LogWarning("Textos de debuff não atribuídos. Verifique se estão configurados no Inspector.");
-            return;
-        }
+            if (debuffText_1 == null || debuffText_2 == null || debuffText_3 == null)
+            {
+                Debug.LogWarning("Textos de debuff não atribuídos. Verifique se estão configurados no Inspector.");
+                return;
+            }
 
-        int i = 0;
-        if (useFirstOnly)
-        {
-            string debuff1 = debuffs.Keys.ElementAt(0);
-            debuffText_3.text = debuffs[debuff1] + " " + debuff1;
-            debuffText_1.gameObject.SetActive(false);
-            debuffText_2.gameObject.SetActive(false);
-        }
-        else
-        {
-            string debuff1 = debuffs.Keys.ElementAt(0);
-            string debuff2 = debuffs.Keys.ElementAt(1);
-            debuffText_1.text = debuffs[debuff1] + " " + debuff1;
-            debuffText_2.text = debuffs[debuff2] + " " + debuff2;
-            debuffText_3.gameObject.SetActive(false);
-        }
+            int i = 0;
+            if (useFirstOnly)
+            {
+                string debuff1 = debuffs.Keys.ElementAt(0);
+                debuffText_3.text = debuffs[debuff1] + " " + debuff1;
+                debuffText_1.gameObject.SetActive(false);
+                debuffText_2.gameObject.SetActive(false);
+            }
+            else
+            {
+                string debuff1 = debuffs.Keys.ElementAt(0);
+                string debuff2 = debuffs.Keys.ElementAt(1);
+                debuffText_1.text = debuffs[debuff1] + " " + debuff1;
+                debuffText_2.text = debuffs[debuff2] + " " + debuff2;
+                debuffText_3.gameObject.SetActive(false);
+            }
 
-        if (natures == null)
-        {
-            Debug.LogWarning("Naturezas não atribuídas. Verifique se as pontuações foram carregadas corretamente.");
-            return;
-        }
+            if (natures == null)
+            {
+                Debug.LogWarning("Naturezas não atribuídas. Verifique se as pontuações foram carregadas corretamente.");
+                return;
+            }
 
-        if (natures.Count > 0)
-        {
-            setupNatureButton(natureButton_1, natures.Keys.ElementAt(0));
-        }
-        
-        if (natures.Count > 1)
-        {
-            setupNatureButton(natureButton_2, natures.Keys.ElementAt(1));
-        }
-        else
-        {
-            natureButton_2.gameObject.SetActive(false);
+            if (natures.Count > 0)
+            {
+                setupNatureButton(natureButton_1, natures.Keys.ElementAt(0));
+            }
+            
+            if (natures.Count > 1)
+            {
+                setupNatureButton(natureButton_2, natures.Keys.ElementAt(1));
+            }
+            else
+            {
+                natureButton_2.gameObject.SetActive(false);
+            }
         }
     }
 
     void OnMouseDown()
     {
         Debug.Log("Card de Imprevisto clicado.");
+        
+        // Se for durante a fase de Imprevisto e tiver manager, usar o sistema de networking
+        if (GameStateManager.Instance != null && 
+            GameStateManager.Instance.GetCurrentState() == GameStateManager.GameState.Imprevisto &&
+            ImprevistoManager.Instance != null)
+        {
+            ImprevistoManager.Instance.OnPOClickCard();
+            return;
+        }
+        
+        // Comportamento original para outros estados
         // Checa se o clique está sobre algum dos dois botões de score
         if (IsPointerOverButton(natureButton_1) || IsPointerOverButton(natureButton_2))
         {
@@ -246,13 +264,24 @@ public class CardImprevistos : MonoBehaviour
         button.onClick.AddListener(() =>
         {
             Debug.Log($"Clicou no botão de natureza: {varName} com valor {value}");
+            
+            // Se for durante a fase de Imprevisto e tiver manager, usar o sistema de networking
+            if (GameStateManager.Instance != null && 
+                GameStateManager.Instance.GetCurrentState() == GameStateManager.GameState.Imprevisto &&
+                ImprevistoManager.Instance != null)
+            {
+                ImprevistoManager.Instance.OnNatureClicked(varName, value, this);
+                return;
+            }
+            
+            // Comportamento original para outros estados
             bool updated = ScoreManager.Instance.UpdateScore(varName, value);
             if (!updated)
             {
                 Debug.LogWarning($"Atualização negada ao atualizar a natureza para {varName} com valor {value}");
                 return;
             }
-            Destroy(gameObject); // Exemplo de ação ao clicar no botão
+            Destroy(gameObject);
         });
     }
 
@@ -274,4 +303,123 @@ public class CardImprevistos : MonoBehaviour
         }
         return false;
     }
+
+    // Método para configurar carta sincronizada
+    public void SetupSyncedCard(string texto, string[] naturesKeys, int[] naturesValues, string[] debuffsKeys, int[] debuffsValues, bool useFirstDebuffOnly)
+    {
+        Debug.Log($"SetupSyncedCard chamado - Texto: '{texto}'");
+        
+        isSyncedCard = true;
+        
+        // Configurar texto
+        if (textUI != null)
+        {
+            textUI.text = texto;
+            Debug.Log($"Texto configurado: '{textUI.text}'");
+        }
+        
+        // Configurar natures
+        natures.Clear();
+        for (int i = 0; i < naturesKeys.Length && i < naturesValues.Length; i++)
+        {
+            natures[naturesKeys[i]] = naturesValues[i];
+        }
+        
+        // Configurar debuffs
+        debuffs.Clear();
+        for (int i = 0; i < debuffsKeys.Length && i < debuffsValues.Length; i++)
+        {
+            debuffs[debuffsKeys[i]] = debuffsValues[i];
+        }
+        
+        useFirstOnly = useFirstDebuffOnly;
+        
+        // Aplicar texturas das naturezas sincronizadas
+        ApplySyncedNatureTextures(naturesKeys);
+        
+        // Configurar UI dos debuffs
+        SetupDebuffTexts();
+        
+        // Configurar botões de natureza
+        SetupNatureButtons();
+    }
+    
+    void ApplySyncedNatureTextures(string[] naturesKeys)
+    {
+        if (meshRenderers == null || naturesKeys == null) return;
+        
+        Material whiteMaterial = Resources.Load<Material>(whiteMaterialPath);
+        
+        for (int i = 0; i < meshRenderers.Length; i++)
+        {
+            if (i < naturesKeys.Length)
+            {
+                // Carregar textura da natureza
+                Texture2D texture = Resources.Load<Texture2D>(imageFolder + "/" + naturesKeys[i]);
+                if (texture != null)
+                {
+                    Material mat = new Material(Shader.Find("Unlit/Texture"));
+                    mat.mainTexture = texture;
+                    meshRenderers[i].material = mat;
+                    Debug.Log($"Textura aplicada: {naturesKeys[i]}");
+                }
+                else
+                {
+                    Debug.LogWarning($"Textura não encontrada: {naturesKeys[i]}");
+                    if (whiteMaterial != null)
+                        meshRenderers[i].material = whiteMaterial;
+                }
+            }
+            else
+            {
+                // Preencher com branco
+                if (whiteMaterial != null)
+                    meshRenderers[i].material = whiteMaterial;
+            }
+        }
+    }
+    
+    void SetupDebuffTexts()
+    {
+        if (debuffText_1 == null || debuffText_2 == null || debuffText_3 == null)
+        {
+            Debug.LogWarning("Textos de debuff não atribuídos.");
+            return;
+        }
+
+        if (useFirstOnly && debuffs.Count > 0)
+        {
+            string debuff1 = debuffs.Keys.ElementAt(0);
+            debuffText_3.text = debuffs[debuff1] + " " + debuff1;
+            debuffText_1.gameObject.SetActive(false);
+            debuffText_2.gameObject.SetActive(false);
+        }
+        else if (debuffs.Count >= 2)
+        {
+            string debuff1 = debuffs.Keys.ElementAt(0);
+            string debuff2 = debuffs.Keys.ElementAt(1);
+            debuffText_1.text = debuffs[debuff1] + " " + debuff1;
+            debuffText_2.text = debuffs[debuff2] + " " + debuff2;
+            debuffText_3.gameObject.SetActive(false);
+        }
+    }
+    
+    void SetupNatureButtons()
+    {
+        if (natures.Count > 0)
+        {
+            setupNatureButton(natureButton_1, natures.Keys.ElementAt(0));
+        }
+        
+        if (natures.Count > 1)
+        {
+            setupNatureButton(natureButton_2, natures.Keys.ElementAt(1));
+        }
+        else if (natureButton_2 != null)
+        {
+            natureButton_2.gameObject.SetActive(false);
+        }
+    }
+    
+
 }
