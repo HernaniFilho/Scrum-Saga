@@ -21,6 +21,7 @@ public class CanvasManager : MonoBehaviourPunCallbacks, IPunObservable
     [SerializeField] private GameObject canvasContainer;
     [SerializeField] private GameObject canvasDrawingBoard;
     [SerializeField] private GameObject canvasToolbar;
+    [SerializeField] private GameObject canvasShapesContainer;
     [SerializeField] private GameObject drawingSaveSlotsContainer;
     
     private const string CANVAS_STATE_KEY = "CanvasActive";
@@ -74,6 +75,8 @@ public class CanvasManager : MonoBehaviourPunCallbacks, IPunObservable
                 canvasToolbar = FindChildByName(canvasContainer.transform, "Toolbar")?.gameObject;
             if (drawingSaveSlotsContainer == null)
                 drawingSaveSlotsContainer = FindChildByName(canvasContainer.transform, "DrawingSave Slots Container")?.gameObject;
+            if (canvasShapesContainer == null)
+                canvasShapesContainer = FindChildByName(canvasContainer.transform, "ShapesContainer")?.gameObject;
         }
 
         LoadStatesFromRoom();
@@ -135,6 +138,11 @@ public class CanvasManager : MonoBehaviourPunCallbacks, IPunObservable
                 canvasDrawingBoard.SetActive(true);
             }
 
+            if (canvasShapesContainer != null)
+            {
+                canvasShapesContainer.SetActive(true);
+            }
+
             if (canvasToolbar != null)
             {
                 canvasToolbar.SetActive(true);
@@ -152,6 +160,11 @@ public class CanvasManager : MonoBehaviourPunCallbacks, IPunObservable
             if (canvasDrawingBoard != null)
             {
                 canvasDrawingBoard.SetActive(false);
+            }
+
+            if (canvasShapesContainer != null)
+            {
+                canvasShapesContainer.SetActive(false);
             }
 
             if (canvasToolbar != null)
@@ -499,6 +512,8 @@ public class CanvasManager : MonoBehaviourPunCallbacks, IPunObservable
     void RequestDrawingSave()
     {
         UnityEngine.Debug.Log("RPC RequestDrawingSave recebido!");
+
+        ProductOwnerManager poManager = FindObjectOfType<ProductOwnerManager>();
         
         CommandRecorder commandRecorder = FindObjectOfType<CommandRecorder>();
         if (commandRecorder != null)
@@ -507,7 +522,6 @@ public class CanvasManager : MonoBehaviourPunCallbacks, IPunObservable
             if (currentSession != null && currentSession.GetCommandCount() > 0)
             {
                 // Envia a sessão diretamente para o PO
-                ProductOwnerManager poManager = FindObjectOfType<ProductOwnerManager>();
                 if (poManager != null)
                 {
                     var poPlayer = poManager.GetCurrentProductOwner();
@@ -515,7 +529,7 @@ public class CanvasManager : MonoBehaviourPunCallbacks, IPunObservable
                     {
                         string sessionJson = currentSession.ToJson();
                         UnityEngine.Debug.Log($"Enviando sessão para PO: {currentSession.GetCommandCount()} comandos, {sessionJson.Length} bytes");
-                        
+
                         // Envia para o PO especificamente
                         GetComponent<PhotonView>().RPC("ReceiveSessionForPO", poPlayer, PhotonNetwork.LocalPlayer.UserId, sessionJson);
                     }
@@ -531,8 +545,7 @@ public class CanvasManager : MonoBehaviourPunCallbacks, IPunObservable
                 }
                 DrawingSession emptySession = new DrawingSession(playerName, PhotonNetwork.LocalPlayer.UserId);
                 string emptyJson = emptySession.ToJson();
-                
-                ProductOwnerManager poManager = FindObjectOfType<ProductOwnerManager>();
+
                 if (poManager != null)
                 {
                     var poPlayer = poManager.GetCurrentProductOwner();
@@ -585,10 +598,15 @@ public class CanvasManager : MonoBehaviourPunCallbacks, IPunObservable
     
     private void SendFinalSessionsList()
     {
-        // Cria JSON da lista completa de sessões
-        string finalListJson = JsonUtility.ToJson(new SessionsListWrapper { sessions = receivedSessions.ToArray() });
+        // Removendo sessão do PO da lista
+        List<DrawingSession> sessionsWithoutPO = receivedSessions
+            .Where(session => session.playerId != PhotonNetwork.LocalPlayer.UserId)
+            .ToList();
+
+        // Cria JSON da lista sem a sessão do PO
+        string finalListJson = JsonUtility.ToJson(new SessionsListWrapper { sessions = sessionsWithoutPO.ToArray() });
         
-        UnityEngine.Debug.Log($"PO enviando lista final com {receivedSessions.Count} sessões (tamanho: {finalListJson.Length} bytes)");
+        UnityEngine.Debug.Log($"PO enviando lista final com {sessionsWithoutPO.Count} sessões (excluindo PO) (tamanho: {finalListJson.Length} bytes)");
         
         // Envia para todos os players
         GetComponent<PhotonView>().RPC("ReceiveFinalSessionsList", RpcTarget.All, finalListJson);
@@ -632,7 +650,7 @@ public class CanvasManager : MonoBehaviourPunCallbacks, IPunObservable
             int addedCount = 0;
             foreach (DrawingSession session in finalSessionsList)
             {
-                if (session != null && session.GetCommandCount() > 0)
+                if (session != null)
                 {
                     // Corrige nomes incorretos de sessões offline
                     if (session.playerName == "Local Player" || session.playerName == "Empty")

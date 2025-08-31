@@ -23,7 +23,7 @@ public class SprintRetrospectiveManager : MonoBehaviourPunCallbacks
     
     [Header("Network Keys")]
     private const string CARTA_PEGA_KEY = "CartaAprendizagemPega";
-    private const string CARTA_POSITION_KEY = "CartaAprendizagemPosition";
+    private const string CARTA_SPAWN_DISTANCE_KEY = "CartaAprendizagemSpawnDistance";
     private const string CARTA_ROTATION_KEY = "CartaAprendizagemRotation";
     private const string CARTA_TEXTO_KEY = "CartaAprendizagemTexto";
     private const string CARTA_NATURE_KEY = "CartaAprendizagemNature";
@@ -120,15 +120,15 @@ public class SprintRetrospectiveManager : MonoBehaviourPunCallbacks
         return !cartaJaPega && !cartaJaRemovida;
     }
 
-    public void NotifyCartaPega(GameObject cartaInstanciada, Vector3 position, Quaternion rotation)
+    public void NotifyCartaPega(GameObject cartaInstanciada, float spawnDistance, Quaternion rotation)
     {
         if (!PhotonNetwork.InRoom) return;
         
         // Aguardar inicialização completa da carta
-        StartCoroutine(WaitForCardInitialization(cartaInstanciada, position, rotation));
+        StartCoroutine(WaitForCardInitialization(cartaInstanciada, spawnDistance, rotation));
     }
 
-    private IEnumerator WaitForCardInitialization(GameObject cartaInstanciada, Vector3 position, Quaternion rotation)
+    private IEnumerator WaitForCardInitialization(GameObject cartaInstanciada, float spawnDistance, Quaternion rotation)
     {
         CardAprendizagens cardComponent = cartaInstanciada.GetComponent<CardAprendizagens>();
         if (cardComponent == null)
@@ -161,21 +161,20 @@ public class SprintRetrospectiveManager : MonoBehaviourPunCallbacks
         Debug.Log($"Carta inicializada com sucesso - Texto: '{texto}', Nature: '{nature}'");
         
         // Converter posição e rotação para arrays para enviar via RPC
-        float[] pos = {position.x, position.y, position.z};
         float[] rot = {rotation.x, rotation.y, rotation.z, rotation.w};
         
-        photonView.RPC("BroadcastCartaPega", RpcTarget.All, PhotonNetwork.LocalPlayer.NickName, pos, rot, texto, nature);
+        photonView.RPC("BroadcastCartaPega", RpcTarget.All, PhotonNetwork.LocalPlayer.NickName, spawnDistance, rot, texto, nature);
     }
 
     [PunRPC]
-    void BroadcastCartaPega(string playerName, float[] position, float[] rotation, string texto, string nature)
+    void BroadcastCartaPega(string playerName, float spawnDistance, float[] rotation, string texto, string nature)
     {
         // Definir propriedade da sala para indicar que a carta foi pega
         if (PhotonNetwork.IsMasterClient)
         {
             Hashtable props = new Hashtable();
             props[CARTA_PEGA_KEY] = playerName;
-            props[CARTA_POSITION_KEY] = position;
+            props[CARTA_SPAWN_DISTANCE_KEY] = spawnDistance;
             props[CARTA_ROTATION_KEY] = rotation;
             props[CARTA_TEXTO_KEY] = texto;
             props[CARTA_NATURE_KEY] = nature;
@@ -194,7 +193,7 @@ public class SprintRetrospectiveManager : MonoBehaviourPunCallbacks
         if (PhotonNetwork.LocalPlayer.NickName != playerName && deckAprendizagens != null && !cartaJaCriada)
         {
             cartaJaCriada = true;
-            CreateSyncedCard(position, rotation, texto, nature);
+            CreateSyncedCard(spawnDistance, rotation, texto, nature);
         }
 
         // Iniciar timer de auto-remoção usando TimerManager (apenas Master Client)
@@ -206,9 +205,12 @@ public class SprintRetrospectiveManager : MonoBehaviourPunCallbacks
         }
     }
 
-    void CreateSyncedCard(float[] position, float[] rotation, string texto, string nature)
+    void CreateSyncedCard(float spawnDistance, float[] rotation, string texto, string nature)
     {
-        Vector3 pos = new Vector3(position[0], position[1], position[2]);
+        Camera playerCamera = Camera.main;
+        Vector3 screenPos = playerCamera.WorldToScreenPoint(playerCamera.transform.position + playerCamera.transform.forward * spawnDistance);
+        screenPos.x += 160;
+        Vector3 pos = playerCamera.ScreenToWorldPoint(screenPos);
         Quaternion rot = new Quaternion(rotation[0], rotation[1], rotation[2], rotation[3]);
         
         GameObject carta = Instantiate(deckAprendizagens.prefabToSpawn, pos, rot);
@@ -337,7 +339,7 @@ public class SprintRetrospectiveManager : MonoBehaviourPunCallbacks
             // Limpar propriedades da sala relacionadas à retrospectiva
             Hashtable props = new Hashtable();
             props[CARTA_PEGA_KEY] = null;
-            props[CARTA_POSITION_KEY] = null;
+            props[CARTA_SPAWN_DISTANCE_KEY] = null;
             props[CARTA_ROTATION_KEY] = null;
             props[CARTA_TEXTO_KEY] = null;
             props[CARTA_NATURE_KEY] = null;
@@ -359,22 +361,22 @@ public class SprintRetrospectiveManager : MonoBehaviourPunCallbacks
     {
         // Recriar carta se chegamos atrasado na sala (evitar duplicação)
         if (propertiesThatChanged.ContainsKey(CARTA_PEGA_KEY) && 
-            propertiesThatChanged.ContainsKey(CARTA_POSITION_KEY) && 
+            propertiesThatChanged.ContainsKey(CARTA_SPAWN_DISTANCE_KEY) && 
             propertiesThatChanged.ContainsKey(CARTA_ROTATION_KEY) &&
             propertiesThatChanged.ContainsKey(CARTA_TEXTO_KEY) &&
             propertiesThatChanged.ContainsKey(CARTA_NATURE_KEY))
         {
             object cartaPegaObj = propertiesThatChanged[CARTA_PEGA_KEY];
-            object positionObj = propertiesThatChanged[CARTA_POSITION_KEY];
+            object spawnDistanceObj = propertiesThatChanged[CARTA_SPAWN_DISTANCE_KEY];
             object rotationObj = propertiesThatChanged[CARTA_ROTATION_KEY];
             object textoObj = propertiesThatChanged[CARTA_TEXTO_KEY];
             object natureObj = propertiesThatChanged[CARTA_NATURE_KEY];
             
-            if (cartaPegaObj != null && positionObj != null && rotationObj != null && 
+            if (cartaPegaObj != null && spawnDistanceObj != null && rotationObj != null && 
                 textoObj != null && natureObj != null)
             {
                 string playerName = (string)cartaPegaObj;
-                float[] position = (float[])positionObj;
+                float spawnDistance = (float)spawnDistanceObj;
                 float[] rotation = (float[])rotationObj;
                 string texto = (string)textoObj;
                 string nature = (string)natureObj;
@@ -383,7 +385,7 @@ public class SprintRetrospectiveManager : MonoBehaviourPunCallbacks
                 if (PhotonNetwork.LocalPlayer.NickName != playerName && deckAprendizagens != null && !cartaJaCriada)
                 {
                     cartaJaCriada = true;
-                    CreateSyncedCard(position, rotation, texto, nature);
+                    CreateSyncedCard(spawnDistance, rotation, texto, nature);
                 }
             }
         }

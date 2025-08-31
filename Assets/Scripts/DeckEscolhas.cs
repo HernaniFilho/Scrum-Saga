@@ -60,9 +60,9 @@ public class DeckEscolhas : MonoBehaviour
         Debug.Log("Carta de escolha comprada e instanciada na posição: " + spawnPosition);
         
         // Aguardar um frame para garantir que a carta foi inicializada
-        StartCoroutine(ConfigureCartaAfterFrame(carta, spawnPosition, rotation));
+        StartCoroutine(ConfigureCartaAfterFrame(carta, rotation));
     }
-    IEnumerator ConfigureCartaAfterFrame(GameObject carta, Vector3 spawnPosition, Quaternion rotation)
+    IEnumerator ConfigureCartaAfterFrame(GameObject carta, Quaternion rotation)
     {
         // Aguardar um frame para garantir que Start() da carta foi chamado
         yield return new WaitForEndOfFrame();
@@ -74,7 +74,7 @@ public class DeckEscolhas : MonoBehaviour
             EscolhaManager.Instance.ConfigureCardForNetworking(cardComponent);
             
             // Notificar EscolhaManager para sincronizar com outros jogadores
-            EscolhaManager.Instance.NotifyCartaPega(carta, spawnPosition, rotation);
+            EscolhaManager.Instance.NotifyCartaPega(carta, spawnDistance, rotation);
         }
     }
 

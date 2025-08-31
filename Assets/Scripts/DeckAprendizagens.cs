@@ -59,7 +59,7 @@ public class DeckAprendizagens : MonoBehaviour
         // Notificar o SprintRetrospectiveManager sobre a carta pega
         if (SprintRetrospectiveManager.Instance != null)
         {
-            SprintRetrospectiveManager.Instance.NotifyCartaPega(cartaInstanciada, spawnPosition, rotation);
+            SprintRetrospectiveManager.Instance.NotifyCartaPega(cartaInstanciada, spawnDistance, rotation);
         }
     }
 

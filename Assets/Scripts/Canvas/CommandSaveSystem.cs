@@ -77,7 +77,7 @@ public class CommandSaveSystem : MonoBehaviour
             if (loadButtons[i] != null)
             {
                 // Se tem desenho salvo, mostra o botão
-                if (i < savedSessions.Count && savedSessions[i] != null && savedSessions[i].GetCommandCount() > 0)
+                if (i < savedSessions.Count && savedSessions[i] != null)
                 {
                     loadButtons[i].gameObject.SetActive(true);
                     

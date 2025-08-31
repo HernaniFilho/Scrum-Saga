@@ -68,7 +68,7 @@ public class DeckImprevistos : MonoBehaviour
         // Notificar o ImprevistoManager
         if (ImprevistoManager.Instance != null)
         {
-            ImprevistoManager.Instance.NotifyCartaPega(spawnedCard, spawnPosition, rotation);
+            ImprevistoManager.Instance.NotifyCartaPega(spawnedCard, spawnDistance, rotation);
         }
     }
 

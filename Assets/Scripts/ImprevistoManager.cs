@@ -26,7 +26,7 @@ public class ImprevistoManager : MonoBehaviourPunCallbacks
     
     [Header("Network Keys")]
     private const string CARTA_PEGA_KEY = "CartaImprevistoPega";
-    private const string CARTA_POSITION_KEY = "CartaImprevistoPosition";
+    private const string CARTA_SPAWN_DISTANCE_KEY = "CartaImprevistoSpawnDistance";
     private const string CARTA_ROTATION_KEY = "CartaImprevistoRotation";
     private const string CARTA_TEXTO_KEY = "CartaImprevistoTexto";
     private const string CARTA_NATURES_KEY = "CartaImprevistoNatures";
@@ -125,15 +125,15 @@ public class ImprevistoManager : MonoBehaviourPunCallbacks
         return !cartaJaPega && !cartaJaRemovida;
     }
 
-    public void NotifyCartaPega(GameObject cartaInstanciada, Vector3 position, Quaternion rotation)
+    public void NotifyCartaPega(GameObject cartaInstanciada, float spawnDistance, Quaternion rotation)
     {
         if (!PhotonNetwork.InRoom) return;
         
         // Aguardar inicialização completa da carta
-        StartCoroutine(WaitForCardInitialization(cartaInstanciada, position, rotation));
+        StartCoroutine(WaitForCardInitialization(cartaInstanciada, spawnDistance, rotation));
     }
 
-    private IEnumerator WaitForCardInitialization(GameObject cartaInstanciada, Vector3 position, Quaternion rotation)
+    private IEnumerator WaitForCardInitialization(GameObject cartaInstanciada, float spawnDistance, Quaternion rotation)
     {
         CardImprevistos cardComponent = cartaInstanciada.GetComponent<CardImprevistos>();
         if (cardComponent == null)
@@ -169,21 +169,20 @@ public class ImprevistoManager : MonoBehaviourPunCallbacks
         Debug.Log($"Carta de imprevisto inicializada com sucesso - Texto: '{texto}', Natures: {naturesKeys.Length}, Debuffs: {debuffsKeys.Length}");
         
         // Converter posição e rotação para arrays para enviar via RPC
-        float[] pos = {position.x, position.y, position.z};
         float[] rot = {rotation.x, rotation.y, rotation.z, rotation.w};
         
-        photonView.RPC("BroadcastCartaPega", RpcTarget.All, PhotonNetwork.LocalPlayer.NickName, pos, rot, texto, naturesKeys, naturesValues, debuffsKeys, debuffsValues, useFirstOnly);
+        photonView.RPC("BroadcastCartaPega", RpcTarget.All, PhotonNetwork.LocalPlayer.NickName, spawnDistance, rot, texto, naturesKeys, naturesValues, debuffsKeys, debuffsValues, useFirstOnly);
     }
 
     [PunRPC]
-    void BroadcastCartaPega(string playerName, float[] position, float[] rotation, string texto, string[] naturesKeys, int[] naturesValues, string[] debuffsKeys, int[] debuffsValues, bool useFirstOnly)
+    void BroadcastCartaPega(string playerName, float spawnDistance, float[] rotation, string texto, string[] naturesKeys, int[] naturesValues, string[] debuffsKeys, int[] debuffsValues, bool useFirstOnly)
     {
         // Definir propriedade da sala para indicar que a carta foi pega
         if (PhotonNetwork.IsMasterClient)
         {
             Hashtable props = new Hashtable();
             props[CARTA_PEGA_KEY] = playerName;
-            props[CARTA_POSITION_KEY] = position;
+            props[CARTA_SPAWN_DISTANCE_KEY] = spawnDistance;
             props[CARTA_ROTATION_KEY] = rotation;
             props[CARTA_TEXTO_KEY] = texto;
             props[CARTA_NATURES_KEY] = new object[] {naturesKeys, naturesValues};
@@ -204,7 +203,7 @@ public class ImprevistoManager : MonoBehaviourPunCallbacks
         if (PhotonNetwork.LocalPlayer.NickName != playerName && deckImprevistos != null && !cartaJaCriada)
         {
             cartaJaCriada = true;
-            CreateSyncedCard(position, rotation, texto, naturesKeys, naturesValues, debuffsKeys, debuffsValues, useFirstOnly);
+            CreateSyncedCard(spawnDistance, rotation, texto, naturesKeys, naturesValues, debuffsKeys, debuffsValues, useFirstOnly);
         }
 
         // Iniciar timer de auto-remoção usando TimerManager (apenas Master Client)
@@ -214,9 +213,12 @@ public class ImprevistoManager : MonoBehaviourPunCallbacks
         }
     }
 
-    void CreateSyncedCard(float[] position, float[] rotation, string texto, string[] naturesKeys, int[] naturesValues, string[] debuffsKeys, int[] debuffsValues, bool useFirstOnly)
+    void CreateSyncedCard(float spawnDistance, float[] rotation, string texto, string[] naturesKeys, int[] naturesValues, string[] debuffsKeys, int[] debuffsValues, bool useFirstOnly)
     {
-        Vector3 pos = new Vector3(position[0], position[1], position[2]);
+        Camera playerCamera = Camera.main;
+        Vector3 screenPos = playerCamera.WorldToScreenPoint(playerCamera.transform.position + playerCamera.transform.forward * spawnDistance);
+        screenPos.x += 160;
+        Vector3 pos = playerCamera.ScreenToWorldPoint(screenPos);
         Quaternion rot = new Quaternion(rotation[0], rotation[1], rotation[2], rotation[3]);
         
         GameObject carta = Instantiate(deckImprevistos.prefabToSpawn, pos, rot);
@@ -537,7 +539,7 @@ public class ImprevistoManager : MonoBehaviourPunCallbacks
             // Limpar propriedades da sala relacionadas ao imprevisto
             Hashtable props = new Hashtable();
             props[CARTA_PEGA_KEY] = null;
-            props[CARTA_POSITION_KEY] = null;
+            props[CARTA_SPAWN_DISTANCE_KEY] = null;
             props[CARTA_ROTATION_KEY] = null;
             props[CARTA_TEXTO_KEY] = null;
             props[CARTA_NATURES_KEY] = null;
@@ -561,7 +563,7 @@ public class ImprevistoManager : MonoBehaviourPunCallbacks
     {
         // Recriar carta se chegamos atrasado na sala (evitar duplicação)
         if (propertiesThatChanged.ContainsKey(CARTA_PEGA_KEY) && 
-            propertiesThatChanged.ContainsKey(CARTA_POSITION_KEY) && 
+            propertiesThatChanged.ContainsKey(CARTA_SPAWN_DISTANCE_KEY) && 
             propertiesThatChanged.ContainsKey(CARTA_ROTATION_KEY) &&
             propertiesThatChanged.ContainsKey(CARTA_TEXTO_KEY) &&
             propertiesThatChanged.ContainsKey(CARTA_NATURES_KEY) &&
@@ -569,18 +571,18 @@ public class ImprevistoManager : MonoBehaviourPunCallbacks
             propertiesThatChanged.ContainsKey(CARTA_USE_FIRST_KEY))
         {
             object cartaPegaObj = propertiesThatChanged[CARTA_PEGA_KEY];
-            object positionObj = propertiesThatChanged[CARTA_POSITION_KEY];
+            object spawnDistanceObj = propertiesThatChanged[CARTA_SPAWN_DISTANCE_KEY];
             object rotationObj = propertiesThatChanged[CARTA_ROTATION_KEY];
             object textoObj = propertiesThatChanged[CARTA_TEXTO_KEY];
             object naturesObj = propertiesThatChanged[CARTA_NATURES_KEY];
             object debuffsObj = propertiesThatChanged[CARTA_DEBUFFS_KEY];
             object useFirstObj = propertiesThatChanged[CARTA_USE_FIRST_KEY];
             
-            if (cartaPegaObj != null && positionObj != null && rotationObj != null && 
+            if (cartaPegaObj != null && spawnDistanceObj != null && rotationObj != null && 
                 textoObj != null && naturesObj != null && debuffsObj != null && useFirstObj != null)
             {
                 string playerName = (string)cartaPegaObj;
-                float[] position = (float[])positionObj;
+                float spawnDistance = (float)spawnDistanceObj;
                 float[] rotation = (float[])rotationObj;
                 string texto = (string)textoObj;
                 bool useFirstOnly = (bool)useFirstObj;
@@ -597,7 +599,7 @@ public class ImprevistoManager : MonoBehaviourPunCallbacks
                 if (PhotonNetwork.LocalPlayer.NickName != playerName && deckImprevistos != null && !cartaJaCriada)
                 {
                     cartaJaCriada = true;
-                    CreateSyncedCard(position, rotation, texto, naturesKeys, naturesValues, debuffsKeys, debuffsValues, useFirstOnly);
+                    CreateSyncedCard(spawnDistance, rotation, texto, naturesKeys, naturesValues, debuffsKeys, debuffsValues, useFirstOnly);
                 }
             }
         }

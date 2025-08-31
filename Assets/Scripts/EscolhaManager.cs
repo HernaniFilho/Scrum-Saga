@@ -25,7 +25,7 @@ public class EscolhaManager : MonoBehaviourPunCallbacks
     
     [Header("Network Keys")]
     private const string CARTA_PEGA_KEY = "CartaPega";
-    private const string CARTA_POSITION_KEY = "CartaPosition";
+    private const string CARTA_SPAWN_DISTANCE_KEY = "CartaSpawnDistance";
     private const string CARTA_ROTATION_KEY = "CartaRotation";
     private const string CARTA_TEXTO_KEY = "CartaTexto";
     private const string CARTA_TRILHAS_KEY = "CartaTrilhas";
@@ -124,7 +124,7 @@ public class EscolhaManager : MonoBehaviourPunCallbacks
         return !cartaJaPega && !escolhaJaFeita;
     }
 
-    public void NotifyCartaPega(GameObject cartaInstanciada, Vector3 position, Quaternion rotation)
+    public void NotifyCartaPega(GameObject cartaInstanciada, float spawnDistance, Quaternion rotation)
     {
         if (!PhotonNetwork.InRoom) return;
         
@@ -141,21 +141,20 @@ public class EscolhaManager : MonoBehaviourPunCallbacks
         int[] pontos = cardComponent.scores.Values.ToArray();
         
         // Converter posição e rotação para arrays para enviar via RPC
-        float[] pos = {position.x, position.y, position.z};
         float[] rot = {rotation.x, rotation.y, rotation.z, rotation.w};
         
-        photonView.RPC("BroadcastCartaPega", RpcTarget.All, PhotonNetwork.LocalPlayer.NickName, pos, rot, texto, trilhas, pontos);
+        photonView.RPC("BroadcastCartaPega", RpcTarget.All, PhotonNetwork.LocalPlayer.NickName, spawnDistance, rot, texto, trilhas, pontos);
     }
 
     [PunRPC]
-    void BroadcastCartaPega(string playerName, float[] position, float[] rotation, string texto, string[] trilhas, int[] pontos)
+    void BroadcastCartaPega(string playerName, float spawnDistance, float[] rotation, string texto, string[] trilhas, int[] pontos)
     {
         // Definir propriedade da sala para indicar que a carta foi pega
         if (PhotonNetwork.IsMasterClient)
         {
             Hashtable props = new Hashtable();
             props[CARTA_PEGA_KEY] = playerName;
-            props[CARTA_POSITION_KEY] = position;
+            props[CARTA_SPAWN_DISTANCE_KEY] = spawnDistance;
             props[CARTA_ROTATION_KEY] = rotation;
             props[CARTA_TEXTO_KEY] = texto;
             props[CARTA_TRILHAS_KEY] = trilhas;
@@ -185,13 +184,16 @@ public class EscolhaManager : MonoBehaviourPunCallbacks
         if (PhotonNetwork.LocalPlayer.NickName != playerName && deckEscolhas != null && !cartaJaCriada)
         {
             cartaJaCriada = true;
-            CreateSyncedCard(position, rotation, texto, trilhas, pontos);
+            CreateSyncedCard(spawnDistance, rotation, texto, trilhas, pontos);
         }
     }
 
-    void CreateSyncedCard(float[] position, float[] rotation, string texto, string[] trilhas, int[] pontos)
+    void CreateSyncedCard(float spawnDistance, float[] rotation, string texto, string[] trilhas, int[] pontos)
     {
-        Vector3 pos = new Vector3(position[0], position[1], position[2]);
+        Camera playerCamera = Camera.main;
+        Vector3 screenPos = playerCamera.WorldToScreenPoint(playerCamera.transform.position + playerCamera.transform.forward * spawnDistance);
+        screenPos.x += 160;
+        Vector3 pos = playerCamera.ScreenToWorldPoint(screenPos);
         Quaternion rot = new Quaternion(rotation[0], rotation[1], rotation[2], rotation[3]);
         
         GameObject carta = Instantiate(deckEscolhas.prefabToSpawn, pos, rot);
@@ -410,7 +412,7 @@ public class EscolhaManager : MonoBehaviourPunCallbacks
             // Limpar propriedades da sala relacionadas à escolha
             Hashtable props = new Hashtable();
             props[CARTA_PEGA_KEY] = null;
-            props[CARTA_POSITION_KEY] = null;
+            props[CARTA_SPAWN_DISTANCE_KEY] = null;
             props[CARTA_ROTATION_KEY] = null;
             props[CARTA_TEXTO_KEY] = null;
             props[CARTA_TRILHAS_KEY] = null;
@@ -434,24 +436,24 @@ public class EscolhaManager : MonoBehaviourPunCallbacks
     {
         // Recriar carta se chegamos atrasado na sala (evitar duplicação)
         if (propertiesThatChanged.ContainsKey(CARTA_PEGA_KEY) && 
-            propertiesThatChanged.ContainsKey(CARTA_POSITION_KEY) && 
+            propertiesThatChanged.ContainsKey(CARTA_SPAWN_DISTANCE_KEY) && 
             propertiesThatChanged.ContainsKey(CARTA_ROTATION_KEY) &&
             propertiesThatChanged.ContainsKey(CARTA_TEXTO_KEY) &&
             propertiesThatChanged.ContainsKey(CARTA_TRILHAS_KEY) &&
             propertiesThatChanged.ContainsKey(CARTA_PONTOS_KEY))
         {
             object cartaPegaObj = propertiesThatChanged[CARTA_PEGA_KEY];
-            object positionObj = propertiesThatChanged[CARTA_POSITION_KEY];
+            object spawnDistanceObj = propertiesThatChanged[CARTA_SPAWN_DISTANCE_KEY];
             object rotationObj = propertiesThatChanged[CARTA_ROTATION_KEY];
             object textoObj = propertiesThatChanged[CARTA_TEXTO_KEY];
             object trilhasObj = propertiesThatChanged[CARTA_TRILHAS_KEY];
             object pontosObj = propertiesThatChanged[CARTA_PONTOS_KEY];
             
-            if (cartaPegaObj != null && positionObj != null && rotationObj != null && 
+            if (cartaPegaObj != null && spawnDistanceObj != null && rotationObj != null && 
                 textoObj != null && trilhasObj != null && pontosObj != null)
             {
                 string playerName = (string)cartaPegaObj;
-                float[] position = (float[])positionObj;
+                float spawnDistance = (float)spawnDistanceObj;
                 float[] rotation = (float[])rotationObj;
                 string texto = (string)textoObj;
                 string[] trilhas = (string[])trilhasObj;
@@ -461,7 +463,7 @@ public class EscolhaManager : MonoBehaviourPunCallbacks
                 if (PhotonNetwork.LocalPlayer.NickName != playerName && deckEscolhas != null && !cartaJaCriada)
                 {
                     cartaJaCriada = true;
-                    CreateSyncedCard(position, rotation, texto, trilhas, pontos);
+                    CreateSyncedCard(spawnDistance, rotation, texto, trilhas, pontos);
                 }
             }
         }

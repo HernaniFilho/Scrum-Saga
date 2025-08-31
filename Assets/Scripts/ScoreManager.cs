@@ -147,6 +147,18 @@ public class ScoreManager : MonoBehaviour
                     scoreboard[varName] = 0;
                 }
             }
+            else if (scoreboard[varName] + value > 10)
+            {
+                if (scoreboard[varName] == 10)
+                {
+                    Debug.LogWarning($"Tentativa de aumentar '{varName}' acima de 10. Operação ignorada.");
+                    return false;
+                }
+                else
+                {
+                    scoreboard[varName] = 10;
+                }
+            }
             else
             {
                 scoreboard[varName] += value;
