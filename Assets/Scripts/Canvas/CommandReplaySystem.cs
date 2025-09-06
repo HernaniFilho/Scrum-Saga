@@ -44,8 +44,20 @@ public class CommandReplaySystem : MonoBehaviour
     
     public void ReplayDrawingSession(DrawingSession session)
     {
-        if (session == null || session.commands.Count == 0)
+        if (session == null)
         {
+            Debug.Log("Nenhuma sessão para reproduzir");
+            return;
+        }
+
+        if (session.commands.Count == 0)
+        {
+            if (shapeDrawer != null)
+            {
+                shapeDrawer.ClearAll();
+                UnityEngine.Debug.Log("Canvas limpo");
+            }
+            
             Debug.Log("Nenhum comando para reproduzir");
             return;
         }

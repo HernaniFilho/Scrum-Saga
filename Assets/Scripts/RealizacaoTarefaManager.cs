@@ -561,9 +561,36 @@ public class RealizacaoTarefaManager : MonoBehaviourPunCallbacks
         SetCurrentPlayer();
     }
 
+    [PunRPC]
+    void HandleTimeUp()
+    {
+        // Se há um popup de confirmação aberto (player fez desenho mas não confirmou)
+        if (confirmationPopupContainer != null && confirmationPopupContainer.activeSelf)
+        {
+            Debug.Log("Confirmando desenho automaticamente devido ao fim do tempo");
+            
+            // Fechar popup de confirmação
+            confirmationPopupContainer.SetActive(false);
+            
+            // Executar confirmação automática
+            if (onConfirmFunction != null)
+            {
+                // Salvar e sincronizar comandos da tarefa atual antes de confirmar
+                SaveAndSyncCurrentPlayerTaskCommands();
+                onConfirmFunction();
+                
+                // Confirmar desenho e passar a vez
+                photonView.RPC("ProcessPlayerFinished", RpcTarget.MasterClient, PhotonNetwork.LocalPlayer.ActorNumber);
+            }
+        }
+    }
+
     private void OnRealizacaoTimeComplete()
     {
         Debug.Log("Timer da Realização da Tarefa encerrado!");
+
+        // Notificar todos os jogadores que o tempo acabou para confirmação automática
+        photonView.RPC("HandleTimeUp", RpcTarget.All);
 
         timerRunning = false;
 
