@@ -27,6 +27,7 @@ public class SprintPlanningManager : MonoBehaviourPun
   public GameObject stopDraftContainer;
   public UnityEngine.UI.Button stopDraftButton;
   public TMP_Text draftText;
+  public GameObject legendaContainer;
 
   [Header("Positioning")]
   public float spawnDistance = 1f; // Câmera: -297f, Cards: -296f
@@ -63,6 +64,11 @@ public class SprintPlanningManager : MonoBehaviourPun
     {
       stopDraftContainer.gameObject.SetActive(false);
       stopDraftButton.onClick.AddListener(OnStopDraftButtonClicked);
+    }
+
+    if (legendaContainer != null)
+    {
+      legendaContainer.SetActive(false);
     }
   }
 
@@ -138,6 +144,11 @@ public class SprintPlanningManager : MonoBehaviourPun
       if (stopDraftContainer != null)
       {
         stopDraftContainer.gameObject.SetActive(false);
+      }
+
+      if (legendaContainer != null)
+      {
+        legendaContainer.SetActive(false);
       }
     }
   }
@@ -231,6 +242,7 @@ public class SprintPlanningManager : MonoBehaviourPun
     RecreateSelectedCard();
 
     ShowStartButton();
+    ShowLegenda();
   }
 
   private void ClearSpawnedCards()
@@ -312,6 +324,14 @@ public class SprintPlanningManager : MonoBehaviourPun
     if (startDraftButton != null)
     {
       startDraftButton.gameObject.SetActive(true);
+    }
+  }
+
+  private void ShowLegenda()
+  {
+    if (legendaContainer != null)
+    {
+      legendaContainer.SetActive(true);
     }
   }
 
