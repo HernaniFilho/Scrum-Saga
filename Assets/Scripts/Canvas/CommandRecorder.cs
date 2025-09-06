@@ -61,7 +61,8 @@ public class CommandRecorder : MonoBehaviour
         if (!isRecording || currentSession == null) return;
         
         string playerName = GetCurrentPlayerName();
-        DrawingCommand command = new DrawingCommand(shapeType, position, size, rotation, color, thickness, playerName);
+        string playerId = GetCurrentPlayerId();
+        DrawingCommand command = new DrawingCommand(shapeType, position, size, rotation, color, thickness, playerName, playerId);
         currentSession.AddCommand(command);
         
         Debug.Log($"Comando gravado: {shapeType} na posição {position} por {playerName} (total: {currentSession.GetCommandCount()})");
@@ -85,7 +86,8 @@ public class CommandRecorder : MonoBehaviour
         if (shapeData != null && rectTransform != null)
         {
             string playerName = GetCurrentPlayerName();
-            DrawingCommand command = new DrawingCommand(shapeData, rectTransform, playerName);
+            string playerId = GetCurrentPlayerId();
+            DrawingCommand command = new DrawingCommand(shapeData, rectTransform, playerName, playerId);
             currentSession.AddCommand(command);
             
             Debug.Log($"Shape gravado como comando: {command.shapeType} na posição {command.position} com cor {command.color} por {playerName} (total: {currentSession.GetCommandCount()})");
@@ -97,7 +99,8 @@ public class CommandRecorder : MonoBehaviour
         if (!isRecording || currentSession == null) return;
         
         string playerName = GetCurrentPlayerName();
-        DrawingCommand floodFillCommand = new DrawingCommand(position, fillColor, playerName);
+        string playerId = GetCurrentPlayerId();
+        DrawingCommand floodFillCommand = new DrawingCommand(position, fillColor, playerName, playerId);
         currentSession.AddCommand(floodFillCommand);
         
         Debug.Log($"Flood fill gravado: posição {position} com cor {fillColor} por {playerName} (total: {currentSession.GetCommandCount()})");
@@ -122,6 +125,18 @@ public class CommandRecorder : MonoBehaviour
         else
         {
             return "Local Player";
+        }
+    }
+    
+    private string GetCurrentPlayerId()
+    {
+        if (Photon.Pun.PhotonNetwork.InRoom)
+        {
+            return Photon.Pun.PhotonNetwork.LocalPlayer.UserId;
+        }
+        else
+        {
+            return "local";
         }
     }
     

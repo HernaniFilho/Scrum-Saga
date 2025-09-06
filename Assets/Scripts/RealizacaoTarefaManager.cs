@@ -21,6 +21,10 @@ public class RealizacaoTarefaManager : MonoBehaviourPunCallbacks
     public UnityEngine.UI.Button confirmDrawingButton;
     public UnityEngine.UI.Button cancelDrawingButton;
 
+    [Header("View Draft Button")]
+    public UnityEngine.UI.Button viewDraftButton;
+    public TMP_Text viewDraftButtonText;
+
     [Header("Game References")]
     private ProductOwnerManager productOwnerManager;
     private GameStateManager gameStateManager;
@@ -44,6 +48,11 @@ public class RealizacaoTarefaManager : MonoBehaviourPunCallbacks
     private int commandCountBeforeTurn = 0; // Para rastrear comandos da vez atual
     private Action onConfirmFunction = null;
     private ShapeType lastSelectedShape = ShapeType.Rectangle; // Para restaurar o shape após cancelamento
+    private bool isViewingDraft = false; // Para controlar se está vendo rascunho ou tarefa
+    private List<DrawingCommand> taskCommands = new List<DrawingCommand>(); // Para salvar comandos da tarefa atual
+    private CommandSaveSystem commandSaveSystem;
+    private CommandReplaySystem commandReplaySystem;
+    private int taskCommandStartIndex = 0; // Índice onde começaram os comandos da tarefa
 
     public static RealizacaoTarefaManager Instance { get; private set; }
 
@@ -102,6 +111,8 @@ public class RealizacaoTarefaManager : MonoBehaviourPunCallbacks
                 vezDoPlayerText.transform.parent.gameObject.SetActive(false);
             if (confirmationPopupContainer != null)
                 confirmationPopupContainer.SetActive(false);
+            if (viewDraftButton != null)
+                viewDraftButton.gameObject.SetActive(false);
         }
     }
 
@@ -113,6 +124,8 @@ public class RealizacaoTarefaManager : MonoBehaviourPunCallbacks
         timerManager = TimerManager.Instance;
         drawingArea = GameObject.Find("DrawingArea");
         undoSystem = drawingArea.GetComponent<UndoSystem>();
+        commandSaveSystem = FindObjectOfType<CommandSaveSystem>();
+        commandReplaySystem = FindObjectOfType<CommandReplaySystem>();
 
         if (gameStateManager == null)
             Debug.LogError("GameStateManager não encontrado!");
@@ -122,6 +135,10 @@ public class RealizacaoTarefaManager : MonoBehaviourPunCallbacks
             Debug.LogError("TimerManager não encontrado!");
         if (undoSystem == null)
             Debug.LogError("UndoSystem não encontrado!");
+        if (commandSaveSystem == null)
+            Debug.LogError("CommandSaveSystem não encontrado!");
+        if (commandReplaySystem == null)
+            Debug.LogError("CommandReplaySystem não encontrado!");
     }
 
     void SetupUI()
@@ -161,6 +178,12 @@ public class RealizacaoTarefaManager : MonoBehaviourPunCallbacks
         if (cancelDrawingButton != null)
         {
             cancelDrawingButton.onClick.AddListener(OnCancelDrawing);
+        }
+
+        if (viewDraftButton != null)
+        {
+            viewDraftButton.onClick.AddListener(OnViewDraftButtonClicked);
+            viewDraftButton.gameObject.SetActive(false);
         }
     }
 
@@ -210,6 +233,7 @@ public class RealizacaoTarefaManager : MonoBehaviourPunCallbacks
         if (realizacaoJaIniciada)
         {
             ContinueRealizacaoProcess();
+            ShowViewDraftButton();
         }
     }
 
@@ -290,8 +314,14 @@ public class RealizacaoTarefaManager : MonoBehaviourPunCallbacks
             timerRunning = true;
         }
 
+        // Limpar comandos da tarefa anterior
+        taskCommands.Clear();
+
         // Continuar processo
         ContinueRealizacaoProcess();
+        
+        // Mostrar botão "Ver rascunho" se não for PO
+        ShowViewDraftButton();
     }
 
     private void ContinueRealizacaoProcess()
@@ -360,12 +390,13 @@ public class RealizacaoTarefaManager : MonoBehaviourPunCallbacks
         {
             DrawingSession session = CommandRecorder.Instance.GetCurrentSession();
             commandCountBeforeTurn = session != null ? session.GetCommandCount() : 0;
+            taskCommandStartIndex = commandCountBeforeTurn; // Marcar onde começam os comandos deste player
         }
 
         // Habilitar desenho apenas para o player atual
         if (canvasManager != null)
         {
-            if (isMyTurn)
+            if (isMyTurn && !isViewingDraft)
             {
                 canvasManager.ActivateToolbar();
                 canvasManager.ActivateDrawingLocal();
@@ -378,6 +409,8 @@ public class RealizacaoTarefaManager : MonoBehaviourPunCallbacks
         }
 
         Debug.Log($"Vez do player: {currentPlayer.NickName} (Local: {isMyTurn})");
+        
+        ShowViewDraftButton();
     }
 
     public void SyncDrawingInRealTime(GameObject shape)
@@ -429,6 +462,12 @@ public class RealizacaoTarefaManager : MonoBehaviourPunCallbacks
             canvasManager.DeactivateToolbar();
         }
 
+        // Esconder botão ver rascunho durante confirmação
+        if (viewDraftButton != null)
+        {
+            viewDraftButton.gameObject.SetActive(false);
+        }
+
         // Mostrar popup de confirmação
         if (confirmationPopupContainer != null)
         {
@@ -445,10 +484,16 @@ public class RealizacaoTarefaManager : MonoBehaviourPunCallbacks
             confirmationPopupContainer.SetActive(false);
         }
 
+        // Salvar e sincronizar comandos da tarefa atual antes de confirmar
+        SaveAndSyncCurrentPlayerTaskCommands();
+
         onConfirmFunction();
         
         // Confirmar desenho e passar a vez
         photonView.RPC("ProcessPlayerFinished", RpcTarget.MasterClient, PhotonNetwork.LocalPlayer.ActorNumber);
+        
+        // Mostrar botão ver rascunho novamente
+        ShowViewDraftButton();
     }
 
     public void OnCancelDrawing()
@@ -481,6 +526,9 @@ public class RealizacaoTarefaManager : MonoBehaviourPunCallbacks
             shapeDrawer.SetShape(lastSelectedShape);
             buttonManager.UpdateSelection(lastSelectedShape);
         }
+        
+        // Mostrar botão ver rascunho novamente
+        ShowViewDraftButton();
     }
 
     [PunRPC]
@@ -562,6 +610,279 @@ public class RealizacaoTarefaManager : MonoBehaviourPunCallbacks
             confirmationPopupContainer.SetActive(false);
     }
 
+    #region View Draft Methods
+
+    private void ShowViewDraftButton()
+    {
+        if (viewDraftButton == null || productOwnerManager == null) return;
+
+        // Não mostrar para PO
+        if (productOwnerManager.IsLocalPlayerProductOwner())
+        {
+            viewDraftButton.gameObject.SetActive(false);
+            return;
+        }
+
+        // Só mostrar se tem rascunho do player
+        if (HasPlayerDraft())
+        {
+            viewDraftButton.gameObject.SetActive(true);
+            UpdateViewDraftButtonText();
+        }
+        else
+        {
+            viewDraftButton.gameObject.SetActive(false);
+        }
+    }
+
+    private void UpdateViewDraftButtonText()
+    {
+        if (viewDraftButtonText == null) return;
+
+        if (isViewingDraft)
+        {
+            viewDraftButtonText.text = "Ver tarefa";
+        }
+        else
+        {
+            viewDraftButtonText.text = "Ver rascunho";
+        }
+    }
+
+    private bool HasPlayerDraft()
+    {
+        if (commandSaveSystem == null) return false;
+
+        // Verificar se há rascunho do player atual
+        var savedSessions = commandSaveSystem.SavedSessions;
+        string localPlayerId = PhotonNetwork.LocalPlayer.UserId;
+        
+        string localPlayerName = PhotonNetwork.LocalPlayer.NickName;
+        if (string.IsNullOrEmpty(localPlayerName))
+        {
+            localPlayerName = $"Player_{PhotonNetwork.LocalPlayer.ActorNumber}";
+        }
+        
+        for (int i = 0; i < savedSessions.Count; i++)
+        {
+            var session = savedSessions[i];
+            
+            // Pegar dados do primeiro comando, igual ao GetPlayerNameFromSession
+            string sessionPlayerId = GetPlayerIdFromSession(session);
+            string sessionPlayerName = GetPlayerNameFromSession(session);
+            
+            // Primeiro tenta por playerId
+            if (sessionPlayerId == localPlayerId)
+            {
+                return true;
+            }
+        }
+        
+        return false;
+    }
+
+    private string GetPlayerIdFromSession(DrawingSession session)
+    {
+        // Primeiro tenta pegar do primeiro comando
+        if (session.commands != null && session.commands.Count > 0)
+        {
+            var firstCommand = session.commands[0];
+            if (!string.IsNullOrEmpty(firstCommand.playerId))
+            {
+                return firstCommand.playerId;
+            }
+        }
+        
+        // Fallback para o playerId da sessão
+        return session.playerId;
+    }
+
+    private string GetPlayerNameFromSession(DrawingSession session)
+    {
+        // Primeiro tenta pegar do primeiro comando
+        if (session.commands != null && session.commands.Count > 0)
+        {
+            var firstCommand = session.commands[0];
+            if (!string.IsNullOrEmpty(firstCommand.playerName) && firstCommand.playerName != "Local Player")
+            {
+                return firstCommand.playerName;
+            }
+        }
+        
+        // Fallback para o playerName da sessão
+        return session.playerName;
+    }
+
+    private void OnViewDraftButtonClicked()
+    {
+        if (isViewingDraft)
+        {
+            // Está vendo rascunho, voltar para tarefa
+            ShowCurrentTask();
+        }
+        else
+        {
+            // Está vendo tarefa, mostrar rascunho
+            ShowPlayerDraft();
+        }
+    }
+
+    private void ShowPlayerDraft()
+    {
+        if (canvasManager == null || commandSaveSystem == null) return;
+
+        // Salvar o shape atual antes de desativar (como no cancelar desenho)
+        ShapeDrawer shapeDrawer = FindObjectOfType<ShapeDrawer>();
+        if (shapeDrawer != null)
+        {
+            lastSelectedShape = shapeDrawer.currentShape;
+        }
+
+        // Limpar canvas antes
+        canvasManager.ClearCanvasLocal();
+
+        // Desabilitar drawing e toolbar
+        canvasManager.DeactivateDrawingLocal();
+        canvasManager.DeactivateToolbar();
+
+        // Encontrar e carregar rascunho do player
+        var savedSessions = commandSaveSystem.SavedSessions;
+        string localPlayerId = PhotonNetwork.LocalPlayer.UserId;
+        string localPlayerName = PhotonNetwork.LocalPlayer.NickName;
+        if (string.IsNullOrEmpty(localPlayerName))
+        {
+            localPlayerName = $"Player_{PhotonNetwork.LocalPlayer.ActorNumber}";
+        }
+        
+        for (int i = 0; i < savedSessions.Count; i++)
+        {
+            var session = savedSessions[i];
+            
+            // Pegar dados do primeiro comando, igual ao GetPlayerNameFromSession
+            string sessionPlayerId = GetPlayerIdFromSession(session);
+            string sessionPlayerName = GetPlayerNameFromSession(session);
+            
+            // Primeiro tenta por playerId
+            if (sessionPlayerId == localPlayerId)
+            {
+                commandSaveSystem.LoadDrawing(i, false);
+                break;
+            }
+            
+            // Se não encontrar por playerId, tenta por playerName (fallback para sessões locais)
+            if (sessionPlayerId == "local" && sessionPlayerName == localPlayerName)
+            {
+                commandSaveSystem.LoadDrawing(i, false);
+                break;
+            }
+        }
+
+        isViewingDraft = true;
+        UpdateViewDraftButtonText();
+    }
+
+    private void ShowCurrentTask()
+    {
+        if (canvasManager == null) return;
+
+        // Limpar canvas antes
+        canvasManager.ClearCanvasLocal();
+
+        // Reproduzir comandos da tarefa atual
+        ReplayTaskCommands();
+
+        // Reativar drawing e toolbar apenas se for sua vez
+        Player currentPlayer = playersOrder.Count > 0 ? playersOrder[currentPlayerIndex] : null;
+        bool isMyTurn = currentPlayer != null && PhotonNetwork.LocalPlayer == currentPlayer;
+
+        if (isMyTurn && timerRunning)
+        {
+            canvasManager.ActivateDrawingLocal();
+            canvasManager.ActivateToolbar();
+            
+            // Restaurar o shape que estava selecionado (como no cancelar desenho)
+            ShapeDrawer shapeDrawer = FindObjectOfType<ShapeDrawer>();
+            ButtonStateManager buttonManager = FindObjectOfType<ButtonStateManager>();
+            
+            if (shapeDrawer != null && buttonManager != null)
+            {
+                shapeDrawer.SetShape(lastSelectedShape);
+                buttonManager.UpdateSelection(lastSelectedShape);
+            }
+        }
+
+        isViewingDraft = false;
+        UpdateViewDraftButtonText();
+    }
+
+    private void SaveAndSyncCurrentPlayerTaskCommands()
+    {
+        if (CommandRecorder.Instance == null) return;
+
+        DrawingSession session = CommandRecorder.Instance.GetCurrentSession();
+        if (session != null && session.commands.Count > taskCommandStartIndex)
+        {
+            List<DrawingCommand> playerCommands = new List<DrawingCommand>();
+            
+            // Salvar apenas comandos do player atual da tarefa (do taskCommandStartIndex em diante)
+            for (int i = taskCommandStartIndex; i < session.commands.Count; i++)
+            {
+                playerCommands.Add(session.commands[i]);
+            }
+            
+            // Sincronizar comandos via RPC para todos os players
+            if (playerCommands.Count > 0)
+            {
+                photonView.RPC("AddPlayerTaskCommands", RpcTarget.All, JsonUtility.ToJson(new SerializableCommandList(playerCommands)));
+            }
+        }
+    }
+
+    [PunRPC]
+    void AddPlayerTaskCommands(string commandsJson)
+    {
+        try
+        {
+            SerializableCommandList commandList = JsonUtility.FromJson<SerializableCommandList>(commandsJson);
+            
+            // Adicionar comandos à lista geral da tarefa (acumular, não substituir)
+            taskCommands.AddRange(commandList.commands);
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError($"[AddPlayerTaskCommands] Erro ao deserializar comandos: {e.Message}");
+        }
+    }
+
+    [System.Serializable]
+    public class SerializableCommandList
+    {
+        public List<DrawingCommand> commands = new List<DrawingCommand>();
+        
+        public SerializableCommandList(List<DrawingCommand> commandList)
+        {
+            commands = commandList;
+        }
+    }
+
+    private void ReplayTaskCommands()
+    {
+        if (taskCommands.Count == 0 || commandReplaySystem == null) return;
+
+        // Reproduzir comandos da tarefa
+        foreach (var command in taskCommands)
+        {
+            commandReplaySystem.ReplayCommand(command);
+        }
+    }
+
+    public bool GetIsViewingDraft()
+    {
+        return isViewingDraft;
+    }
+
+    #endregion
+
     #region Photon Callbacks
 
     public override void OnRoomPropertiesUpdate(Hashtable propertiesThatChanged)
@@ -574,6 +895,7 @@ public class RealizacaoTarefaManager : MonoBehaviourPunCallbacks
             if (realizacaoIniciada && !timerRunning)
             {
                 ContinueRealizacaoProcess();
+                ShowViewDraftButton();
             }
         }
 

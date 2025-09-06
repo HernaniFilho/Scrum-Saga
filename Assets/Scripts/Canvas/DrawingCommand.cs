@@ -11,6 +11,7 @@ public class DrawingCommand
     public float lineThickness;
     public long timestamp; // Para ordem de execução
     public string playerName; // Nome do player que criou o comando
+    public string playerId; // ID do player que criou o comando
     
     // Para comandos de flood fill
     public bool isFloodFill = false;
@@ -21,7 +22,7 @@ public class DrawingCommand
     {
     }
     
-    public DrawingCommand(ShapeType type, Vector2 pos, Vector2 sz, float rot, Color col, float thickness, string playerName = "")
+    public DrawingCommand(ShapeType type, Vector2 pos, Vector2 sz, float rot, Color col, float thickness, string playerName = "", string playerId = "")
     {
         shapeType = type;
         position = pos;
@@ -31,10 +32,11 @@ public class DrawingCommand
         lineThickness = thickness;
         timestamp = System.DateTime.Now.Ticks;
         this.playerName = playerName;
+        this.playerId = playerId;
     }
     
     // Construtor a partir de dados existentes do shape
-    public DrawingCommand(ShapeData shapeData, RectTransform rectTransform, string playerName = "")
+    public DrawingCommand(ShapeData shapeData, RectTransform rectTransform, string playerName = "", string playerId = "")
     {
         shapeType = shapeData.shapeType;
         position = rectTransform.anchoredPosition;
@@ -45,16 +47,18 @@ public class DrawingCommand
         timestamp = System.DateTime.Now.Ticks;
         isFloodFill = false;
         this.playerName = playerName;
+        this.playerId = playerId;
     }
     
     // Construtor para comandos de flood fill
-    public DrawingCommand(Vector2 fillPosition, Color fillColor, string playerName = "")
+    public DrawingCommand(Vector2 fillPosition, Color fillColor, string playerName = "", string playerId = "")
     {
         isFloodFill = true;
         floodFillPosition = fillPosition;
         floodFillColor = fillColor;
         timestamp = System.DateTime.Now.Ticks;
         this.playerName = playerName;
+        this.playerId = playerId;
         
         // Valores padrão para campos não usados
         shapeType = ShapeType.Bucket;

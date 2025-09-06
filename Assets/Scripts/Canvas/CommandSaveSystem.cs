@@ -151,7 +151,7 @@ public class CommandSaveSystem : MonoBehaviour
         return clone;
     }
     
-    public void LoadDrawing(int index)
+    public void LoadDrawing(int index, bool showDisplayName = true)
     {
         if (index < 0 || index >= savedSessions.Count)
         {
@@ -190,10 +190,13 @@ public class CommandSaveSystem : MonoBehaviour
         
         currentlyLoadedIndex = index;
         UpdateButtonColors();
-        
+
         // Atualiza o texto com o nome do player do desenho selecionado
-        string displayName = GetPlayerNameFromSession(session);
-        UpdatePlayerNameDisplay(displayName);
+        if (showDisplayName)
+        {
+            string displayName = GetPlayerNameFromSession(session);
+            UpdatePlayerNameDisplay(displayName);
+        }
         
         Debug.Log($"Sessão '{session.playerName}' carregada com {session.GetCommandCount()} comandos!");
     }
@@ -239,7 +242,7 @@ public class CommandSaveSystem : MonoBehaviour
         {
             return "Índice inválido";
         }
-        
+
         DrawingSession session = savedSessions[index];
         return $"{session.playerName} - {session.timestamp} ({session.GetCommandCount()} comandos)";
     }
@@ -327,6 +330,24 @@ public class CommandSaveSystem : MonoBehaviour
         return session.playerName;
     }
     
+    // Método público para limpar apenas o display do nome do player
+    public void ClearPlayerNameDisplay()
+    {
+        UpdatePlayerNameDisplay("");
+    }
+    
+    // Método para esconder todos os botões de load temporariamente
+    public void HideAllLoadButtons()
+    {
+        for (int i = 0; i < loadButtons.Length; i++)
+        {
+            if (loadButtons[i] != null)
+            {
+                loadButtons[i].gameObject.SetActive(false);
+            }
+        }
+    }
+
     // Métodos públicos para UI (compatibilidade)
     public void SaveCurrentDrawingWithAutoName() => SaveCurrentSession();
     public void SaveCurrentDrawingWithName(string name) => SaveCurrentSession(name);

@@ -236,7 +236,7 @@ public class CanvasManager : MonoBehaviourPunCallbacks, IPunObservable
         }
     }
 
-    private void ClearCanvasLocal()
+    public void ClearCanvasLocal()
     {
         ShapeDrawer shapeDrawer = FindObjectOfType<ShapeDrawer>();
         if (shapeDrawer != null)
@@ -736,7 +736,9 @@ public class CanvasManager : MonoBehaviourPunCallbacks, IPunObservable
             DrawingCommand command = JsonUtility.FromJson<DrawingCommand>(commandJson);
             
             CommandReplaySystem replaySystem = FindObjectOfType<CommandReplaySystem>();
-            if (replaySystem != null)
+            RealizacaoTarefaManager realizacaoTarefaManager = FindObjectOfType<RealizacaoTarefaManager>();
+            bool isPlayerViewingDraft = realizacaoTarefaManager != null && realizacaoTarefaManager.GetIsViewingDraft();
+            if (replaySystem != null && !isPlayerViewingDraft)
             {
                 // Replay apenas este comando
                 replaySystem.ReplayCommand(command);

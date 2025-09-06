@@ -97,8 +97,11 @@ public class DailyScrumManager : MonoBehaviourPun
             CanvasManager.Instance.DeactivateDrawingForAll();
             CanvasManager.Instance.ActivateDrawingSaveUIForAll();
             
-            // Reproduz todos os desenhos salvos dos players
-            CanvasManager.Instance.ReplayAllPlayerDrawings();
+            // Esconder botões de load até carregar desenhos
+            HideLoadButtons();
+            
+            // Tentar carregar desenhos, se não conseguir, ficar tentando
+            StartCoroutine(EnsureDrawingsLoad());
         }
 
         photonView.RPC("DailyIniciada", RpcTarget.All);
@@ -115,8 +118,10 @@ public class DailyScrumManager : MonoBehaviourPun
             CanvasManager.Instance.ActivateToolbarForAll();
             CanvasManager.Instance.ClearCanvasForAll();
             CanvasManager.Instance.DeactivateCanvasForAll();
-            CanvasManager.Instance.ClearAllSavedDrawings();
         }
+
+        // Limpar display do nome do player para todos
+        photonView.RPC("ClearPlayerNameForAll", RpcTarget.All);
 
         if (productOwnerManager != null && productOwnerManager.IsLocalPlayerProductOwner())
         {
@@ -137,6 +142,59 @@ public class DailyScrumManager : MonoBehaviourPun
     void DailyTerminada()
     {
         hasStartedDaily = false;
+    }
+
+    private System.Collections.IEnumerator EnsureDrawingsLoad()
+    {
+        int tentativas = 0;
+        
+        while (tentativas < 20) // Máximo 10 segundos tentando (20 * 0.5s)
+        {
+            CommandSaveSystem commandSaveSystem = FindObjectOfType<CommandSaveSystem>();
+            int savedCount = commandSaveSystem != null ? commandSaveSystem.SavedSessions.Count : 0;
+            
+            if (savedCount > 0)
+            {
+                CanvasManager.Instance.ReplayAllPlayerDrawings();
+                
+                ShowLoadButtons();
+                
+                yield break;
+            }
+            
+            tentativas++;
+            yield return new UnityEngine.WaitForSeconds(0.5f);
+        }
+    }
+
+    private void HideLoadButtons()
+    {
+        CommandSaveSystem commandSaveSystem = FindObjectOfType<CommandSaveSystem>();
+        if (commandSaveSystem != null)
+        {
+            // Esconder todos os botões de load temporariamente
+            commandSaveSystem.HideAllLoadButtons();
+        }
+    }
+
+    private void ShowLoadButtons()
+    {
+        CommandSaveSystem commandSaveSystem = FindObjectOfType<CommandSaveSystem>();
+        if (commandSaveSystem != null)
+        {
+            // Mostrar botões de load baseado nos desenhos carregados
+            commandSaveSystem.RefreshSlotVisibility();
+        }
+    }
+
+    [PunRPC]
+    void ClearPlayerNameForAll()
+    {
+        CommandSaveSystem commandSaveSystem = FindObjectOfType<CommandSaveSystem>();
+        if (commandSaveSystem != null)
+        {
+            commandSaveSystem.ClearPlayerNameDisplay();
+        }
     }
 
     private void UpdateWaitingText()
