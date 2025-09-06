@@ -10,6 +10,8 @@ public class DailyScrumManager : MonoBehaviourPun
 
     [Header("UI Elements")]
     public UnityEngine.UI.Button startDailyButton;
+    public GameObject stopDailyContainer;
+    public UnityEngine.UI.Button stopDailyButton;
     public TMP_Text waitingText;
 
     private GameStateManager gameStateManager;
@@ -24,6 +26,12 @@ public class DailyScrumManager : MonoBehaviourPun
         {
             startDailyButton.gameObject.SetActive(false);
             startDailyButton.onClick.AddListener(OnStartDailyButtonClicked);
+        }
+
+        if (stopDailyContainer != null && stopDailyButton != null)
+        {
+            stopDailyContainer.gameObject.SetActive(false);
+            stopDailyButton.onClick.AddListener(OnStopDailyButtonClicked);
         }
     }
 
@@ -60,6 +68,11 @@ public class DailyScrumManager : MonoBehaviourPun
             {
                 startDailyButton.gameObject.SetActive(false);
             }
+
+            if (stopDailyContainer != null)
+            {
+                stopDailyContainer.gameObject.SetActive(false);
+            }
         }
     }
 
@@ -80,6 +93,12 @@ public class DailyScrumManager : MonoBehaviourPun
         if (startDailyButton != null)
         {
             startDailyButton.gameObject.SetActive(false);
+        }
+
+        // Mostrar botão de parar Daily
+        if (stopDailyContainer != null)
+        {
+            stopDailyContainer.gameObject.SetActive(true);
         }
 
         // Iniciar timer de 1 minuto (60 segundos)
@@ -105,6 +124,21 @@ public class DailyScrumManager : MonoBehaviourPun
         }
 
         photonView.RPC("DailyIniciada", RpcTarget.All);
+    }
+
+    private void OnStopDailyButtonClicked()
+    {
+        Debug.Log("Botão 'Parar Daily' clicado!");
+
+        if (stopDailyContainer != null)
+        {
+            stopDailyContainer.gameObject.SetActive(false);
+        }
+
+        if (TimerManager.Instance != null)
+        {
+            TimerManager.Instance.EndTimer();
+        }
     }
 
     private void OnDailyTimeComplete()

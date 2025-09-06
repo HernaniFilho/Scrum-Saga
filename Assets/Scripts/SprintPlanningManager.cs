@@ -24,6 +24,8 @@ public class SprintPlanningManager : MonoBehaviourPun
 
   [Header("UI Elements")]
   public UnityEngine.UI.Button startDraftButton;
+  public GameObject stopDraftContainer;
+  public UnityEngine.UI.Button stopDraftButton;
   public TMP_Text draftText;
 
   [Header("Positioning")]
@@ -55,6 +57,12 @@ public class SprintPlanningManager : MonoBehaviourPun
     {
       startDraftButton.gameObject.SetActive(false);
       startDraftButton.onClick.AddListener(OnStartButtonClicked);
+    }
+
+    if (stopDraftContainer != null && stopDraftButton != null)
+    {
+      stopDraftContainer.gameObject.SetActive(false);
+      stopDraftButton.onClick.AddListener(OnStopDraftButtonClicked);
     }
   }
 
@@ -125,6 +133,11 @@ public class SprintPlanningManager : MonoBehaviourPun
       if (startDraftButton != null)
       {
         startDraftButton.gameObject.SetActive(false);
+      }
+
+      if (stopDraftContainer != null)
+      {
+        stopDraftContainer.gameObject.SetActive(false);
       }
     }
   }
@@ -313,6 +326,12 @@ public class SprintPlanningManager : MonoBehaviourPun
       startDraftButton.gameObject.SetActive(false);
     }
 
+    // Mostrar botão de parar rascunho
+    if (stopDraftContainer != null)
+    {
+      stopDraftContainer.gameObject.SetActive(true);
+    }
+
     // Momento do rascunho - iniciar timer de 1:40 para todos os players
     if (TimerManager.Instance != null)
     {
@@ -328,6 +347,21 @@ public class SprintPlanningManager : MonoBehaviourPun
     draftText.gameObject.SetActive(true);
     draftText.text = "Descreva o desenho, o Dev Team está rascunhando...";
     photonView.RPC("RascunhoIniciado", RpcTarget.All);
+  }
+
+  private void OnStopDraftButtonClicked()
+  {
+    Debug.Log("Botão 'Parar Rascunho' clicado!");
+
+    if (stopDraftContainer != null)
+    {
+      stopDraftContainer.gameObject.SetActive(false);
+    }
+
+    if (TimerManager.Instance != null)
+    {
+      TimerManager.Instance.EndTimer();
+    }
   }
 
   private void OnDraftTimeComplete()
