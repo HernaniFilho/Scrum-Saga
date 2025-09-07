@@ -169,6 +169,12 @@ public class FimManager : MonoBehaviourPun
         {
           ScoreManager.Instance.ResetScore();
         }
+
+        // Reset da carta Scrum Master quando o jogo reinicia
+        if (ScrumMasterCardManager.Instance != null)
+        {
+          ScrumMasterCardManager.Instance.ResetCartaStatus();
+        }
       }
 
       if (gameStateManager != null)

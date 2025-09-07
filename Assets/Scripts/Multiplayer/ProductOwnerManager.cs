@@ -105,7 +105,7 @@ public class ProductOwnerManager : MonoBehaviourPunCallbacks
         bool isLocalPlayerPO = IsLocalPlayerProductOwner();
 
         // Atualizar visibilidade do botão
-        becomeProductOwnerButton.gameObject.SetActive(!hasProductOwner && PhotonNetwork.InRoom);
+        becomeProductOwnerButton.transform.parent.gameObject.SetActive(!hasProductOwner && PhotonNetwork.InRoom);
 
         if (gameStateManager == null) return;
 
