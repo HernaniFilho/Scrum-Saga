@@ -576,6 +576,42 @@ public class SprintReviewManager : MonoBehaviourPunCallbacks
         }
     }
     
+    public void ResetSprintReviewManager()
+    {
+        hasDisplayedCard = false;
+        hasVoted = false;
+        isShowingResult = false;
+        showingCard = true;
+        networkCardData = null;
+        
+        // Esconder e resetar UI
+        if (displayText != null)
+            displayText.gameObject.SetActive(false);
+            
+        // Esconder botões de avaliação
+        if (highSatisfactionButton != null)
+            highSatisfactionButton.transform.parent.gameObject.SetActive(false);
+        if (mediumSatisfactionButton != null)
+            mediumSatisfactionButton.transform.parent.gameObject.SetActive(false);
+        if (lowSatisfactionButton != null)
+            lowSatisfactionButton.transform.parent.gameObject.SetActive(false);
+            
+        // Esconder botão de toggle view
+        if (toggleViewButton != null)
+            toggleViewButton.gameObject.SetActive(false);
+            
+        // Limpar carta exibida
+        ClearDisplayedCard();
+        
+        // Mostrar tabuleiro se estava escondido
+        if (tabuleiro != null)
+            tabuleiro.SetActive(true);
+            
+        // Ativar shapesContainer se estava desativado
+        if (shapesContainer != null)
+            shapesContainer.SetActive(true);
+    }
+
     private Transform FindChildByName(Transform parent, string name)
     {
         foreach (Transform child in parent)

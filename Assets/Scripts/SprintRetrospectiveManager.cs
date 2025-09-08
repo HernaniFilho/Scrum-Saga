@@ -355,6 +355,25 @@ public class SprintRetrospectiveManager : MonoBehaviourPunCallbacks
         DestroyAllCards();
     }
 
+    public void ResetSprintRetrospectiveManager()
+    {
+        cartaJaCriada = false;
+        hasStartedRetrospectivePhase = false;
+        
+        // Parar timer se estiver ativo
+        if (TimerManager.Instance != null)
+        {
+            TimerManager.Instance.StopTimer("CartaAprendizagemTimer");
+        }
+        
+        // Esconder UI
+        if (resultadoAprendizagemText != null)
+            resultadoAprendizagemText.gameObject.SetActive(false);
+            
+        // Destruir todas as cartas
+        DestroyAllCards();
+    }
+
     #region Photon Callbacks
 
     public override void OnRoomPropertiesUpdate(Hashtable propertiesThatChanged)

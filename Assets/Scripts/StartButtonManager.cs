@@ -132,4 +132,10 @@ public class StartButtonManager : MonoBehaviourPun
     {
         currentSprint = sprint;
     }
+
+    public void ResetSprints()
+    {
+        setCurrentSprint(0);
+        Debug.Log("Sprints resetadas para 0");
+    }
 }

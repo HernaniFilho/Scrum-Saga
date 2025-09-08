@@ -77,6 +77,11 @@ public class CardTarefas : MonoBehaviour
 
     void OnMouseDown()
     {
+        if (ResetGameManager.IsResetPopupOpen)
+        {
+            return;
+        }
+        
         // Só destrói se não foi selecionada
         if (!isSelected)
         {

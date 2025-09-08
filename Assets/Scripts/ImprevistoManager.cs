@@ -557,6 +557,27 @@ public class ImprevistoManager : MonoBehaviourPunCallbacks
         DestroyAllCards();
     }
 
+    public void ResetImprevistoManager()
+    {
+        cartaJaCriada = false;
+        hasStartedImprevistoPhase = false;
+        
+        // Parar timers se estiverem ativos
+        if (TimerManager.Instance != null)
+        {
+            TimerManager.Instance.StopTimer("ImprevistoCartaTimer");
+            TimerManager.Instance.StopTimer("ImprevistoNeutralizacaoTimer");
+            TimerManager.Instance.StopTimer("ImprevistoRemovidoTimer");
+        }
+        
+        // Esconder UI
+        if (resultadoImprevistoText != null)
+            resultadoImprevistoText.gameObject.SetActive(false);
+            
+        // Destruir todas as cartas
+        DestroyAllCards();
+    }
+
     #region Photon Callbacks
 
     public override void OnRoomPropertiesUpdate(Hashtable propertiesThatChanged)

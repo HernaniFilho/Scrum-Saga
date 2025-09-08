@@ -101,6 +101,11 @@ public class CardImprevistos : MonoBehaviour
 
     void OnMouseDown()
     {
+        if (ResetGameManager.IsResetPopupOpen)
+        {
+            return;
+        }
+        
         Debug.Log("Card de Imprevisto clicado.");
         
         // Se for durante a fase de Imprevisto e tiver manager, usar o sistema de networking

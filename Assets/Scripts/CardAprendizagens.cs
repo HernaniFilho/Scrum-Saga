@@ -108,6 +108,11 @@ public class CardAprendizagens : MonoBehaviour
     }
     void OnMouseDown()
     {
+        if (ResetGameManager.IsResetPopupOpen)
+        {
+            return;
+        }
+        
         // Durante a fase de Sprint Retrospective, apenas o PO pode clicar na carta
         if (GameStateManager.Instance != null && 
             GameStateManager.Instance.GetCurrentState() == GameStateManager.GameState.SprintRetrospective &&

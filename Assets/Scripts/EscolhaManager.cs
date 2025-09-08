@@ -430,6 +430,25 @@ public class EscolhaManager : MonoBehaviourPunCallbacks
         DestroyAllCards();
     }
 
+    public void ResetEscolhaManager()
+    {
+        cartaJaCriada = false;
+        hasStartedEscolhaPhase = false;
+        
+        // Parar timer se estiver ativo
+        if (TimerManager.Instance != null)
+        {
+            TimerManager.Instance.StopTimer("ResultadoEscolhaTimer");
+        }
+        
+        // Esconder UI
+        if (resultadoEscolhaText != null)
+            resultadoEscolhaText.gameObject.SetActive(false);
+            
+        // Destruir todas as cartas
+        DestroyAllCards();
+    }
+
     #region Photon Callbacks
 
     public override void OnRoomPropertiesUpdate(Hashtable propertiesThatChanged)

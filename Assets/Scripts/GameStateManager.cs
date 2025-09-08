@@ -143,4 +143,10 @@ public class GameStateManager : MonoBehaviour
             Debug.Log("Já está no primeiro estado!");
         }
     }
+
+    public void ResetToInitialState()
+    {
+        ChangeState(GameState.Inicio);
+        Debug.Log("Estado resetado para o inicial (Inicio)");
+    }
 }

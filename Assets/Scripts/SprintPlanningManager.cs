@@ -432,6 +432,28 @@ public class SprintPlanningManager : MonoBehaviourPun
     return null;
   }
 
+  public void ResetSprintPlanning()
+  {
+    ClearSpawnedCards();
+    hasStartedDraft = false;
+    cardSelectionCompleted = false;
+    selectedCard = null;
+    selectedCardData = null;
+    hasSpawnedCardsThisPhase = false;
+    
+    // Esconder elementos de UI
+    if (startDraftButton != null)
+      startDraftButton.gameObject.SetActive(false);
+    if (stopDraftContainer != null)  
+      stopDraftContainer.gameObject.SetActive(false);
+    if (draftText != null)
+      draftText.gameObject.SetActive(false);
+    if (legendaContainer != null)
+      legendaContainer.SetActive(false);
+      
+    Debug.Log("SprintPlanningManager resetado - cartas e UI limpos");
+  }
+
   void OnDestroy()
   {
     ClearSpawnedCards();
