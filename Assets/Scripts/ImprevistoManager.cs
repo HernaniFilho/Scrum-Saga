@@ -16,6 +16,9 @@ public class ImprevistoManager : MonoBehaviourPunCallbacks
     
     [Header("Result UI")]
     public TMP_Text resultadoImprevistoText;
+    
+    [Header("Pause Button")]
+    public Button pauseButton;
 
     [Header("Configuration")]
     public float cardShowDuration = 15f;
@@ -101,6 +104,17 @@ public class ImprevistoManager : MonoBehaviourPunCallbacks
         if (resultadoImprevistoText != null)
         {
             resultadoImprevistoText.gameObject.SetActive(false);
+        }
+        
+        SetupPauseButton();
+    }
+    
+    void SetupPauseButton()
+    {
+        if (pauseButton != null)
+        {
+            pauseButton.gameObject.SetActive(false);
+            pauseButton.onClick.RemoveAllListeners();
         }
     }
 
@@ -211,6 +225,9 @@ public class ImprevistoManager : MonoBehaviourPunCallbacks
         {
             TimerManager.Instance.StartTimer(cardShowDuration, OnCartaTimeoutComplete, "ImprevistoCartaTimer");
         }
+        
+        // Mostrar botão de pause para PO
+        UpdatePauseButtonVisibility();
     }
 
     void CreateSyncedCard(float spawnDistance, float[] rotation, string texto, string[] naturesKeys, int[] naturesValues, string[] debuffsKeys, int[] debuffsValues, bool useFirstOnly)
@@ -403,6 +420,9 @@ public class ImprevistoManager : MonoBehaviourPunCallbacks
         {
             TimerManager.Instance.StartTimer(5f, OnNeutralizacaoTimerComplete, "ImprevistoNeutralizacaoTimer");
         }
+        
+        // Atualizar botão de pause para o novo timer
+        UpdatePauseButtonVisibility();
     }
 
     [PunRPC]
@@ -440,6 +460,9 @@ public class ImprevistoManager : MonoBehaviourPunCallbacks
         {
             TimerManager.Instance.StartTimer(5f, OnRemovidoTimerComplete, "ImprevistoRemovidoTimer");
         }
+        
+        // Atualizar botão de pause para o novo timer
+        UpdatePauseButtonVisibility();
     }
 
     void OnCartaTimeoutComplete()
@@ -456,6 +479,9 @@ public class ImprevistoManager : MonoBehaviourPunCallbacks
             gameStateManager.NextState();
             Debug.Log("Avançando para o próximo estado do jogo: " + gameStateManager.GetCurrentState());
         }
+        
+        // Atualizar botão de pause quando timer acaba
+        UpdatePauseButtonVisibility();
     }
     
     void OnRemovidoTimerComplete()
@@ -467,6 +493,9 @@ public class ImprevistoManager : MonoBehaviourPunCallbacks
             gameStateManager.NextState();
             Debug.Log("Avançando para o próximo estado do jogo: " + gameStateManager.GetCurrentState());
         }
+        
+        // Atualizar botão de pause quando timer acaba
+        UpdatePauseButtonVisibility();
     }
 
     void ApplyDebuffsFromExistingCards()
@@ -553,6 +582,10 @@ public class ImprevistoManager : MonoBehaviourPunCallbacks
         if (resultadoImprevistoText != null)
             resultadoImprevistoText.gameObject.SetActive(false);
             
+        // Esconder botão de pause
+        if (pauseButton != null)
+            pauseButton.gameObject.SetActive(false);
+            
         // Destruir cartas restantes
         DestroyAllCards();
     }
@@ -576,6 +609,59 @@ public class ImprevistoManager : MonoBehaviourPunCallbacks
             
         // Destruir todas as cartas
         DestroyAllCards();
+    }
+    
+    // Método para atualizar visibilidade do botão de pause
+    void UpdatePauseButtonVisibility()
+    {
+        if (pauseButton == null) return;
+        
+        bool isPO = productOwnerManager != null && productOwnerManager.IsLocalPlayerProductOwner();
+        bool hasActiveTimer = TimerManager.Instance != null && TimerManager.Instance.IsTimerActive();
+        bool isImprevistoPhase = gameStateManager != null && gameStateManager.GetCurrentState() == GameStateManager.GameState.Imprevisto;
+        
+        // Mostrar botão se é PO, tem timer ativo E está na fase de Imprevisto
+        if (isPO && hasActiveTimer && isImprevistoPhase)
+        {
+            pauseButton.gameObject.SetActive(true);
+            
+            // Configurar onClick baseado no estado atual
+            pauseButton.onClick.RemoveAllListeners();
+            
+            if (TimerManager.Instance.IsPaused())
+            {
+                pauseButton.GetComponentInChildren<TMP_Text>().text = "Despausar";
+                pauseButton.onClick.AddListener(() => UnpauseTimers());
+            }
+            else
+            {
+                pauseButton.GetComponentInChildren<TMP_Text>().text = "Pausar";
+                pauseButton.onClick.AddListener(() => PauseTimers());
+            }
+        }
+        else
+        {
+            pauseButton.gameObject.SetActive(false);
+        }
+    }
+    
+    // Métodos para controle de pause pelo PO
+    public void PauseTimers()
+    {
+        if (TimerManager.Instance != null && productOwnerManager != null && productOwnerManager.IsLocalPlayerProductOwner())
+        {
+            TimerManager.Instance.PauseTimer();
+            UpdatePauseButtonVisibility();
+        }
+    }
+    
+    public void UnpauseTimers()
+    {
+        if (TimerManager.Instance != null && productOwnerManager != null && productOwnerManager.IsLocalPlayerProductOwner())
+        {
+            TimerManager.Instance.UnpauseTimer();
+            UpdatePauseButtonVisibility();
+        }
     }
 
     #region Photon Callbacks

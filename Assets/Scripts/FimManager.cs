@@ -13,6 +13,9 @@ public class FimManager : MonoBehaviourPun
     [Header("Result UI")]
     public TMP_Text fimText;
     public TMP_Text feedbackText;
+    
+    [Header("Pause Button")]
+    public Button pauseButton;
 
     [Header("Configuration")]
     public float fimPhaseDefaultDuration = 10f;
@@ -97,6 +100,17 @@ public class FimManager : MonoBehaviourPun
       {
         feedbackText.gameObject.SetActive(false);
       }
+      
+      SetupPauseButton();
+    }
+    
+    void SetupPauseButton()
+    {
+        if (pauseButton != null)
+        {
+            pauseButton.gameObject.SetActive(false);
+            pauseButton.onClick.RemoveAllListeners();
+        }
     }
 
     public void StartFimPhase()
@@ -146,6 +160,9 @@ public class FimManager : MonoBehaviourPun
       {
         TimerManager.Instance.StartTimer(isLastSprint ? fimPhaseFeedbackDuration : fimPhaseDefaultDuration, onTimerComplete, "FimTimer");
       }
+      
+      // Mostrar botão de pause para PO
+      UpdatePauseButtonVisibility();
     }
 
     void onTimerComplete()
@@ -181,6 +198,9 @@ public class FimManager : MonoBehaviourPun
       {
         gameStateManager.NextState();
       }
+      
+      // Atualizar botão de pause quando timer acaba
+      UpdatePauseButtonVisibility();
     }
 
     [PunRPC]
@@ -215,5 +235,62 @@ public class FimManager : MonoBehaviourPun
         fimText.gameObject.SetActive(false);
       if (feedbackText != null)
         feedbackText.gameObject.SetActive(false);
+        
+      // Esconder botão de pause
+      if (pauseButton != null)
+        pauseButton.gameObject.SetActive(false);
+    }
+    
+    // Método para atualizar visibilidade do botão de pause
+    void UpdatePauseButtonVisibility()
+    {
+        if (pauseButton == null) return;
+        
+        bool isPO = productOwnerManager != null && productOwnerManager.IsLocalPlayerProductOwner();
+        bool hasActiveTimer = TimerManager.Instance != null && TimerManager.Instance.IsTimerActive();
+        bool isFimPhase = gameStateManager != null && gameStateManager.GetCurrentState() == GameStateManager.GameState.Fim;
+        
+        // Mostrar botão se é PO, tem timer ativo E está na fase de Fim
+        if (isPO && hasActiveTimer && isFimPhase)
+        {
+            pauseButton.gameObject.SetActive(true);
+            
+            // Configurar onClick baseado no estado atual
+            pauseButton.onClick.RemoveAllListeners();
+            
+            if (TimerManager.Instance.IsPaused())
+            {
+                pauseButton.GetComponentInChildren<TMP_Text>().text = "Despausar";
+                pauseButton.onClick.AddListener(() => UnpauseTimers());
+            }
+            else
+            {
+                pauseButton.GetComponentInChildren<TMP_Text>().text = "Pausar";
+                pauseButton.onClick.AddListener(() => PauseTimers());
+            }
+        }
+        else
+        {
+            pauseButton.gameObject.SetActive(false);
+        }
+    }
+    
+    // Métodos para controle de pause pelo PO
+    public void PauseTimers()
+    {
+        if (TimerManager.Instance != null && productOwnerManager != null && productOwnerManager.IsLocalPlayerProductOwner())
+        {
+            TimerManager.Instance.PauseTimer();
+            UpdatePauseButtonVisibility();
+        }
+    }
+    
+    public void UnpauseTimers()
+    {
+        if (TimerManager.Instance != null && productOwnerManager != null && productOwnerManager.IsLocalPlayerProductOwner())
+        {
+            TimerManager.Instance.UnpauseTimer();
+            UpdatePauseButtonVisibility();
+        }
     }
 }

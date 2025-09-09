@@ -13,6 +13,9 @@ public class SprintRetrospectiveManager : MonoBehaviourPunCallbacks
     
     [Header("Result UI")]
     public TMP_Text resultadoAprendizagemText;
+    
+    [Header("Pause Button")]
+    public Button pauseButton;
 
     [Header("Configuration")]
     public float cardShowDuration = 7f;
@@ -96,6 +99,17 @@ public class SprintRetrospectiveManager : MonoBehaviourPunCallbacks
         if (resultadoAprendizagemText != null)
         {
             resultadoAprendizagemText.gameObject.SetActive(false);
+        }
+        
+        SetupPauseButton();
+    }
+    
+    void SetupPauseButton()
+    {
+        if (pauseButton != null)
+        {
+            pauseButton.gameObject.SetActive(false);
+            pauseButton.onClick.RemoveAllListeners();
         }
     }
 
@@ -203,6 +217,9 @@ public class SprintRetrospectiveManager : MonoBehaviourPunCallbacks
                 photonView.RPC("BroadcastCartaRemovida", RpcTarget.All);
             }, "CartaAprendizagemTimer");
         }
+        
+        // Mostrar botão de pause para PO
+        UpdatePauseButtonVisibility();
     }
 
     void CreateSyncedCard(float spawnDistance, float[] rotation, string texto, string nature)
@@ -276,6 +293,10 @@ public class SprintRetrospectiveManager : MonoBehaviourPunCallbacks
             resultadoAprendizagemText.gameObject.SetActive(false);
         }
         
+        // Esconder botão de pause
+        if (pauseButton != null)
+            pauseButton.gameObject.SetActive(false);
+        
         // Avançar para próximo estado (apenas o PO pode fazer isso)
         if (productOwnerManager != null && productOwnerManager.IsLocalPlayerProductOwner())
         {
@@ -294,6 +315,9 @@ public class SprintRetrospectiveManager : MonoBehaviourPunCallbacks
         {
             Debug.LogError("GameStateManager não encontrado para avançar estado!");
         }
+        
+        // Atualizar botão de pause quando avança estado
+        UpdatePauseButtonVisibility();
     }
 
     void UpdateScoreFromExistingCards()
@@ -351,6 +375,10 @@ public class SprintRetrospectiveManager : MonoBehaviourPunCallbacks
         if (resultadoAprendizagemText != null)
             resultadoAprendizagemText.gameObject.SetActive(false);
             
+        // Esconder botão de pause
+        if (pauseButton != null)
+            pauseButton.gameObject.SetActive(false);
+            
         // Destruir cartas restantes
         DestroyAllCards();
     }
@@ -372,6 +400,59 @@ public class SprintRetrospectiveManager : MonoBehaviourPunCallbacks
             
         // Destruir todas as cartas
         DestroyAllCards();
+    }
+    
+    // Método para atualizar visibilidade do botão de pause
+    void UpdatePauseButtonVisibility()
+    {
+        if (pauseButton == null) return;
+        
+        bool isPO = productOwnerManager != null && productOwnerManager.IsLocalPlayerProductOwner();
+        bool hasActiveTimer = TimerManager.Instance != null && TimerManager.Instance.IsTimerActive();
+        bool isRetrospectivePhase = gameStateManager != null && gameStateManager.GetCurrentState() == GameStateManager.GameState.SprintRetrospective;
+        
+        // Mostrar botão se é PO, tem timer ativo E está na fase de Sprint Retrospective
+        if (isPO && hasActiveTimer && isRetrospectivePhase)
+        {
+            pauseButton.gameObject.SetActive(true);
+            
+            // Configurar onClick baseado no estado atual
+            pauseButton.onClick.RemoveAllListeners();
+            
+            if (TimerManager.Instance.IsPaused())
+            {
+                pauseButton.GetComponentInChildren<TMP_Text>().text = "Despausar";
+                pauseButton.onClick.AddListener(() => UnpauseTimers());
+            }
+            else
+            {
+                pauseButton.GetComponentInChildren<TMP_Text>().text = "Pausar";
+                pauseButton.onClick.AddListener(() => PauseTimers());
+            }
+        }
+        else
+        {
+            pauseButton.gameObject.SetActive(false);
+        }
+    }
+    
+    // Métodos para controle de pause pelo PO
+    public void PauseTimers()
+    {
+        if (TimerManager.Instance != null && productOwnerManager != null && productOwnerManager.IsLocalPlayerProductOwner())
+        {
+            TimerManager.Instance.PauseTimer();
+            UpdatePauseButtonVisibility();
+        }
+    }
+    
+    public void UnpauseTimers()
+    {
+        if (TimerManager.Instance != null && productOwnerManager != null && productOwnerManager.IsLocalPlayerProductOwner())
+        {
+            TimerManager.Instance.UnpauseTimer();
+            UpdatePauseButtonVisibility();
+        }
     }
 
     #region Photon Callbacks

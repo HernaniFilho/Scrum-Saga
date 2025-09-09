@@ -4680,6 +4680,17 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 769508456}
   m_CullTransparentMesh: 1
+--- !u!114 &772313919 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 8303353891445177236, guid: 964db72f22499b0469a62ce15906a05e, type: 3}
+  m_PrefabInstance: {fileID: 3761204002797785133}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &772591967
 GameObject:
   m_ObjectHideFlags: 0
@@ -10607,6 +10618,10 @@ PrefabInstance:
       propertyPath: m_text
       value: TextoTextoTextoTextoTextoTextoTextoTextoTexto
       objectReference: {fileID: 0}
+    - target: {fileID: 1098745967965410178, guid: 964db72f22499b0469a62ce15906a05e, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 1099411464046128981, guid: 964db72f22499b0469a62ce15906a05e, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
@@ -11005,6 +11020,10 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 2034086609283537876, guid: 964db72f22499b0469a62ce15906a05e, type: 3}
+      propertyPath: pauseButton
+      value: 
+      objectReference: {fileID: 772313919}
     - target: {fileID: 2034086609283537876, guid: 964db72f22499b0469a62ce15906a05e, type: 3}
       propertyPath: deckEscolhas
       value: 
@@ -11469,6 +11488,10 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 3226385155155932653, guid: 964db72f22499b0469a62ce15906a05e, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 3246986470618303966, guid: 964db72f22499b0469a62ce15906a05e, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
@@ -11541,6 +11564,10 @@ PrefabInstance:
       propertyPath: tabuleiro
       value: 
       objectReference: {fileID: 1825298117}
+    - target: {fileID: 3366149858932993470, guid: 964db72f22499b0469a62ce15906a05e, type: 3}
+      propertyPath: pauseButton
+      value: 
+      objectReference: {fileID: 772313919}
     - target: {fileID: 3366149858932993470, guid: 964db72f22499b0469a62ce15906a05e, type: 3}
       propertyPath: feedbackText
       value: 
@@ -11846,6 +11873,10 @@ PrefabInstance:
       value: -114.91
       objectReference: {fileID: 0}
     - target: {fileID: 4050745912216720326, guid: 964db72f22499b0469a62ce15906a05e, type: 3}
+      propertyPath: pauseButton
+      value: 
+      objectReference: {fileID: 772313919}
+    - target: {fileID: 4050745912216720326, guid: 964db72f22499b0469a62ce15906a05e, type: 3}
       propertyPath: deckImprevistos
       value: 
       objectReference: {fileID: 105810115}
@@ -11977,6 +12008,10 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 4239433865587748538, guid: 964db72f22499b0469a62ce15906a05e, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4245431762836551441, guid: 964db72f22499b0469a62ce15906a05e, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
@@ -12093,6 +12128,10 @@ PrefabInstance:
       propertyPath: displayText
       value: 
       objectReference: {fileID: 104662301}
+    - target: {fileID: 4471870522578745055, guid: 964db72f22499b0469a62ce15906a05e, type: 3}
+      propertyPath: pauseButton
+      value: 
+      objectReference: {fileID: 772313919}
     - target: {fileID: 4471870522578745055, guid: 964db72f22499b0469a62ce15906a05e, type: 3}
       propertyPath: waitingText
       value: 
@@ -12439,6 +12478,10 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 5981719426145060136, guid: 964db72f22499b0469a62ce15906a05e, type: 3}
+      propertyPath: m_text
+      value: Despausar
+      objectReference: {fileID: 0}
     - target: {fileID: 6035126267557665212, guid: 964db72f22499b0469a62ce15906a05e, type: 3}
       propertyPath: m_SizeDelta.x
       value: 266.5
@@ -12622,6 +12665,30 @@ PrefabInstance:
     - target: {fileID: 6492108257642029542, guid: 964db72f22499b0469a62ce15906a05e, type: 3}
       propertyPath: m_AnchoredPosition.y
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6525216046772261418, guid: 964db72f22499b0469a62ce15906a05e, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6525216046772261418, guid: 964db72f22499b0469a62ce15906a05e, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6525216046772261418, guid: 964db72f22499b0469a62ce15906a05e, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6525216046772261418, guid: 964db72f22499b0469a62ce15906a05e, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 29.200012
+      objectReference: {fileID: 0}
+    - target: {fileID: 6525216046772261418, guid: 964db72f22499b0469a62ce15906a05e, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 86.09
+      objectReference: {fileID: 0}
+    - target: {fileID: 6525216046772261418, guid: 964db72f22499b0469a62ce15906a05e, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: -14.600006
       objectReference: {fileID: 0}
     - target: {fileID: 6653298459536278151, guid: 964db72f22499b0469a62ce15906a05e, type: 3}
       propertyPath: m_AnchorMax.y
@@ -13056,6 +13123,10 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8106075268707583193, guid: 964db72f22499b0469a62ce15906a05e, type: 3}
+      propertyPath: pauseButton
+      value: 
+      objectReference: {fileID: 772313919}
+    - target: {fileID: 8106075268707583193, guid: 964db72f22499b0469a62ce15906a05e, type: 3}
       propertyPath: cardShowDuration
       value: 7
       objectReference: {fileID: 0}
@@ -13163,6 +13234,10 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: -14.600006
       objectReference: {fileID: 0}
+    - target: {fileID: 8421346898749298963, guid: 964db72f22499b0469a62ce15906a05e, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 8540178464200607484, guid: 964db72f22499b0469a62ce15906a05e, type: 3}
       propertyPath: m_Name
       value: Main
@@ -13237,6 +13312,10 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8772963183028647696, guid: 964db72f22499b0469a62ce15906a05e, type: 3}
       propertyPath: m_AnchoredPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8822128198584512928, guid: 964db72f22499b0469a62ce15906a05e, type: 3}
+      propertyPath: m_SizeDelta.x
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8822540770196749860, guid: 964db72f22499b0469a62ce15906a05e, type: 3}

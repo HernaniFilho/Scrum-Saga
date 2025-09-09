@@ -15,6 +15,9 @@ public class EscolhaManager : MonoBehaviourPunCallbacks
     
     [Header("Result UI")]
     public TMP_Text resultadoEscolhaText;
+    
+    [Header("Pause Button")]
+    public Button pauseButton;
 
     [Header("Configuration")]
     public float resultShowDuration = 5f;
@@ -101,6 +104,17 @@ public class EscolhaManager : MonoBehaviourPunCallbacks
         {
             resultadoEscolhaText.gameObject.SetActive(false);
         }
+        
+        SetupPauseButton();
+    }
+    
+    void SetupPauseButton()
+    {
+        if (pauseButton != null)
+        {
+            pauseButton.gameObject.SetActive(false);
+            pauseButton.onClick.RemoveAllListeners();
+        }
     }
 
     public void StartEscolhaPhase()
@@ -163,12 +177,13 @@ public class EscolhaManager : MonoBehaviourPunCallbacks
         }
 
         Debug.Log($"Carta de escolha pega por: {playerName}");
-        
+
         // Atualizar UI baseado no papel do jogador
+        bool isPO = false;
         if (resultadoEscolhaText != null)
         {
-            bool isPO = productOwnerManager != null && productOwnerManager.IsLocalPlayerProductOwner();
-            
+            isPO = productOwnerManager != null && productOwnerManager.IsLocalPlayerProductOwner();
+
             if (isPO)
             {
                 resultadoEscolhaText.gameObject.SetActive(false);
@@ -186,6 +201,9 @@ public class EscolhaManager : MonoBehaviourPunCallbacks
             cartaJaCriada = true;
             CreateSyncedCard(spawnDistance, rotation, texto, trilhas, pontos);
         }
+        
+        // Atualizar botão de pause se aplicável
+        UpdatePauseButtonVisibility();
     }
 
     void CreateSyncedCard(float spawnDistance, float[] rotation, string texto, string[] trilhas, int[] pontos)
@@ -364,6 +382,9 @@ public class EscolhaManager : MonoBehaviourPunCallbacks
         {
             TimerManager.Instance.StartTimer(resultShowDuration, onTimerComplete, "ResultadoEscolhaTimer");
         }
+        
+        // Atualizar botão de pause para o novo timer
+        UpdatePauseButtonVisibility();
     }
 
     void onTimerComplete()
@@ -375,6 +396,9 @@ public class EscolhaManager : MonoBehaviourPunCallbacks
             gameStateManager.NextState();
             Debug.Log("Avançando para o próximo estado do jogo: " + gameStateManager.GetCurrentState());
         }
+        
+        // Atualizar botão de pause quando timer acaba
+        UpdatePauseButtonVisibility();
     }
 
     [PunRPC]
@@ -426,6 +450,10 @@ public class EscolhaManager : MonoBehaviourPunCallbacks
         if (resultadoEscolhaText != null)
             resultadoEscolhaText.gameObject.SetActive(false);
             
+        // Esconder botão de pause
+        if (pauseButton != null)
+            pauseButton.gameObject.SetActive(false);
+            
         // Destruir cartas restantes
         DestroyAllCards();
     }
@@ -447,6 +475,59 @@ public class EscolhaManager : MonoBehaviourPunCallbacks
             
         // Destruir todas as cartas
         DestroyAllCards();
+    }
+    
+    // Método para atualizar visibilidade do botão de pause
+    void UpdatePauseButtonVisibility()
+    {
+        if (pauseButton == null) return;
+        
+        bool isPO = productOwnerManager != null && productOwnerManager.IsLocalPlayerProductOwner();
+        bool hasActiveTimer = TimerManager.Instance != null && TimerManager.Instance.IsTimerActive();
+        bool isEscolhaPhase = gameStateManager != null && gameStateManager.GetCurrentState() == GameStateManager.GameState.Escolha;
+        
+        // Mostrar botão se é PO, tem timer ativo E está na fase de Escolha
+        if (isPO && hasActiveTimer && isEscolhaPhase)
+        {
+            pauseButton.gameObject.SetActive(true);
+            
+            // Configurar onClick baseado no estado atual
+            pauseButton.onClick.RemoveAllListeners();
+            
+            if (TimerManager.Instance.IsPaused())
+            {
+                pauseButton.GetComponentInChildren<TMP_Text>().text = "Despausar";
+                pauseButton.onClick.AddListener(() => UnpauseTimers());
+            }
+            else
+            {
+                pauseButton.GetComponentInChildren<TMP_Text>().text = "Pausar";
+                pauseButton.onClick.AddListener(() => PauseTimers());
+            }
+        }
+        else
+        {
+            pauseButton.gameObject.SetActive(false);
+        }
+    }
+    
+    // Métodos para controle de pause pelo PO
+    public void PauseTimers()
+    {
+        if (TimerManager.Instance != null && productOwnerManager != null && productOwnerManager.IsLocalPlayerProductOwner())
+        {
+            TimerManager.Instance.PauseTimer();
+            UpdatePauseButtonVisibility();
+        }
+    }
+    
+    public void UnpauseTimers()
+    {
+        if (TimerManager.Instance != null && productOwnerManager != null && productOwnerManager.IsLocalPlayerProductOwner())
+        {
+            TimerManager.Instance.UnpauseTimer();
+            UpdatePauseButtonVisibility();
+        }
     }
 
     #region Photon Callbacks

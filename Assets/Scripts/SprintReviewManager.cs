@@ -19,6 +19,9 @@ public class SprintReviewManager : MonoBehaviourPunCallbacks
     public UnityEngine.UI.Button toggleViewButton;
     public TMP_Text displayText; // Unified text for waiting, result, and hover messages
     
+    [Header("Pause Button")]
+    public UnityEngine.UI.Button pauseButton;
+    
     private GameObject buttonsContainer;
     private bool showingCard = true; // Start showing card
 
@@ -153,6 +156,17 @@ public class SprintReviewManager : MonoBehaviourPunCallbacks
         if (displayText != null)
         {
             displayText.gameObject.SetActive(false);
+        }
+        
+        SetupPauseButton();
+    }
+    
+    void SetupPauseButton()
+    {
+        if (pauseButton != null)
+        {
+            pauseButton.gameObject.SetActive(false);
+            pauseButton.onClick.RemoveAllListeners();
         }
     }
     
@@ -453,6 +467,9 @@ public class SprintReviewManager : MonoBehaviourPunCallbacks
                 onTimerComplete(level);
             }, "ResultadoSprintReviewTimer");
         }
+        
+        // Atualizar botão de pause para o novo timer
+        UpdatePauseButtonVisibility();
     }
     
     private void ApplyScoreChanges(SatisfactionLevel level)
@@ -565,6 +582,9 @@ public class SprintReviewManager : MonoBehaviourPunCallbacks
         {
             gameStateManager.NextState();
         }
+        
+        // Atualizar botão de pause quando timer acaba
+        UpdatePauseButtonVisibility();
     }
     
     private void ClearDisplayedCard()
@@ -600,6 +620,10 @@ public class SprintReviewManager : MonoBehaviourPunCallbacks
         if (toggleViewButton != null)
             toggleViewButton.gameObject.SetActive(false);
             
+        // Esconder botão de pause
+        if (pauseButton != null)
+            pauseButton.gameObject.SetActive(false);
+            
         // Limpar carta exibida
         ClearDisplayedCard();
         
@@ -612,6 +636,59 @@ public class SprintReviewManager : MonoBehaviourPunCallbacks
             shapesContainer.SetActive(true);
     }
 
+    // Método para atualizar visibilidade do botão de pause
+    void UpdatePauseButtonVisibility()
+    {
+        if (pauseButton == null) return;
+        
+        bool isPO = productOwnerManager != null && productOwnerManager.IsLocalPlayerProductOwner();
+        bool hasActiveTimer = TimerManager.Instance != null && TimerManager.Instance.IsTimerActive();
+        bool isSprintReviewPhase = gameStateManager != null && gameStateManager.GetCurrentState() == GameStateManager.GameState.SprintReview;
+        
+        // Mostrar botão se é PO, tem timer ativo E está na fase de Sprint Review
+        if (isPO && hasActiveTimer && isSprintReviewPhase)
+        {
+            pauseButton.gameObject.SetActive(true);
+            
+            // Configurar onClick baseado no estado atual
+            pauseButton.onClick.RemoveAllListeners();
+            
+            if (TimerManager.Instance.IsPaused())
+            {
+                pauseButton.GetComponentInChildren<TMP_Text>().text = "Despausar";
+                pauseButton.onClick.AddListener(() => UnpauseTimers());
+            }
+            else
+            {
+                pauseButton.GetComponentInChildren<TMP_Text>().text = "Pausar";
+                pauseButton.onClick.AddListener(() => PauseTimers());
+            }
+        }
+        else
+        {
+            pauseButton.gameObject.SetActive(false);
+        }
+    }
+    
+    // Métodos para controle de pause pelo PO
+    public void PauseTimers()
+    {
+        if (TimerManager.Instance != null && productOwnerManager != null && productOwnerManager.IsLocalPlayerProductOwner())
+        {
+            TimerManager.Instance.PauseTimer();
+            UpdatePauseButtonVisibility();
+        }
+    }
+    
+    public void UnpauseTimers()
+    {
+        if (TimerManager.Instance != null && productOwnerManager != null && productOwnerManager.IsLocalPlayerProductOwner())
+        {
+            TimerManager.Instance.UnpauseTimer();
+            UpdatePauseButtonVisibility();
+        }
+    }
+    
     private Transform FindChildByName(Transform parent, string name)
     {
         foreach (Transform child in parent)
