@@ -16,7 +16,10 @@ public class CanvasManager : MonoBehaviourPunCallbacks, IPunObservable
 {
     [Header("Game Board")]
     [SerializeField] private GameObject tabuleiro;
-    
+
+    [Header("Pawn")]
+    [SerializeField] private GameObject pawn;
+
     [Header("Canvas Components")]
     [SerializeField] private GameObject canvasContainer;
     [SerializeField] private GameObject canvasDrawingBoard;
@@ -66,8 +69,10 @@ public class CanvasManager : MonoBehaviourPunCallbacks, IPunObservable
     {
         if (tabuleiro == null)
             tabuleiro = GameObject.Find("Tabuleiro");
+        if (pawn == null)
+            pawn = GameObject.Find("Pawn");
         if (canvasContainer == null)
-            canvasContainer = GameObject.Find("Canvas Container");
+                canvasContainer = GameObject.Find("Canvas Container");
 
         if (canvasContainer != null)
         {
@@ -133,10 +138,15 @@ public class CanvasManager : MonoBehaviourPunCallbacks, IPunObservable
                 tabuleiro.SetActive(false);
             }
 
-            if (canvasDrawingBoard != null)
+            if (pawn != null)
             {
-                canvasDrawingBoard.SetActive(true);
+                pawn.SetActive(false);
             }
+
+            if (canvasDrawingBoard != null)
+                {
+                    canvasDrawingBoard.SetActive(true);
+                }
 
             if (canvasShapesContainer != null)
             {
@@ -157,6 +167,11 @@ public class CanvasManager : MonoBehaviourPunCallbacks, IPunObservable
                 tabuleiro.SetActive(true);
             }
             
+            if (pawn != null)
+            {
+                pawn.SetActive(true);
+            }
+
             if (canvasDrawingBoard != null)
             {
                 canvasDrawingBoard.SetActive(false);

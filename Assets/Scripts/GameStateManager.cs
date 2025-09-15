@@ -23,7 +23,11 @@ public class GameStateManager : MonoBehaviour
 
     [Header("Referência ao Texto de Estado na UI")]
     public TMP_Text stateText;
-    
+
+    [Header("Referência ao Peão do jogo")]
+    public GameObject pawn;
+
+
     private static readonly Dictionary<GameState, string> stateDisplayNames = new Dictionary<GameState, string>
     {
         { GameState.Inicio,              "Início da Sprint" },
@@ -35,6 +39,19 @@ public class GameStateManager : MonoBehaviour
         { GameState.SprintReview,        "Sprint Review" },
         { GameState.SprintRetrospective, "Sprint Retrospective" },
         { GameState.Fim,                 "Fim da Sprint" }
+    };
+
+    private static readonly Dictionary<GameState, Vector3> statePawnPosition = new Dictionary<GameState, Vector3>
+    {
+        { GameState.Inicio,              new Vector3(50, 10, -175)    },
+        { GameState.SprintPlanning,      new Vector3(-35, 10, -175)    },
+        { GameState.DailyScrum,          new Vector3(-105, 10, -175)       },
+        { GameState.Imprevisto,          new Vector3(-105, 10, -55)        },
+        { GameState.Escolha,             new Vector3(-105, 10, 45)       },
+        { GameState.RealizacaoTarefa,    new Vector3(-105, 10, 150)      },
+        { GameState.SprintReview,        new Vector3(20, 10, 150)   },
+        { GameState.SprintRetrospective, new Vector3(120, 10, 65)   },
+        { GameState.Fim,                 new Vector3(120, 10, -75)     }
     };
 
     public static GameStateManager Instance { get; private set; }
@@ -49,6 +66,9 @@ public class GameStateManager : MonoBehaviour
 
         Instance = this;
         DontDestroyOnLoad(gameObject);
+        DontDestroyOnLoad(pawn);
+        pawn.transform.localScale = new Vector3(8, 8, 8);
+        pawn.SetActive(true);
     }
 
     void Start()
@@ -59,6 +79,13 @@ public class GameStateManager : MonoBehaviour
             return;
         }
 
+        if (pawn != null)
+        {
+            pawn.transform.localScale = new Vector3(8, 8, 8);
+            pawn.SetActive(true);
+            UpdatePawnPosition(currentState);
+        }
+        
         UpdateStateText();
         Debug.Log("GameStateManager iniciado com estado: " + currentState);
     }
@@ -67,6 +94,7 @@ public class GameStateManager : MonoBehaviour
     {
         currentState = newState;
         UpdateStateText();
+        UpdatePawnPosition(currentState);
         Debug.Log($"Estado alterado para: {currentState}");
 
         // Se NetworkGameStateManager existir, notificar outros jogadores
@@ -113,11 +141,34 @@ public class GameStateManager : MonoBehaviour
         }
     }
 
+    void UpdatePawnPosition(GameState state)
+    {
+        Vector3 pawnPositon = statePawnPosition.TryGetValue(state, out Vector3 position) ? position : new Vector3(120, 10, -75);
+        GameObject currentPawn = GetPawn();
+
+        if (currentPawn != null)
+        {
+            currentPawn.transform.localPosition = pawnPositon;
+        }
+
+        Debug.Log($"Peão posicionado em: {currentPawn.transform.position}");
+    }
+
+    GameObject GetPawn()
+    {
+        if (pawn == null)
+        {
+            pawn = GameObject.FindWithTag("pawn");
+        }
+        return pawn;
+    }
+
+
     public void NextState()
     {
         GameState[] states = (GameState[])Enum.GetValues(typeof(GameState));
         int currentIndex = Array.IndexOf(states, currentState);
-        
+
         if (currentIndex < states.Length - 1)
         {
             ChangeState(states[currentIndex + 1]);
