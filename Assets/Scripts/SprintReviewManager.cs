@@ -19,6 +19,9 @@ public class SprintReviewManager : MonoBehaviourPunCallbacks
     public UnityEngine.UI.Button toggleViewButton;
     public TMP_Text displayText; // Unified text for waiting, result, and hover messages
     
+    [Header("Round Info Text")]
+    public TMP_Text roundInfoText;
+    
     [Header("Pause Button")]
     public UnityEngine.UI.Button pauseButton;
     
@@ -26,10 +29,15 @@ public class SprintReviewManager : MonoBehaviourPunCallbacks
     private bool showingCard = true; // Start showing card
 
     [Header("Configuration")]
-    public float resultShowDuration = 5f;
+    public float resultShowDuration = 10f;
     
     [Header("Camera Reference")]
     private Camera playerCamera;
+    
+    private List<GameObject> spawnedCards = new List<GameObject>();
+    
+    private Vector3 originalTogglePosition;
+    private bool hasMovedToggleButton = false;
     
     [Header("Product Owner Manager")]
     private ProductOwnerManager productOwnerManager;
@@ -42,14 +50,22 @@ public class SprintReviewManager : MonoBehaviourPunCallbacks
     public float cardSpawnDistance = 0.67f; // Same as selected card in SprintPlanningManager
     
     // Photon synchronization keys
-    private const string SELECTED_CARD_KEY = "SprintReview_SelectedCard";
     private const string SATISFACTION_RESULT_KEY = "SprintReview_Result";
+    private const string SHOW_APPROVED_CARDS_KEY = "SprintReview_ShowApprovedCards";
+    private const string FORCE_DRAWING_VIEW_KEY = "SprintReview_ForceDrawingView";
+    private const string RESULT_TIMER_COMPLETE_KEY = "SprintReview_ResultTimerComplete";
     
     private GameStateManager gameStateManager;
     private bool hasDisplayedCard = false;
     private bool hasVoted = false;
     private bool isShowingResult = false;
-    private SelectedCardData networkCardData;
+    
+    private bool isMultiRound = false;
+    private int currentRound = 0;
+    private int totalRounds = 1;
+    private List<SelectedCardData> cardsToReview = new List<SelectedCardData>();
+    private List<SatisfactionLevel> roundResults = new List<SatisfactionLevel>();
+    private bool hasBeenPrepared = false;
     
     // Satisfaction levels
     public enum SatisfactionLevel
@@ -93,13 +109,15 @@ public class SprintReviewManager : MonoBehaviourPunCallbacks
         {
             if (!hasDisplayedCard)
             {
-                // PO synchronizes selected card data for all players
-                if (productOwnerManager != null && productOwnerManager.IsLocalPlayerProductOwner())
+                // Only prepare rounds once per Sprint Review session
+                if (!hasBeenPrepared)
                 {
-                    SynchronizeSelectedCard();
+                    PrepareReviewRounds();
+                    hasBeenPrepared = true;
                 }
                 
-                DisplaySelectedCard();
+                
+                DisplayCurrentRoundCard();
                 ShowUI();
                 
                 // Initialize view state: start showing card
@@ -113,6 +131,12 @@ public class SprintReviewManager : MonoBehaviourPunCallbacks
             hasVoted = false;
             isShowingResult = false;
             showingCard = true;
+            isMultiRound = false;
+            currentRound = 0;
+            totalRounds = 1;
+            cardsToReview.Clear();
+            roundResults.Clear();
+            hasBeenPrepared = false;
             ClearDisplayedCard();
         }
     }
@@ -150,6 +174,12 @@ public class SprintReviewManager : MonoBehaviourPunCallbacks
         {
             toggleViewButton.onClick.AddListener(OnToggleViewClicked);
             UpdateToggleButtonText();
+            
+            RectTransform buttonRect = toggleViewButton.GetComponent<RectTransform>();
+            if (buttonRect != null)
+            {
+                originalTogglePosition = buttonRect.anchoredPosition;
+            }
         }
         
         // Setup unified display text
@@ -242,11 +272,20 @@ public class SprintReviewManager : MonoBehaviourPunCallbacks
             if (tabuleiro != null) tabuleiro.SetActive(false);
             
             if (displayedCard != null) displayedCard.SetActive(true);
+            
+            foreach (GameObject card in spawnedCards)
+            {
+                if (card != null) card.SetActive(true);
+            }
         }
         else
         {
-            // Showing drawing: hide card, show canvas and shapes (no toolbar/drawing ability)
             if (displayedCard != null) displayedCard.SetActive(false);
+            
+            foreach (GameObject card in spawnedCards)
+            {
+                if (card != null) card.SetActive(false);
+            }
             
             if (CanvasManager.Instance != null)
             {
@@ -262,56 +301,111 @@ public class SprintReviewManager : MonoBehaviourPunCallbacks
     
     private void InitializeViewState()
     {
-        // Start showing card (showingCard = true), so disable canvas and shapes
-        showingCard = true;
-        UpdateToggleButtonText();
-        ToggleView();
-    }
-    
-    private void SynchronizeSelectedCard()
-    {
-        if (SelectedCardStorage.Instance && SelectedCardStorage.Instance.HasSelectedCard())
+        bool isProductOwner = productOwnerManager != null && productOwnerManager.IsLocalPlayerProductOwner();
+        
+        if (isProductOwner)
         {
-            SelectedCardData cardData = SelectedCardStorage.Instance.GetSelectedCardData();
-            
-            // Create serializable data for network sync including texture info
-            var syncData = new Dictionary<string, object>()
-            {
-                ["imageName"] = cardData.imageName ?? "",
-                ["scores"] = cardData.scores ?? new Dictionary<string, int>()
-            };
-            
-            // Add full texture path for better synchronization
-            if (cardData.cardMaterial != null && cardData.cardMaterial.mainTexture != null)
-            {
-                // Store just the texture name, others will load from Images/Tarefas/Cartas
-                syncData["textureName"] = cardData.cardMaterial.mainTexture.name;
-            }
-            
-            Hashtable props = new Hashtable();
-            props[SELECTED_CARD_KEY] = syncData;
-            PhotonNetwork.CurrentRoom.SetCustomProperties(props);
-            
-            Debug.Log("Carta selecionada sincronizada para todos os jogadores");
+            showingCard = true;
+            UpdateToggleButtonText();
+            ToggleView();
+        }
+        else
+        {
+            showingCard = false;
+            if (toggleViewButton != null) toggleViewButton.gameObject.SetActive(false);
+            ShowDrawingViewForPlayers();
         }
     }
+
+    private void ShowDrawingViewForPlayers()
+    {
+        if (CanvasManager.Instance != null)
+        {
+            CanvasManager.Instance.ActivateCanvas();
+            CanvasManager.Instance.DeactivateToolbar();
+        }
+
+        if (shapesContainer != null) shapesContainer.SetActive(true);
+        if (tabuleiro != null) tabuleiro.SetActive(true);
+    }
+    
+
     
     private void SynchronizeResult(SatisfactionLevel level)
     {
         Hashtable props = new Hashtable();
         props[SATISFACTION_RESULT_KEY] = (int)level;
+        
+        int[] roundResultsArray = new int[roundResults.Count];
+        for (int i = 0; i < roundResults.Count; i++)
+        {
+            roundResultsArray[i] = (int)roundResults[i];
+        }
+        props["RoundResults"] = roundResultsArray;
+        props["CurrentRound"] = currentRound;
+        props["TotalRounds"] = totalRounds;
+        props["IsMultiRound"] = isMultiRound;
+        
         PhotonNetwork.CurrentRoom.SetCustomProperties(props);
         
-        Debug.Log($"Resultado de satisfação sincronizado: {level}");
+        Debug.Log($"Resultado de satisfação sincronizado: {level} - RoundResults compartilhados");
     }
     
-    private void DisplaySelectedCard()
+    private void PrepareReviewRounds()
     {
-        SelectedCardData cardData = GetCardDataForDisplay();
+        cardsToReview.Clear();
+        roundResults.Clear();
+        
+        bool hasSelectedCard = SelectedCardStorage.Instance != null && SelectedCardStorage.Instance.HasSelectedCard();
+        bool hasRejectedCard = SelectedCardStorage.Instance != null && SelectedCardStorage.Instance.HasRejectedCard();
+        
+        if (hasSelectedCard && hasRejectedCard)
+        {
+            isMultiRound = true;
+            totalRounds = 2;
+            cardsToReview.Add(SelectedCardStorage.Instance.GetRejectedCardData());
+            cardsToReview.Add(SelectedCardStorage.Instance.GetSelectedCardData());
+            Debug.Log("Sprint Review preparado para 2 rodadas (carta reprovada + nova carta)");
+        }
+        else if (hasSelectedCard)
+        {
+            isMultiRound = false;
+            totalRounds = 1;
+            cardsToReview.Add(SelectedCardStorage.Instance.GetSelectedCardData());
+            Debug.Log("Sprint Review preparado para 1 rodada (apenas nova carta)");
+        }
+        
+        currentRound = 0;
+    }
+
+    private void DisplayCurrentRoundCard()
+    {
+        if (currentRound >= cardsToReview.Count)
+        {
+            return;
+        }
+        
+        ClearDisplayedCard();
+        
+        bool isProductOwner = productOwnerManager != null && productOwnerManager.IsLocalPlayerProductOwner();
+        if (isProductOwner)
+        {
+            DisplayCardForPO();
+        }
+        
+        ShowRoundInfo();
+        
+        string roundType = (isMultiRound && currentRound == 0) ? "reprovada" : "nova";
+        Debug.Log($"Preparando para avaliar carta {roundType} (Rodada {currentRound + 1}/{totalRounds})");
+    }
+
+    private void DisplayCardForPO()
+    {
+        SelectedCardData cardData = cardsToReview[currentRound];
         
         if (cardData == null)
         {
-            Debug.LogError("Nenhuma carta selecionada encontrada para Sprint Review!");
+            Debug.LogError("Nenhuma carta encontrada para a rodada atual!");
             return;
         }
         
@@ -321,38 +415,47 @@ public class SprintReviewManager : MonoBehaviourPunCallbacks
             return;
         }
         
-        // Clear any existing card
-        ClearDisplayedCard();
-        
         // Calculate position (center of screen)
         Vector3 screenCenter = new Vector3(Screen.width / 2f + 160f, Screen.height / 2f, cardSpawnDistance);
         Vector3 centerPosition = playerCamera.ScreenToWorldPoint(screenCenter);
         
-        // Create card
+        // Create card for PO
         Quaternion rotation = Quaternion.Euler(-90, 0, 180);
         displayedCard = Instantiate(cardTarefasPrefab, centerPosition, rotation);
         displayedCard.transform.localScale = new Vector3(0.51f, 0.0001f, 0.65f);
         
-        // Apply card data (CardTarefas.Start() now respects existing materials)
+        // Apply card data
         ApplyCardData(displayedCard, cardData);
         
-        Debug.Log("Carta selecionada exibida para Sprint Review!");
+        Debug.Log("Carta exibida para o PO");
+    }
+
+    private void ShowRoundInfo()
+    {
+        if (roundInfoText != null && totalRounds > 1)
+        {
+            roundInfoText.text = "Carta Reprovada";
+            
+            if (roundInfoText.transform.parent != null)
+            {
+                roundInfoText.transform.parent.gameObject.SetActive(true);
+            }
+        }
+    }
+
+    private void HideRoundInfo()
+    {
+        if (roundInfoText != null && roundInfoText.transform.parent != null)
+        {
+            roundInfoText.transform.parent.gameObject.SetActive(false);
+        }
     }
     
     private SelectedCardData GetCardDataForDisplay()
     {
-        // For PO: use local SelectedCardStorage
-        if (productOwnerManager != null && productOwnerManager.IsLocalPlayerProductOwner())
+        if (SelectedCardStorage.Instance && SelectedCardStorage.Instance.HasSelectedCard())
         {
-            if (SelectedCardStorage.Instance && SelectedCardStorage.Instance.HasSelectedCard())
-            {
-                return SelectedCardStorage.Instance.GetSelectedCardData();
-            }
-        }
-        // For other players: use network synchronized data
-        else if (networkCardData != null)
-        {
-            return networkCardData;
+            return SelectedCardStorage.Instance.GetSelectedCardData();
         }
         
         return null;
@@ -411,27 +514,40 @@ public class SprintReviewManager : MonoBehaviourPunCallbacks
     {
         bool isProductOwner = productOwnerManager != null && productOwnerManager.IsLocalPlayerProductOwner();
         
-        // Always show toggle button
-        if (toggleViewButton != null) toggleViewButton.gameObject.SetActive(true);
-        
-        if (isProductOwner && !hasVoted)
+        if (isProductOwner)
         {
-            // Show buttons for Product Owner
-            if (buttonsContainer != null) buttonsContainer.SetActive(true);
-            
-            if (displayText != null) displayText.gameObject.SetActive(false);
-        }
-        else if (!isProductOwner && !hasVoted)
-        {
-            // Show waiting text for other players
-            if (displayText != null)
+            if (toggleViewButton != null) 
             {
-                displayText.text = "Aguardando feedback do PO...";
-                displayText.gameObject.SetActive(true);
+                toggleViewButton.gameObject.SetActive(true);
+                
+                RectTransform buttonRect = toggleViewButton.GetComponent<RectTransform>();
+                if (buttonRect != null)
+                {
+                    buttonRect.anchoredPosition = originalTogglePosition;
+                }
             }
             
-            // Hide buttons
-            if (buttonsContainer != null) buttonsContainer.SetActive(false);
+            if (!hasVoted)
+            {
+                if (buttonsContainer != null) buttonsContainer.SetActive(true);
+                
+                if (displayText != null) displayText.gameObject.SetActive(false);
+            }
+        }
+        else
+        {
+            if (toggleViewButton != null) toggleViewButton.gameObject.SetActive(false);
+            
+            if (!hasVoted)
+            {
+                if (displayText != null)
+                {
+                    displayText.text = "Aguardando feedback do PO...";
+                    displayText.gameObject.SetActive(true);
+                }
+                
+                if (buttonsContainer != null) buttonsContainer.SetActive(false);
+            }
         }
     }
 
@@ -443,11 +559,11 @@ public class SprintReviewManager : MonoBehaviourPunCallbacks
         if (!isProductOwner) return; // Only PO can vote
 
         hasVoted = true;
+        roundResults.Add(level);
 
-        Debug.Log($"Nível de satisfação selecionado: {level}");
+        Debug.Log($"Nível de satisfação selecionado: {level} (Rodada {currentRound + 1}/{totalRounds})");
 
-        // Apply score changes based on satisfaction level
-        ApplyScoreChanges(level);
+        HandleRoundSatisfaction(level);
 
         // Hide buttons
         if (buttonsContainer != null) buttonsContainer.SetActive(false);
@@ -457,10 +573,32 @@ public class SprintReviewManager : MonoBehaviourPunCallbacks
         // Synchronize result for all players
         SynchronizeResult(level);
         
+        // Hide round info during result display
+        HideRoundInfo();
+        
         // Show result to all players
         ShowResult(level);
         
-        // Start 5-second timer before phase transition
+        // Only show approved cards if the current card was not rejected
+        if (level != SatisfactionLevel.Low)
+        {
+            ShowApprovedCards();
+        }
+        else
+        {
+            if (isProductOwner)
+            {
+                Hashtable props = new Hashtable();
+                props["FORCE_DRAWING_NO_WAITING"] = System.DateTime.Now.Ticks;
+                PhotonNetwork.CurrentRoom.SetCustomProperties(props);
+                Debug.Log("Carta rejeitada - forçando visualização apenas do desenho sem texto de espera");
+            }
+        }
+        
+        // Enable toggle button for players if there are approved cards
+        EnablePlayerToggleIfNeeded();
+        
+        // Start timer before next round or phase transition
         if (TimerManager.Instance != null)
         {
             TimerManager.Instance.StartTimer(resultShowDuration, () => {
@@ -471,13 +609,47 @@ public class SprintReviewManager : MonoBehaviourPunCallbacks
         // Atualizar botão de pause para o novo timer
         UpdatePauseButtonVisibility();
     }
+
+    private void HandleRoundSatisfaction(SatisfactionLevel level)
+    {
+        bool isRejectedCardRound = isMultiRound && currentRound == 0;
+        
+        if (isRejectedCardRound)
+        {
+            if (level == SatisfactionLevel.Low)
+            {
+                Debug.Log("Carta reprovada foi reprovada novamente - será removida permanentemente");
+            }
+            else
+            {
+                ApplyScoreChanges(level);
+                Debug.Log("Carta reprovada foi aprovada - pontuação aplicada");
+            }
+        }
+        else
+        {
+            if (level == SatisfactionLevel.Low)
+            {
+                if (SelectedCardStorage.Instance != null && SelectedCardStorage.Instance.HasSelectedCard())
+                {
+                    SelectedCardStorage.Instance.MoveSelectedToRejected();
+                    Debug.Log("Nova carta foi reprovada - movida para cartas reprovadas");
+                }
+            }
+            else
+            {
+                ApplyScoreChanges(level);
+                Debug.Log("Nova carta foi aprovada - pontuação aplicada");
+            }
+        }
+    }
     
     private void ApplyScoreChanges(SatisfactionLevel level)
     {
-        SelectedCardData cardData = GetCardDataForDisplay();
+        SelectedCardData cardData = cardsToReview[currentRound];
         if (cardData == null || cardData.scores == null)
         {
-            Debug.LogError("Nenhuma carta selecionada para aplicar mudanças de pontuação!");
+            Debug.LogError("Nenhuma carta encontrada para aplicar mudanças de pontuação!");
             return;
         }
         
@@ -560,10 +732,138 @@ public class SprintReviewManager : MonoBehaviourPunCallbacks
         
         isShowingResult = true;
     }
+
+    private void ShowApprovedCards()
+    {
+        List<SelectedCardData> approvedCards = new List<SelectedCardData>();
+        
+        for (int i = 0; i <= currentRound && i < roundResults.Count; i++)
+        {
+            if (roundResults[i] != SatisfactionLevel.Low)
+            {
+                if (i < cardsToReview.Count)
+                {
+                    approvedCards.Add(cardsToReview[i]);
+                }
+            }
+        }
+        
+        if (approvedCards.Count == 0)
+        {
+            Debug.Log("Nenhuma carta aprovada para mostrar aos jogadores");
+            return;
+        }
+        
+        var cardsList = new List<Dictionary<string, object>>();
+        
+        foreach (var card in approvedCards)
+        {
+            var cardData = new Dictionary<string, object>()
+            {
+                ["imageName"] = card.imageName ?? "",
+                ["scores"] = card.scores ?? new Dictionary<string, int>()
+            };
+            
+            if (card.cardMaterial != null && card.cardMaterial.mainTexture != null)
+            {
+                cardData["textureName"] = card.cardMaterial.mainTexture.name;
+            }
+            
+            cardsList.Add(cardData);
+        }
+        
+        Hashtable props = new Hashtable();
+        props[SHOW_APPROVED_CARDS_KEY] = cardsList.ToArray();
+        PhotonNetwork.CurrentRoom.SetCustomProperties(props);
+        
+        Debug.Log($"Comando para mostrar {approvedCards.Count} carta(s) aprovada(s) enviado para todos os players");
+        
+        DisplayApprovedCardsLocally(approvedCards);
+    }
+    
+
+    
+    private void DisplayApprovedCardsLocally(List<SelectedCardData> approvedCards)
+    {
+        if (approvedCards == null || approvedCards.Count == 0) return;
+        
+        ClearDisplayedCard();
+        
+        DisplaySingleCard(approvedCards[approvedCards.Count - 1]); // Show the last (most recent) approved card
+    }
+
+    private void EnablePlayerToggleIfNeeded()
+    {
+        bool isProductOwner = productOwnerManager != null && productOwnerManager.IsLocalPlayerProductOwner();
+        
+        if (!isProductOwner)
+        {
+            int approvedCount = 0;
+            for (int i = 0; i <= currentRound && i < roundResults.Count; i++)
+            {
+                if (roundResults[i] != SatisfactionLevel.Low)
+                {
+                    approvedCount++;
+                }
+            }
+            
+            if (approvedCount > 0 && toggleViewButton != null)
+            {
+                toggleViewButton.gameObject.SetActive(true);
+                
+                if (!hasMovedToggleButton)
+                {
+                    RectTransform buttonRect = toggleViewButton.GetComponent<RectTransform>();
+                    if (buttonRect != null)
+                    {
+                        Vector3 currentPos = buttonRect.anchoredPosition;
+                        buttonRect.anchoredPosition = new Vector3(currentPos.x, currentPos.y - 40, currentPos.z);
+                        hasMovedToggleButton = true;
+                    }
+                }
+                
+                showingCard = true;
+                UpdateToggleButtonText();
+                
+                ToggleView();
+            }
+            else
+            {
+                if (toggleViewButton != null)
+                {
+                    toggleViewButton.gameObject.SetActive(false);
+                }
+            }
+        }
+    }
+
+    private void DisplaySingleCard(SelectedCardData cardData)
+    {
+        if (cardTarefasPrefab == null || playerCamera == null || cardData == null) return;
+        
+        Vector3 screenCenter = new Vector3(Screen.width / 2f + 160f, Screen.height / 2f, cardSpawnDistance);
+        Vector3 centerPosition = playerCamera.ScreenToWorldPoint(screenCenter);
+        
+        Quaternion rotation = Quaternion.Euler(-90, 0, 180);
+        displayedCard = Instantiate(cardTarefasPrefab, centerPosition, rotation);
+        displayedCard.transform.localScale = new Vector3(0.51f, 0.0001f, 0.65f);
+        
+        ApplyCardData(displayedCard, cardData);
+    }
+
+
     
     private void onTimerComplete(SatisfactionLevel level)
     {
-        // Hide result text
+        bool isProductOwner = productOwnerManager != null && productOwnerManager.IsLocalPlayerProductOwner();
+        if (isProductOwner)
+        {
+            Hashtable props = new Hashtable();
+            props[RESULT_TIMER_COMPLETE_KEY] = System.DateTime.Now.Ticks; // Use timestamp to ensure property change
+            PhotonNetwork.CurrentRoom.SetCustomProperties(props);
+        }
+        
+        // Hide result text for PO
         if (displayText != null)
         {
             displayText.gameObject.SetActive(false);
@@ -571,16 +871,108 @@ public class SprintReviewManager : MonoBehaviourPunCallbacks
         
         isShowingResult = false;
 
-        if (CanvasManager.Instance != null)
+        // Check if we need to proceed to next round
+        if (currentRound + 1 < totalRounds)
         {
-            CanvasManager.Instance.ClearCanvasForAll();
-            CanvasManager.Instance.ClearAllSavedDrawings();
-            CanvasManager.Instance.DeactivateCanvasForAll();
+            currentRound++;
+            hasVoted = false;
+            
+            if (currentRound == 1 && roundResults.Count > 0 && roundResults[0] == SatisfactionLevel.Low)
+            {
+                if (SelectedCardStorage.Instance != null)
+                {
+                    SelectedCardStorage.Instance.ClearRejectedCard();
+                    Debug.Log("Carta reprovada novamente foi removida do storage");
+                }
+            }
+            
+            if (isProductOwner)
+            {
+                Hashtable props = new Hashtable();
+                props[FORCE_DRAWING_VIEW_KEY] = System.DateTime.Now.Ticks; // Use timestamp to ensure property change
+                PhotonNetwork.CurrentRoom.SetCustomProperties(props);
+                Debug.Log("Comando enviado para todos retornarem à visualização do desenho");
+            }
+            
+            DisplayCurrentRoundCard();
+            
+            ShowUI();
+            InitializeViewState();
+            
+            HideRoundInfo();
+            
+            Debug.Log($"Iniciando rodada {currentRound + 1}/{totalRounds}");
         }
-        
-        if (productOwnerManager != null)
+        else
         {
-            gameStateManager.NextState();
+            // All rounds completed - handle card storage based on results
+            if (SelectedCardStorage.Instance != null)
+            {
+                if (isMultiRound && roundResults.Count >= 2)
+                {
+                    SatisfactionLevel rejectedCardResult = roundResults[0]; // Resultado da carta reprovada
+                    SatisfactionLevel selectedCardResult = roundResults[1]; // Resultado da nova carta
+                    
+                    Debug.LogWarning($"DEBUG MULTI: Rejected result: {rejectedCardResult}, Selected result: {selectedCardResult}");
+                    
+                    // Primeiro, lidar com a nova carta
+                    if (selectedCardResult == SatisfactionLevel.Low)
+                    {
+                        // Nova carta foi reprovada - mover para rejected (substitui a antiga)
+                        Debug.LogWarning($"DEBUG: Antes de mover carta - HasSelected: {SelectedCardStorage.Instance.HasSelectedCard()}, HasRejected: {SelectedCardStorage.Instance.HasRejectedCard()}");
+                        SelectedCardStorage.Instance.MoveSelectedToRejected();
+                        Debug.LogWarning($"DEBUG: Depois de mover carta - HasSelected: {SelectedCardStorage.Instance.HasSelectedCard()}, HasRejected: {SelectedCardStorage.Instance.HasRejectedCard()}");
+                        Debug.LogWarning("Nova carta foi reprovada - movida para rejected storage (substitui a anterior)");
+                    }
+                    else
+                    {
+                        // Nova carta foi aprovada - limpar selected
+                        SelectedCardStorage.Instance.ClearSelectedCard();
+                        Debug.LogWarning("Nova carta foi aprovada - removida do storage");
+                        
+                        // Se a carta reprovada anterior também foi aprovada, limpar rejected
+                        if (rejectedCardResult != SatisfactionLevel.Low)
+                        {
+                            SelectedCardStorage.Instance.ClearRejectedCard();
+                            Debug.LogWarning("Carta reprovada anterior também foi aprovada - removida do storage");
+                        }
+                        // Se a carta reprovada anterior foi reprovada novamente, ela fica no rejected storage
+                    }
+                }
+                else if (!isMultiRound && roundResults.Count >= 1)
+                {
+                    SatisfactionLevel result = roundResults[0];
+                    
+                    if (result == SatisfactionLevel.Low)
+                    {
+                        Debug.LogWarning($"DEBUG SINGLE: Antes de mover carta - HasSelected: {SelectedCardStorage.Instance.HasSelectedCard()}, HasRejected: {SelectedCardStorage.Instance.HasRejectedCard()}");
+                        SelectedCardStorage.Instance.MoveSelectedToRejected();
+                        Debug.LogWarning($"DEBUG SINGLE: Depois de mover carta - HasSelected: {SelectedCardStorage.Instance.HasSelectedCard()}, HasRejected: {SelectedCardStorage.Instance.HasRejectedCard()}");
+                        Debug.LogWarning("Carta selecionada foi reprovada - movida para rejected storage");
+                    }
+                    else
+                    {
+                        SelectedCardStorage.Instance.ClearSelectedCard();
+                        Debug.LogWarning("Carta selecionada foi aprovada - removida do storage");
+                    }
+                }
+            }
+            
+            if (CanvasManager.Instance != null)
+            {
+                CanvasManager.Instance.ClearCanvasForAll();
+                CanvasManager.Instance.ClearAllSavedDrawings();
+                CanvasManager.Instance.DeactivateCanvasForAll();
+            }
+            
+            if (productOwnerManager != null)
+            {
+                gameStateManager.NextState();
+            }
+            
+            HideRoundInfo();
+            
+            Debug.Log("Sprint Review completo - todas as rodadas finalizadas");
         }
         
         // Atualizar botão de pause quando timer acaba
@@ -594,6 +986,15 @@ public class SprintReviewManager : MonoBehaviourPunCallbacks
             Destroy(displayedCard);
             displayedCard = null;
         }
+        
+        foreach (GameObject card in spawnedCards)
+        {
+            if (card != null && card != displayedCard)
+            {
+                Destroy(card);
+            }
+        }
+        spawnedCards.Clear();
     }
     
     public void ResetSprintReviewManager()
@@ -602,7 +1003,15 @@ public class SprintReviewManager : MonoBehaviourPunCallbacks
         hasVoted = false;
         isShowingResult = false;
         showingCard = true;
-        networkCardData = null;
+        
+        isMultiRound = false;
+        currentRound = 0;
+        totalRounds = 1;
+        cardsToReview.Clear();
+        roundResults.Clear();
+        hasBeenPrepared = false;
+        
+        HideRoundInfo();
         
         // Esconder e resetar UI
         if (displayText != null)
@@ -677,6 +1086,8 @@ public class SprintReviewManager : MonoBehaviourPunCallbacks
         {
             TimerManager.Instance.PauseTimer();
             UpdatePauseButtonVisibility();
+            
+            PreserveResultTextOnPause();
         }
     }
     
@@ -686,6 +1097,26 @@ public class SprintReviewManager : MonoBehaviourPunCallbacks
         {
             TimerManager.Instance.UnpauseTimer();
             UpdatePauseButtonVisibility();
+        }
+    }
+
+    private void PreserveResultTextOnPause()
+    {
+        if (isShowingResult && displayText != null && displayText.gameObject.activeInHierarchy)
+        {
+            StartCoroutine(KeepResultTextActive());
+        }
+    }
+
+    private IEnumerator KeepResultTextActive()
+    {
+        while (TimerManager.Instance != null && TimerManager.Instance.IsPaused() && isShowingResult)
+        {
+            if (displayText != null && !displayText.gameObject.activeInHierarchy)
+            {
+                displayText.gameObject.SetActive(true);
+            }
+            yield return new WaitForSeconds(0.1f);
         }
     }
     
@@ -710,50 +1141,7 @@ public class SprintReviewManager : MonoBehaviourPunCallbacks
         {
             string key = property.Key.ToString();
             
-            if (key == SELECTED_CARD_KEY)
-            {
-                var syncData = (Dictionary<string, object>)property.Value;
-                networkCardData = new SelectedCardData();
-                networkCardData.imageName = syncData["imageName"].ToString();
-                networkCardData.scores = (Dictionary<string, int>)syncData["scores"];
-                
-                // Load texture from Images/Tarefas/Cartas folder like CardTarefas does
-                if (syncData.ContainsKey("textureName"))
-                {
-                    string textureName = syncData["textureName"].ToString();
-                    
-                    // Load all textures from the same folder CardTarefas uses
-                    Texture2D[] textures = Resources.LoadAll<Texture2D>("Images/Tarefas/Cartas");
-                    Texture2D foundTexture = null;
-                    
-                    foreach (Texture2D tex in textures)
-                    {
-                        if (tex.name == textureName)
-                        {
-                            foundTexture = tex;
-                            break;
-                        }
-                    }
-                    
-                    if (foundTexture != null)
-                    {
-                        networkCardData.cardTexture = foundTexture;
-                        // Use same shader as CardTarefas
-                        networkCardData.cardMaterial = new Material(Shader.Find("Unlit/Texture"));
-                        networkCardData.cardMaterial.mainTexture = foundTexture;
-                        networkCardData.cardMaterial.SetTexture("_MainTex", foundTexture);
-                        
-                        Debug.Log($"Texture '{textureName}' carregada com sucesso para sincronização");
-                    }
-                    else
-                    {
-                        Debug.LogWarning($"Texture '{textureName}' não encontrada em Images/Tarefas/Cartas");
-                    }
-                }
-                
-                Debug.Log("Dados da carta sincronizados pela rede");
-            }
-            else if (key == SATISFACTION_RESULT_KEY)
+            if (key == SATISFACTION_RESULT_KEY)
             {
                 if (showingCard) OnToggleViewClicked();
                 
@@ -762,22 +1150,168 @@ public class SprintReviewManager : MonoBehaviourPunCallbacks
                 {
                     if (toggleViewButton != null) toggleViewButton.gameObject.SetActive(false);
                     ShowResult(level);
-                    StartCoroutine(ResultDisplayTimerForPlayers(level));
+                    
+                    EnablePlayerToggleIfNeeded();
+                }
+            }
+            else if (key == "RoundResults")
+            {
+                if (!productOwnerManager.IsLocalPlayerProductOwner())
+                {
+                    int[] roundResultsArray = (int[])property.Value;
+                    roundResults.Clear();
+                    
+                    for (int i = 0; i < roundResultsArray.Length; i++)
+                    {
+                        roundResults.Add((SatisfactionLevel)roundResultsArray[i]);
+                    }
+                    
+                    Debug.Log($"RoundResults sincronizados para player - {roundResults.Count} resultados");
+                }
+            }
+            else if (key == "CurrentRound")
+            {
+                if (!productOwnerManager.IsLocalPlayerProductOwner())
+                {
+                    currentRound = (int)property.Value;
+                }
+            }
+            else if (key == "TotalRounds")
+            {
+                if (!productOwnerManager.IsLocalPlayerProductOwner())
+                {
+                    totalRounds = (int)property.Value;
+                }
+            }
+            else if (key == "IsMultiRound")
+            {
+                if (!productOwnerManager.IsLocalPlayerProductOwner())
+                {
+                    isMultiRound = (bool)property.Value;
+                }
+            }
+            else if (key == SHOW_APPROVED_CARDS_KEY)
+            {
+                if (!productOwnerManager.IsLocalPlayerProductOwner())
+                {
+                    var cardsArray = (Dictionary<string, object>[])property.Value;
+                    List<SelectedCardData> approvedCards = new List<SelectedCardData>();
+                    
+                    foreach (var cardSync in cardsArray)
+                    {
+                        approvedCards.Add(CreateCardDataFromSync(cardSync));
+                    }
+                    
+                    if (!showingCard)
+                    {
+                        showingCard = true;
+                        UpdateToggleButtonText();
+                        ToggleView();
+                    }
+                    
+                    DisplayApprovedCardsLocally(approvedCards);
+                    
+                    EnablePlayerToggleIfNeeded();
+                    
+                    Debug.Log($"Comando recebido para mostrar {approvedCards.Count} carta(s) aprovada(s)");
+                }
+            }
+            else if (key == FORCE_DRAWING_VIEW_KEY)
+            {
+                // Force all players (except PO) back to drawing view for new round
+                if (!productOwnerManager.IsLocalPlayerProductOwner())
+                {
+                    showingCard = false;
+                    if (toggleViewButton != null) 
+                    {
+                        toggleViewButton.gameObject.SetActive(false);
+                        UpdateToggleButtonText();
+                    }
+                    ShowDrawingViewForPlayers();
+                    
+                    if (displayText != null)
+                    {
+                        displayText.text = "Aguardando feedback do PO...";
+                        displayText.gameObject.SetActive(true);
+                    }
+                    
+                    Debug.Log("Forçado a retornar para visualização do desenho para nova rodada");
+                }
+            }
+            else if (key == "FORCE_DRAWING_NO_WAITING")
+            {
+                if (!productOwnerManager.IsLocalPlayerProductOwner())
+                {
+                    showingCard = false;
+                    if (toggleViewButton != null) 
+                    {
+                        toggleViewButton.gameObject.SetActive(false);
+                        UpdateToggleButtonText();
+                    }
+                    ShowDrawingViewForPlayers();
+                    
+                    if (displayText != null && !isShowingResult)
+                    {
+                        displayText.gameObject.SetActive(false);
+                    }
+                    
+                    Debug.Log("Forçado a retornar para visualização do desenho (carta rejeitada - sem texto de espera)");
+                }
+            }
+            else if (key == RESULT_TIMER_COMPLETE_KEY)
+            {
+                if (!productOwnerManager.IsLocalPlayerProductOwner())
+                {
+                    if (displayText != null)
+                    {
+                        displayText.gameObject.SetActive(false);
+                    }
+                    
+                    if (toggleViewButton != null)
+                    {
+                        toggleViewButton.gameObject.SetActive(false);
+                    }
+                    
+                    isShowingResult = false;
                 }
             }
         }
     }
     
-    private IEnumerator ResultDisplayTimerForPlayers(SatisfactionLevel level)
+
+    
+    private SelectedCardData CreateCardDataFromSync(Dictionary<string, object> syncData)
     {
-        yield return new WaitForSeconds(5f);
+        var cardData = new SelectedCardData();
+        cardData.imageName = syncData["imageName"].ToString();
+        cardData.scores = (Dictionary<string, int>)syncData["scores"];
         
-        if (displayText != null)
+        if (syncData.ContainsKey("textureName"))
         {
-            displayText.gameObject.SetActive(false);
+            string textureName = syncData["textureName"].ToString();
+            
+            Texture2D[] textures = Resources.LoadAll<Texture2D>("Images/Tarefas/Cartas");
+            Texture2D foundTexture = null;
+            
+            foreach (Texture2D tex in textures)
+            {
+                if (tex.name == textureName)
+                {
+                    foundTexture = tex;
+                    break;
+                }
+            }
+            
+            if (foundTexture != null)
+            {
+                cardData.cardTexture = foundTexture;
+                cardData.cardMaterial = new Material(Shader.Find("Unlit/Texture"));
+                cardData.cardMaterial.mainTexture = foundTexture;
+                cardData.cardMaterial.SetTexture("_MainTex", foundTexture);
+            }
         }
         
-        isShowingResult = false;
+        return cardData;
     }
     
     void OnDestroy()

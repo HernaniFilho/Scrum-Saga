@@ -7056,7 +7056,7 @@ RectTransform:
   m_GameObject: {fileID: 1353880085}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 0, y: 0, z: 0}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1113505372}
@@ -7065,9 +7065,9 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 454, y: 255.5}
-  m_SizeDelta: {x: 908, y: 511}
-  m_Pivot: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
+  m_Pivot: {x: 0, y: 0}
 --- !u!114 &1353880090
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7340,6 +7340,17 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 3ec2d84bf5676fc4dacfb3107e14db63, type: 3}
+--- !u!114 &1426679615 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 1470207804242008750, guid: 964db72f22499b0469a62ce15906a05e, type: 3}
+  m_PrefabInstance: {fileID: 3761204002797785133}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1430062311
 GameObject:
   m_ObjectHideFlags: 0
@@ -10758,6 +10769,10 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: -135.61
       objectReference: {fileID: 0}
+    - target: {fileID: 1470207804242008750, guid: 964db72f22499b0469a62ce15906a05e, type: 3}
+      propertyPath: m_text
+      value: Carta ?/2 (Reprovada)
+      objectReference: {fileID: 0}
     - target: {fileID: 1542385181951786622, guid: 964db72f22499b0469a62ce15906a05e, type: 3}
       propertyPath: m_IsActive
       value: 0
@@ -10971,6 +10986,10 @@ PrefabInstance:
     - target: {fileID: 1932924777835151575, guid: 964db72f22499b0469a62ce15906a05e, type: 3}
       propertyPath: m_ConstrainProportionsScale
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1945882941446028269, guid: 964db72f22499b0469a62ce15906a05e, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 290
       objectReference: {fileID: 0}
     - target: {fileID: 1983009540739219898, guid: 964db72f22499b0469a62ce15906a05e, type: 3}
       propertyPath: m_AnchorMax.y
@@ -11313,6 +11332,10 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 1889460401}
     - target: {fileID: 2805442323181726743, guid: 964db72f22499b0469a62ce15906a05e, type: 3}
+      propertyPath: centeredCardSpacing
+      value: 0.6
+      objectReference: {fileID: 0}
+    - target: {fileID: 2805442323181726743, guid: 964db72f22499b0469a62ce15906a05e, type: 3}
       propertyPath: 'cardSpawnPositions.Array.data[0]'
       value: 
       objectReference: {fileID: 0}
@@ -11370,6 +11393,10 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2833547779198814378, guid: 964db72f22499b0469a62ce15906a05e, type: 3}
       propertyPath: m_AnchoredPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2833550927564653439, guid: 964db72f22499b0469a62ce15906a05e, type: 3}
+      propertyPath: m_IsActive
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 2859023167907057306, guid: 964db72f22499b0469a62ce15906a05e, type: 3}
@@ -12137,6 +12164,10 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 104662301}
     - target: {fileID: 4471870522578745055, guid: 964db72f22499b0469a62ce15906a05e, type: 3}
+      propertyPath: roundInfoText
+      value: 
+      objectReference: {fileID: 1426679615}
+    - target: {fileID: 4471870522578745055, guid: 964db72f22499b0469a62ce15906a05e, type: 3}
       propertyPath: toggleViewButton
       value: 
       objectReference: {fileID: 1093602330}
@@ -12144,6 +12175,10 @@ PrefabInstance:
       propertyPath: cardTarefasPrefab
       value: 
       objectReference: {fileID: 2771592241563556512}
+    - target: {fileID: 4471870522578745055, guid: 964db72f22499b0469a62ce15906a05e, type: 3}
+      propertyPath: resultShowDuration
+      value: 15
+      objectReference: {fileID: 0}
     - target: {fileID: 4471870522578745055, guid: 964db72f22499b0469a62ce15906a05e, type: 3}
       propertyPath: lowSatisfactionButton
       value: 

@@ -33,6 +33,7 @@ public class SprintPlanningManager : MonoBehaviourPun
   public float spawnDistance = 1f; // Câmera: -297f, Cards: -296f
   public float selectedCardSpawnDistance = 0.67f; // Câmera: -297f, Card: -296.33
   public float cardSpacing = 0.8f;
+  public float centeredCardSpacing = 0.6f; // Espaçamento entre rejected e selected quando centralizadas
 
   private List<GameObject> spawnedCards = new List<GameObject>();
   private GameStateManager gameStateManager;
@@ -217,6 +218,20 @@ public class SprintPlanningManager : MonoBehaviourPun
     return centerPosition + rightOffset + upOffset;
   }
 
+  private Vector3 CalculateCenteredPosition(bool isLeftCard)
+  {
+    if (playerCamera == null) return Vector3.zero;
+
+    Vector3 screenCenter = new Vector3(Screen.width / 2f + 160f, Screen.height / 2f, selectedCardSpawnDistance);
+    Vector3 centerPosition = playerCamera.ScreenToWorldPoint(screenCenter);
+
+    float offset = centeredCardSpacing / 2f;
+    float horizontalOffset = isLeftCard ? -offset : offset;
+
+    Vector3 rightOffset = playerCamera.transform.right * horizontalOffset;
+    return centerPosition + rightOffset;
+  }
+
   public void OnCardSelected(int cardIndex, GameObject selectedCardObj)
   {
     if (selectedCardObj == null || cardSelectionCompleted) return;
@@ -239,33 +254,76 @@ public class SprintPlanningManager : MonoBehaviourPun
     cardSelectionCompleted = true;
 
     ClearSpawnedCards();
-    RecreateSelectedCard();
+    RecreateSelectedCards();
 
     ShowStartButton();
     ShowLegenda();
   }
 
-  private void ClearSpawnedCards()
-  {
-    foreach (GameObject card in spawnedCards)
-    {
-      if (card != null)
-      {
-        Destroy(card);
-      }
-    }
-    spawnedCards.Clear();
-  }
-
-  private void RecreateSelectedCard()
+  private void RecreateSelectedCards()
   {
     if (cardTarefasPrefab == null || playerCamera == null || selectedCardData == null) return;
 
-    Vector3 screenCenter = new Vector3(Screen.width / 2f + 160f, Screen.height / 2f, selectedCardSpawnDistance);
-    Vector3 centerPosition = playerCamera.ScreenToWorldPoint(screenCenter);
+    bool hasRejectedCard = SelectedCardStorage.Instance != null && SelectedCardStorage.Instance.HasRejectedCard();
+    
+    if (hasRejectedCard)
+    {
+      CreateRejectedCardDisplay();
+      CreateSelectedCardDisplay(true);
+    }
+    else
+    {
+      CreateSelectedCardDisplay(false);
+    }
+  }
+
+  private void CreateRejectedCardDisplay()
+  {
+    if (SelectedCardStorage.Instance == null || !SelectedCardStorage.Instance.HasRejectedCard()) return;
+
+    CardTarefas storedRejectedCard = SelectedCardStorage.Instance.GetRejectedCard();
+    if (storedRejectedCard == null) return;
+
+    Vector3 position = CalculateCenteredPosition(true);
+    Quaternion rotation = Quaternion.Euler(-90, 0, 180);
+    
+    bool prefabWasActive = cardTarefasPrefab.activeSelf;
+    cardTarefasPrefab.SetActive(false);
+    
+    GameObject rejectedCard = Instantiate(cardTarefasPrefab, position, rotation);
+    rejectedCard.transform.localScale = new Vector3(0.51f, 0.0001f, 0.65f);
+    
+    cardTarefasPrefab.SetActive(prefabWasActive);
+    
+    ApplyCardData(rejectedCard, storedRejectedCard);
+    
+    rejectedCard.SetActive(true);
+
+    CardSelector selector = rejectedCard.GetComponent<CardSelector>();
+    if (selector != null)
+    {
+      Destroy(selector);
+    }
+
+    spawnedCards.Add(rejectedCard);
+    Debug.Log("Carta reprovada exibida na posição 0");
+  }
+
+  private void CreateSelectedCardDisplay(bool showingWithRejected)
+  {
+    Vector3 centerPosition;
+    
+    if (!showingWithRejected)
+    {
+      Vector3 screenCenter = new Vector3(Screen.width / 2f + 160f, Screen.height / 2f, selectedCardSpawnDistance);
+      centerPosition = playerCamera.ScreenToWorldPoint(screenCenter);
+    }
+    else
+    {
+      centerPosition = CalculateCenteredPosition(false);
+    }
 
     Quaternion rotation = Quaternion.Euler(-90, 0, 180);
-
     selectedCard = Instantiate(cardTarefasPrefab, centerPosition, rotation);
     selectedCard.transform.localScale = new Vector3(0.51f, 0.0001f, 0.65f);
 
@@ -278,25 +336,18 @@ public class SprintPlanningManager : MonoBehaviourPun
     }
 
     spawnedCards.Add(selectedCard);
-
-    Debug.Log("Carta selecionada recriada e centralizada!");
   }
 
-  private void ApplyCardData(GameObject card, SelectedCardData cardData)
+  private void ClearSpawnedCards()
   {
-    if (card == null || cardData == null) return;
-
-    MeshRenderer meshRenderer = card.GetComponent<MeshRenderer>();
-    if (meshRenderer != null && cardData.cardMaterial != null)
+    foreach (GameObject card in spawnedCards)
     {
-      meshRenderer.material = cardData.cardMaterial;
+      if (card != null)
+      {
+        Destroy(card);
+      }
     }
-
-    CardTarefas cardTarefas = card.GetComponent<CardTarefas>();
-    if (cardTarefas != null)
-    {
-      cardTarefas.scores = new Dictionary<string, int>(cardData.scores);
-    }
+    spawnedCards.Clear();
   }
 
   private void ApplyCardData(GameObject card, CardTarefas sourceCardData)
@@ -314,8 +365,9 @@ public class SprintPlanningManager : MonoBehaviourPun
     if (targetCardTarefas != null)
     {
       targetCardTarefas.scores = new Dictionary<string, int>(sourceCardData.scores);
+      targetCardTarefas.maxScore = sourceCardData.maxScore;
       targetCardTarefas.isSelected = true;
-      targetCardTarefas.UpdateScoreTexts();
+      targetCardTarefas.InitializeWithCustomData(sourceCardData.scores, targetMeshRenderer?.material, sourceCardData.maxScore);
     }
   }
 

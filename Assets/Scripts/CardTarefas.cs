@@ -21,10 +21,34 @@ public class CardTarefas : MonoBehaviour
     
     [Header("Estado da carta")]
     public bool isSelected = false;
+    private bool customInitialized = false;
 
+    public void InitializeWithCustomData(Dictionary<string, int> customScores, Material customMaterial, int customMaxScore = 1)
+    {
+        customInitialized = true;
+        isSelected = true;
+        
+        scores = new Dictionary<string, int>(customScores);
+        maxScore = customMaxScore;
+        
+        if (customMaterial != null && meshRenderer != null)
+        {
+            meshRenderer.material = new Material(customMaterial);
+        }
+    }
+    
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
+        if (customInitialized)
+        {
+            if (scoreText_1 != null && scoreText_2 != null && scoreText_3 != null && scoreText_4 != null)
+            {
+                UpdateScoreTexts();
+            }
+            return;
+        }
+        
         // Só aplica textura aleatória se não houver material definido (evita sobrescrever cartas selecionadas)
         if (meshRenderer != null && (meshRenderer.material == null || meshRenderer.material.mainTexture == null))
         {

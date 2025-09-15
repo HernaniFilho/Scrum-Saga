@@ -192,6 +192,12 @@ public class FimManager : MonoBehaviourPun
         {
           ScrumMasterCardManager.Instance.ResetCartaStatus();
         }
+
+        if (SelectedCardStorage.Instance != null)
+        {
+          SelectedCardStorage.Instance.ClearSelectedCard();
+          SelectedCardStorage.Instance.ClearRejectedCard();
+        }
       }
 
       if (gameStateManager != null)
