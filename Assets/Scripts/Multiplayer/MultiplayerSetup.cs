@@ -12,12 +12,14 @@ public class MultiplayerSetup : MonoBehaviour
     [SerializeField] private bool autoSetupOnStart = true;
     
     [Header("UI Elements to Create")]
-    [SerializeField] private bool createConnectionUI = true;
     [SerializeField] private bool enableNameInput = true;
     
     [Header("UI References (Optional - se não atribuído, será criado automaticamente)")]
     [SerializeField] private TextMeshProUGUI connectionStatusText;
-    [SerializeField] private TextMeshProUGUI roomInfoText;
+    [SerializeField] private TextMeshProUGUI roomNameText;
+    [SerializeField] private TextMeshProUGUI playerCountText;
+    [SerializeField] private TextMeshProUGUI[] playerNameTexts = new TextMeshProUGUI[5];
+    [SerializeField] private TextMeshProUGUI[] playerPOTexts = new TextMeshProUGUI[5];
 
     private Canvas uiCanvas;
     private NetworkGameStateManager gameStateManager;
@@ -44,9 +46,14 @@ public class MultiplayerSetup : MonoBehaviour
                 connectionStatusText.gameObject.SetActive(false);
             }
 
-            if (roomInfoText != null)
+            if (roomNameText != null)
             {
-                roomInfoText.gameObject.SetActive(false);
+                roomNameText.gameObject.SetActive(false);
+            }
+            
+            if (playerCountText != null)
+            {
+                playerCountText.gameObject.SetActive(false);
             }
         }
     }
@@ -63,8 +70,6 @@ public class MultiplayerSetup : MonoBehaviour
         SetupNetworkScoreManager();
         
         SetupNetworkManager();
-        
-        if (createConnectionUI) CreateConnectionUI();
         
         Debug.Log("Configuração de Multiplayer concluída!");
     }
@@ -138,76 +143,23 @@ public class MultiplayerSetup : MonoBehaviour
         {
             Debug.Log("NetworkManager já existe");
         }
-        
+
         // Se enableNameInput for true, impedir conexão automática
         if (enableNameInput && networkManager != null)
         {
             networkManager.autoConnect = false;
         }
-    }
 
-    void CreateConnectionUI()
-    {
-        // Cria o Connection Status Text se não tiver sido atribuído
-        if (connectionStatusText == null)
-        {
-            GameObject connectionTextObj = new GameObject("ConnectionStatusText");
-            connectionTextObj.transform.SetParent(uiCanvas.transform, false);
-
-            connectionStatusText = connectionTextObj.AddComponent<TextMeshProUGUI>();
-            connectionStatusText.text = "Conectando...";
-            connectionStatusText.fontSize = 16;
-            connectionStatusText.color = Color.yellow;
-            connectionStatusText.alignment = TextAlignmentOptions.TopLeft;
-
-            RectTransform connectionRect = connectionStatusText.GetComponent<RectTransform>();
-            connectionRect.anchorMin = new Vector2(0, 1);
-            connectionRect.anchorMax = new Vector2(0, 1);
-            connectionRect.anchoredPosition = new Vector2(10, -10);
-            connectionRect.sizeDelta = new Vector2(300, 30);
-
-            Debug.Log("Connection Status Text criado automaticamente");
-        }
-        else
-        {
-            Debug.Log("Connection Status Text já atribuído no editor");
-        }
-
-        // Cria o Room Info Text se não tiver sido atribuído
-        if (roomInfoText == null)
-        {
-            GameObject roomTextObj = new GameObject("RoomInfoText");
-            roomTextObj.transform.SetParent(uiCanvas.transform, false);
-
-            roomInfoText = roomTextObj.AddComponent<TextMeshProUGUI>();
-            roomInfoText.text = "Sala: Não conectado";
-            roomInfoText.fontSize = 14;
-            roomInfoText.color = Color.cyan;
-            roomInfoText.alignment = TextAlignmentOptions.TopLeft;
-
-            RectTransform roomRect = roomInfoText.GetComponent<RectTransform>();
-            roomRect.anchorMin = new Vector2(0, 1);
-            roomRect.anchorMax = new Vector2(0, 1);
-            roomRect.anchoredPosition = new Vector2(100, -40);
-            roomRect.sizeDelta = new Vector2(300, 30);
-
-            Debug.Log("Room Info Text criado automaticamente");
-        }
-        else
-        {
-            Debug.Log("Room Info Text já atribuído no editor");
-        }
-        
-        // Conectar ao NetworkManager
         if (networkManager != null)
         {
             networkManager.connectionStatusText = connectionStatusText;
-            networkManager.roomInfoText = roomInfoText;
+            networkManager.roomNameText = roomNameText;
+            networkManager.playerCountText = playerCountText;
+            networkManager.playerNameTexts = playerNameTexts;
+            networkManager.playerPOTexts = playerPOTexts;
         }
-        
-        Debug.Log("Connection UI configurada");
     }
-
+    
     void SetupNameInputManager()
     {
         // Criar o componente NameInputManager se não existir
@@ -225,7 +177,10 @@ public class MultiplayerSetup : MonoBehaviour
         
         // Esconder outros elementos da UI
         if (connectionStatusText != null) connectionStatusText.gameObject.SetActive(false);
-        if (roomInfoText != null) roomInfoText.gameObject.SetActive(false);
+        if (roomNameText != null) roomNameText.gameObject.SetActive(false);
+        if (playerCountText != null) playerCountText.gameObject.SetActive(false);
+        // Limpar textos de jogadores
+        ClearAllPlayerTexts();
     }
 
     void ShowNameInputScreen()
@@ -246,7 +201,9 @@ public class MultiplayerSetup : MonoBehaviour
 
         // Mostrar UI normal
         if (connectionStatusText != null) connectionStatusText.gameObject.SetActive(true);
-        if (roomInfoText != null) roomInfoText.gameObject.SetActive(true);
+        if (roomNameText != null) roomNameText.gameObject.SetActive(true);
+        if (playerCountText != null) playerCountText.gameObject.SetActive(true);
+        // Textos de jogadores ficam vazios inicialmente (serão gerenciados pelo NetworkManager)
         
         // Agora que o nome foi escolhido, conectar à sala
         // A loading screen será mostrada automaticamente pelo NetworkManager.ConnectToPhoton()
@@ -262,6 +219,38 @@ public class MultiplayerSetup : MonoBehaviour
         if (uiCanvas != null)
         {
             DestroyImmediate(uiCanvas.gameObject);
+        }
+    }
+    
+    void ClearAllPlayerTexts()
+    {
+        // Limpar todos os textos de nome
+        if (playerNameTexts != null)
+        {
+            for (int i = 0; i < playerNameTexts.Length; i++)
+            {
+                if (playerNameTexts[i] != null)
+                {
+                    playerNameTexts[i].text = "";
+                    
+                    // Desativar componente Image do pai se existir
+                    UnityEngine.UI.Image parentImage = playerNameTexts[i].transform.parent?.GetComponent<UnityEngine.UI.Image>();
+                    if (parentImage != null)
+                    {
+                        parentImage.enabled = false;
+                    }
+                }
+            }
+        }
+        
+        // Limpar todos os textos de PO
+        if (playerPOTexts != null)
+        {
+            for (int i = 0; i < playerPOTexts.Length; i++)
+            {
+                if (playerPOTexts[i] != null)
+                    playerPOTexts[i].text = "";
+            }
         }
     }
 }
