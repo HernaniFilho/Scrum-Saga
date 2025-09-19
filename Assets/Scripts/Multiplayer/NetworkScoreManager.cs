@@ -76,7 +76,7 @@ public class NetworkScoreManager : MonoBehaviourPunCallbacks
             
             // Aplicar valor diretamente sem somar
             scoreManager.scoreboard[scoreKey] = newValue;
-            scoreManager.UpdateScoreTexts(scoreKey, newValue);
+            scoreManager.UpdateScoreDisplay(scoreKey, newValue);
             
             // Reativar NetworkScoreManager
             Instance = temp;
