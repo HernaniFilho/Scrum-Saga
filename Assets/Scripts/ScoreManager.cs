@@ -4,6 +4,7 @@ using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
 using System.Collections;
+using System.Linq;
 
 public class ScoreManager : MonoBehaviour
 {
@@ -59,6 +60,17 @@ public class ScoreManager : MonoBehaviour
     public TMP_Text natureText_1;
     public TMP_Text natureText_2;
     public TMP_Text natureText_3;
+    
+    [Header("GameObjects das Cartas de Natureza")]
+    public GameObject natureCardObject_1; // Primeiro slot
+    public GameObject natureCardObject_2; // Segundo slot  
+    public GameObject natureCardObject_3; // Terceiro slot
+    
+    [Header("Sprites das Cartas de Natureza")]
+    public Sprite emptySlotSprite; // Sprite para slot vazio
+    public Sprite adaptacaoSprite; // Sprite para Adaptação
+    public Sprite inspecaoSprite;  // Sprite para Inspeção
+    public Sprite transparenciaSprite; // Sprite para Transparência
 
     [Header("Referências aos Textos de Natureza e Pontuação na UI")]
     public Dictionary<string, TMP_Text> scoreTexts = new Dictionary<string, TMP_Text>();
@@ -76,6 +88,11 @@ public class ScoreManager : MonoBehaviour
     
     // Dicionário para armazenar as imagens fill dos sliders
     private Dictionary<string, Image> sliderFillImages = new Dictionary<string, Image>();
+    
+    // Sistema de cartas de natureza (queue/array)
+    private List<Natures> availableNatureCards = new List<Natures>();
+    private GameObject[] natureCardObjects;
+    private Image[] natureCardImages;
 
     public static ScoreManager Instance { get; private set; }
 
@@ -120,6 +137,20 @@ public class ScoreManager : MonoBehaviour
             Debug.LogError("Referências de natureza da UI não atribuídas!");
             return;
         }
+        
+        // Verificar referências dos GameObjects de cartas de natureza
+        if (natureCardObject_1 == null || natureCardObject_2 == null || natureCardObject_3 == null)
+        {
+            Debug.LogError("Referências dos GameObjects de cartas de natureza não atribuídas!");
+            return;
+        }
+        
+        // Verificar referências dos sprites
+        if (emptySlotSprite == null || adaptacaoSprite == null || inspecaoSprite == null || transparenciaSprite == null)
+        {
+            Debug.LogError("Referências dos sprites de natureza não atribuídas!");
+            return;
+        }
 
         // Configurar dicionários para ScoreTypes
         scoreNameTexts[ScoreType.Entrosamento.ToString()] = scoreNameText_1;
@@ -138,6 +169,28 @@ public class ScoreManager : MonoBehaviour
         scoreTexts[Natures.Adaptacao.ToString()] = natureText_1;
         scoreTexts[Natures.Inspecao.ToString()] = natureText_2;
         scoreTexts[Natures.Transparencia.ToString()] = natureText_3;
+        
+        // Configurar arrays de GameObjects e Images das cartas de natureza
+        natureCardObjects = new GameObject[] { natureCardObject_1, natureCardObject_2, natureCardObject_3 };
+        natureCardImages = new Image[3];
+        
+        for (int i = 0; i < 3; i++)
+        {
+            if (natureCardObjects[i] != null)
+            {
+                natureCardImages[i] = natureCardObjects[i].GetComponent<Image>();
+                if (natureCardImages[i] == null)
+                {
+                    Debug.LogError($"GameObject de carta de natureza {i+1} ({natureCardObjects[i].name}) não possui componente Image!");
+                    return;
+                }
+            }
+            else
+            {
+                Debug.LogError($"natureCardObject_{i+1} está null!");
+                return;
+            }
+        }
 
         // Configurar sliders com valores mínimo e máximo e capturar images fill
         foreach (var kvp in scoreSliders)
@@ -161,6 +214,10 @@ public class ScoreManager : MonoBehaviour
         }
 
         loadScore(gameDifficulty);
+        
+        // Inicializar sistema de cartas de natureza (começar vazio)
+        UpdateNatureCardDisplay();
+        
         Debug.Log("ScoreManager iniciado com dificuldade: " + gameDifficulty);
         foreach (var score in scoreboard)
         {
@@ -208,12 +265,16 @@ public class ScoreManager : MonoBehaviour
             if (scoreSliders.ContainsKey(key))
                 scoreSliders[key].value = value;
         }
+        // Limpar cartas de natureza antes de recarregar
+        ClearAllNatureCards();
+        
         foreach (Natures nature in Enum.GetValues(typeof(Natures)))
         {
             string key = nature.ToString();
             int value = 0; // Inicializa as naturezas com 0
             scoreboard[key] = value;
             UpdateScoreTexts(key, value);
+            // Cartas visuais já foram limpas acima
         }
     }
 
@@ -252,14 +313,16 @@ public class ScoreManager : MonoBehaviour
 
             Debug.Log($"Pontuação atualizada: {varName} = {scoreboard[varName]}");
             
-            // Para ScoreTypes usar display animado, para Natures usar UpdateScoreTexts
+            // Para ScoreTypes usar display animado, para Natures usar sistema de cartas
             if (Enum.TryParse<ScoreType>(varName, out ScoreType scoreType))
             {
                 UpdateScoreDisplay(varName, scoreboard[varName]);
             }
-            else
+            else if (Enum.TryParse<Natures>(varName, out Natures nature))
             {
+                // Atualizar texto das naturezas E sistema de cartas
                 UpdateScoreTexts(varName, scoreboard[varName]);
+                UpdateNatureCards(nature, value);
             }
 
             // Sincronizar com outros jogadores se NetworkScoreManager existir
@@ -470,6 +533,191 @@ public class ScoreManager : MonoBehaviour
         }
 
         return lowest;
+    }
+
+    // ============ SISTEMA DE CARTAS DE NATUREZA ============
+    
+    private void UpdateNatureCards(Natures nature, int deltaValue)
+    {
+        if (deltaValue > 0)
+        {
+            // Ganhou pontos de natureza - adicionar cartas
+            for (int i = 0; i < deltaValue; i++)
+            {
+                AddNatureCard(nature);
+            }
+        }
+        else if (deltaValue < 0)
+        {
+            // Perdeu pontos de natureza - remover cartas
+            int cardsToRemove = Mathf.Abs(deltaValue);
+            for (int i = 0; i < cardsToRemove; i++)
+            {
+                if (HasNatureCard(nature))
+                {
+                    UseNatureCard(nature);
+                }
+                else
+                {
+                    Debug.LogWarning($"Tentou remover carta de {nature}, mas não possui mais cartas desta natureza!");
+                    break;
+                }
+            }
+        }
+        // Se deltaValue == 0, não faz nada
+    }
+    
+    private Sprite GetNatureSprite(Natures nature)
+    {
+        switch (nature)
+        {
+            case Natures.Adaptacao:
+                return adaptacaoSprite;
+            case Natures.Inspecao:
+                return inspecaoSprite;
+            case Natures.Transparencia:
+                return transparenciaSprite;
+            default:
+                return emptySlotSprite;
+        }
+    }
+    
+    private void UpdateNatureCardDisplay()
+    {
+        if (natureCardImages == null)
+        {
+            Debug.LogError("natureCardImages array não foi inicializado!");
+            return;
+        }
+        
+        for (int i = 0; i < 3; i++)
+        {
+            if (natureCardImages[i] == null)
+            {
+                Debug.LogError($"natureCardImages[{i}] está null!");
+                continue;
+            }
+            
+            if (i < availableNatureCards.Count)
+            {
+                // Tem carta neste slot - mostrar sprite da natureza
+                Sprite spriteToUse = GetNatureSprite(availableNatureCards[i]);
+                if (spriteToUse != null)
+                {
+                    natureCardImages[i].sprite = spriteToUse;
+                    Debug.Log($"Slot {i+1}: Sprite {availableNatureCards[i]} aplicado");
+                }
+                else
+                {
+                    Debug.LogError($"Sprite para natureza {availableNatureCards[i]} está null!");
+                }
+            }
+            else
+            {
+                // Slot vazio - mostrar sprite vazio
+                if (emptySlotSprite != null)
+                {
+                    natureCardImages[i].sprite = emptySlotSprite;
+                    Debug.Log($"Slot {i+1}: Sprite vazio aplicado");
+                }
+                else
+                {
+                    Debug.LogError("emptySlotSprite está null!");
+                }
+            }
+        }
+        
+        Debug.Log($"Cartas de natureza atualizadas: {availableNatureCards.Count} cartas disponíveis");
+    }
+    
+    public void AddNatureCard(Natures nature)
+    {
+        // Verificar se ainda pode adicionar essa natureza baseado no valor atual
+        string key = nature.ToString();
+        int currentValue = scoreboard.ContainsKey(key) ? scoreboard[key] : 0;
+        int currentCards = availableNatureCards.Count(n => n == nature);
+        
+        if (currentCards >= currentValue)
+        {
+            Debug.LogWarning($"Já possui {currentCards} cartas de {nature} para valor {currentValue}. Não pode adicionar mais.");
+            return;
+        }
+        
+        if (availableNatureCards.Count < 3)
+        {
+            availableNatureCards.Add(nature);
+            UpdateNatureCardDisplay();
+            Debug.Log($"Carta de natureza {nature} adicionada. Total: {availableNatureCards.Count} ({currentCards + 1} de {nature})");
+        }
+        else
+        {
+            Debug.LogWarning("Já possui 3 cartas de natureza! Não é possível adicionar mais.");
+        }
+    }
+    
+    public bool UseNatureCard(Natures nature)
+    {
+        int index = availableNatureCards.IndexOf(nature);
+        if (index >= 0)
+        {
+            // Remove a carta da lista
+            availableNatureCards.RemoveAt(index);
+            
+            // Atualiza a exibição (automaticamente reorganiza o "array para trás")
+            UpdateNatureCardDisplay();
+            
+            Debug.Log($"Carta de natureza {nature} usada. Restam: {availableNatureCards.Count} cartas");
+            return true;
+        }
+        else
+        {
+            Debug.LogWarning($"Carta de natureza {nature} não encontrada!");
+            return false;
+        }
+    }
+    
+    public bool HasNatureCard(Natures nature)
+    {
+        return availableNatureCards.Contains(nature);
+    }
+    
+    public int GetAvailableNatureCardsCount()
+    {
+        return availableNatureCards.Count;
+    }
+    
+    public List<Natures> GetAvailableNatureCards()
+    {
+        return new List<Natures>(availableNatureCards); // Retorna cópia para segurança
+    }
+    
+    public void ClearAllNatureCards()
+    {
+        availableNatureCards.Clear();
+        UpdateNatureCardDisplay();
+        Debug.Log("Todas as cartas de natureza foram removidas.");
+    }
+    
+    public void SyncNatureCardsWithValues()
+    {
+        // Limpar todas as cartas e recriar baseado nos valores atuais
+        availableNatureCards.Clear();
+        
+        foreach (Natures nature in Enum.GetValues(typeof(Natures)))
+        {
+            string key = nature.ToString();
+            if (scoreboard.ContainsKey(key))
+            {
+                int value = scoreboard[key];
+                for (int i = 0; i < value && availableNatureCards.Count < 3; i++)
+                {
+                    availableNatureCards.Add(nature);
+                }
+            }
+        }
+        
+        UpdateNatureCardDisplay();
+        Debug.Log($"Cartas de natureza sincronizadas: {availableNatureCards.Count} cartas totais");
     }
 
 }
