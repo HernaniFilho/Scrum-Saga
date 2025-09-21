@@ -12,7 +12,7 @@ public class CardAprendizagens : MonoBehaviour
     public TMP_Text textUI;
 
     [Header("Caminho das imagens de natureza usadas no card")]
-    public string imageFolder = "Images/Naturezas";
+    public string imageFolder = "Images/Naturezas/Antigas";
     [Header("Caminho do material branco usado para preencher espaços vazios")]
     public string whiteMaterialPath = "Materials/White";
     [Header("Natureza que será atualizada com a imagem aleatória")]
