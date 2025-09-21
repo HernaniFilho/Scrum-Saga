@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
@@ -26,6 +27,11 @@ public class GameStateManager : MonoBehaviour
 
     [Header("Referência ao Peão do jogo")]
     public GameObject pawn;
+
+    [Header("Configurações de Movimento")]
+    public float movementSpeed = 5f;
+    
+    private bool isMoving = false;
 
 
     private static readonly Dictionary<GameState, string> stateDisplayNames = new Dictionary<GameState, string>
@@ -66,9 +72,13 @@ public class GameStateManager : MonoBehaviour
 
         Instance = this;
         DontDestroyOnLoad(gameObject);
-        DontDestroyOnLoad(pawn);
-        pawn.transform.localScale = new Vector3(8, 8, 8);
-        pawn.SetActive(true);
+        
+        if (pawn != null)
+        {
+            DontDestroyOnLoad(pawn);
+            pawn.transform.localScale = new Vector3(8, 8, 8);
+            pawn.SetActive(true);
+        }
     }
 
     void Start()
@@ -148,10 +158,41 @@ public class GameStateManager : MonoBehaviour
 
         if (currentPawn != null)
         {
-            currentPawn.transform.localPosition = pawnPositon;
+            if (!isMoving)
+            {
+                StartCoroutine(MovePawnSmoothly(currentPawn, pawnPositon));
+            }
         }
 
-        Debug.Log($"Peão posicionado em: {currentPawn.transform.position}");
+        Debug.Log($"Peão se movendo para: {pawnPositon}");
+    }
+
+    IEnumerator MovePawnSmoothly(GameObject pawnToMove, Vector3 targetPosition)
+    {
+        if (pawnToMove == null)
+        {
+            isMoving = false;
+            yield break;
+        }
+
+        isMoving = true;
+        Vector3 startPosition = pawnToMove.transform.localPosition;
+        float journey = 0f;
+        
+        while (journey <= 1f && pawnToMove != null)
+        {
+            journey += movementSpeed * Time.deltaTime;
+            pawnToMove.transform.localPosition = Vector3.Lerp(startPosition, targetPosition, journey);
+            yield return null;
+        }
+        
+        if (pawnToMove != null)
+        {
+            pawnToMove.transform.localPosition = targetPosition;
+            Debug.Log($"Peão chegou em: {pawnToMove.transform.position}");
+        }
+        
+        isMoving = false;
     }
 
     GameObject GetPawn()
