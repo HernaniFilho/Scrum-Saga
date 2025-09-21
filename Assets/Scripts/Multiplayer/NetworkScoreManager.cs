@@ -76,7 +76,18 @@ public class NetworkScoreManager : MonoBehaviourPunCallbacks
             
             // Aplicar valor diretamente sem somar
             scoreManager.scoreboard[scoreKey] = newValue;
-            scoreManager.UpdateScoreTexts(scoreKey, newValue);
+            
+            // Usar a mesma lógica do UpdateScore mas sem validações
+            if (System.Enum.TryParse<ScoreManager.ScoreType>(scoreKey, out ScoreManager.ScoreType scoreType))
+            {
+                scoreManager.UpdateScoreDisplay(scoreKey, newValue);
+            }
+            else if (System.Enum.TryParse<ScoreManager.Natures>(scoreKey, out ScoreManager.Natures nature))
+            {
+                scoreManager.UpdateScoreTexts(scoreKey, newValue);
+                // Sincronizar cartas visuais também
+                scoreManager.SyncNatureCardsWithValues();
+            }
             
             // Reativar NetworkScoreManager
             Instance = temp;

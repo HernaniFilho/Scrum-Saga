@@ -2,6 +2,7 @@ using UnityEngine;
 using Photon.Pun;
 using Photon.Realtime;
 using TMPro;
+using UnityEngine.UI;
 
 public class NetworkManager : MonoBehaviourPunCallbacks
 {
@@ -11,7 +12,10 @@ public class NetworkManager : MonoBehaviourPunCallbacks
 
     [Header("UI References")]
     public TMP_Text connectionStatusText;
-    public TMP_Text roomInfoText;
+    public TMP_Text roomNameText;
+    public TMP_Text playerCountText;
+    public TMP_Text[] playerNameTexts = new TMP_Text[5];
+    public TMP_Text[] playerPOTexts = new TMP_Text[5];
     public GameObject[] uiToHideWhenConnected;
     public GameObject[] uiToShowWhenConnected;
     
@@ -102,26 +106,129 @@ public class NetworkManager : MonoBehaviourPunCallbacks
 
     public void UpdateRoomInfo()
     {
-        if (roomInfoText != null)
+        UpdateRoomName();
+        UpdatePlayerCount();
+        UpdatePlayerContainers();
+    }
+    
+    private void UpdateRoomName()
+    {
+        if (roomNameText != null)
         {
             if (PhotonNetwork.InRoom)
             {
-                string players = "";
-                foreach (var player in PhotonNetwork.PlayerList)
-                {
-                    string playerName = player.NickName;
-                    if (productOwnerManager != null && productOwnerManager.IsPlayerProductOwner(player))
-                    {
-                        playerName += " (PO)";
-                    }
-                    players += "\n- " + playerName;
-                }
-                roomInfoText.text = $"Sala: {PhotonNetwork.CurrentRoom.Name}\nJogadores ({PhotonNetwork.CurrentRoom.PlayerCount}/{PhotonNetwork.CurrentRoom.MaxPlayers}): {players}";
+                roomNameText.text = PhotonNetwork.CurrentRoom.Name;
             }
             else
             {
-                roomInfoText.text = "Não está em uma sala";
+                roomNameText.text = "Não conectado";
             }
+        }
+    }
+    
+    private void UpdatePlayerCount()
+    {
+        if (playerCountText != null)
+        {
+            if (PhotonNetwork.InRoom)
+            {
+                int currentCount = PhotonNetwork.CurrentRoom.PlayerCount;
+                int maxCount = PhotonNetwork.CurrentRoom.MaxPlayers;
+                playerCountText.text = $"Jogadores ({currentCount}/{maxCount}):";
+            }
+            else
+            {
+                playerCountText.text = "Jogadores (0/0):";
+            }
+        }
+    }
+    
+    private void UpdatePlayerContainers()
+    {
+        if (playerNameTexts == null || playerPOTexts == null) return;
+        
+        if (PhotonNetwork.InRoom)
+        {
+            var playerList = PhotonNetwork.PlayerList;
+            
+            // Atualizar textos baseado na quantidade de jogadores
+            for (int i = 0; i < playerNameTexts.Length; i++)
+            {
+                if (i < playerList.Length)
+                {
+                    // Atualizar informações do jogador
+                    UpdatePlayerTexts(playerList[i], i);
+                }
+                else
+                {
+                    // Limpar textos se não há jogador suficiente
+                    ClearPlayerTexts(i);
+                }
+            }
+        }
+        else
+        {
+            // Se não está na sala, limpar todos os textos
+            for (int i = 0; i < playerNameTexts.Length; i++)
+            {
+                ClearPlayerTexts(i);
+            }
+        }
+    }
+    
+    private void UpdatePlayerTexts(Player player, int index)
+    {
+        if (index >= playerNameTexts.Length || index >= playerPOTexts.Length) return;
+        
+        // Atualizar nome do jogador
+        if (playerNameTexts[index] != null)
+        {
+            playerNameTexts[index].text = player.NickName;
+            
+            // Ativar componente Image do pai se existir
+            Image parentImage = playerNameTexts[index].transform.parent?.GetComponent<Image>();
+            if (parentImage != null)
+            {
+                parentImage.enabled = true;
+            }
+        }
+        
+        // Atualizar status PO
+        if (playerPOTexts[index] != null)
+        {
+            if (productOwnerManager != null && productOwnerManager.IsPlayerProductOwner(player))
+            {
+                playerPOTexts[index].gameObject.SetActive(true);
+                playerPOTexts[index].text = "(PO)";
+            }
+            else
+            {
+                playerPOTexts[index].text = "";
+            }
+        }
+    }
+
+    private void ClearPlayerTexts(int index)
+    {
+        if (index >= playerNameTexts.Length || index >= playerPOTexts.Length) return;
+        
+        // Limpar nome do jogador
+        if (playerNameTexts[index] != null)
+        {
+            playerNameTexts[index].text = "";
+            
+            // Desativar componente Image do pai se existir
+            Image parentImage = playerNameTexts[index].transform.parent?.GetComponent<Image>();
+            if (parentImage != null)
+            {
+                parentImage.enabled = false;
+            }
+        }
+        
+        // Limpar status PO
+        if (playerPOTexts[index] != null)
+        {
+            playerPOTexts[index].text = "";
         }
     }
 
