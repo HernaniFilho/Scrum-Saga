@@ -1385,7 +1385,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   textFolder: Texts/Imprevistos
   textUI: {fileID: 2927425279686509324}
-  imageFolder: Images/Naturezas
+  imageFolder: Images/Naturezas/Antigas
   whiteMaterialPath: Materials/White
   meshRenderers:
   - {fileID: 6632977370908169942}
@@ -1397,6 +1397,8 @@ MonoBehaviour:
   debuffText_1: {fileID: 9146307759238820059}
   debuffText_2: {fileID: 6813778679077374654}
   debuffText_3: {fileID: 1374966085463420618}
+  useFirstOnly: 0
+  isSyncedCard: 0
 --- !u!1 &6031379329980554197
 GameObject:
   m_ObjectHideFlags: 0
