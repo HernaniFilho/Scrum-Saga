@@ -583,9 +583,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   textFolder: Texts/Aprendizagens
   textUI: {fileID: 4266849842021893605}
-  imageFolder: Images/Naturezas
+  imageFolder: Images/Naturezas/Antigas
   whiteMaterialPath: Materials/White
   meshRenderer: {fileID: 5215799096721970843}
+  nature: 
+  isSyncedCard: 0
 --- !u!1 &7773909867551603478
 GameObject:
   m_ObjectHideFlags: 0

@@ -70,7 +70,6 @@ public class CardAprendizagens : MonoBehaviour
         
         Debug.Log($"Tentando carregar textura sincronizada para natureza: '{natureza}'");
         
-        string imageFolder = "Images/Naturezas";
         string texturePath = imageFolder + "/" + natureza;
         Texture2D texture = Resources.Load<Texture2D>(texturePath);
         
@@ -148,43 +147,40 @@ public class CardAprendizagens : MonoBehaviour
     }
 
     public void randomImages()
+{
+    if (meshRenderer == null)
     {
-        if (meshRenderer == null)
-        {
-            Debug.LogWarning("Nenhum MeshRenderer atribuído para receber as imagens aleatórias.");
-            return;
-        }
-        
-        // Teste direto com nomes das imagens
-        string[] imageNames = { "Adaptacao", "Inspecao", "Transparencia" };
-        string selectedImageName = imageNames[Random.Range(0, imageNames.Length)];
-        
-        Debug.Log("Tentando carregar: " + imageFolder + "/" + selectedImageName);
-        Texture2D selectedTexture = Resources.Load<Texture2D>(imageFolder + "/" + selectedImageName);
-        
-        if (selectedTexture == null)
-        {
-            Debug.LogError("Textura não encontrada: " + imageFolder + "/" + selectedImageName);
-            return;
-        }
-        
-        Debug.Log("Textura carregada: " + selectedTexture.name + " - Tamanho: " + selectedTexture.width + "x" + selectedTexture.height);
-        
-        // Criar material novo com shader simples para WebGL
-        Material material = new Material(Shader.Find("Unlit/Texture"));
-        
-        Debug.Log("Shader encontrado: " + (material.shader != null ? material.shader.name : "NULL"));
-        
-        // Aplicar textura
-        material.mainTexture = selectedTexture;
-        material.SetTexture("_MainTex", selectedTexture);
-        
-        // Aplicar ao renderer
-        meshRenderer.material = material;
-        
-        Debug.Log("Material aplicado - Textura principal: " + (material.mainTexture != null ? material.mainTexture.name : "NULL"));
-        
-        nature = selectedImageName;
-        Debug.Log("Natureza selecionada: " + nature);
+        Debug.LogWarning("Nenhum MeshRenderer atribuído para receber as imagens aleatórias.");
+        return;
     }
+
+    // Carregar todas as texturas disponíveis na pasta
+    Texture2D[] allTextures = Resources.LoadAll<Texture2D>(imageFolder);
+
+    if (allTextures.Length == 0)
+    {
+        Debug.LogError($"Nenhuma textura encontrada em: {imageFolder}");
+        return;
+    }
+
+    Debug.Log($"[DEBUG] Foram encontradas {allTextures.Length} texturas em '{imageFolder}':");
+
+    foreach (var tex in allTextures)
+    {
+        Debug.Log($"- {tex.name} | {tex.width}x{tex.height}");
+
+        // Criar material novo para debug
+        Material material = new Material(Shader.Find("Unlit/Texture"));
+        material.mainTexture = tex;
+
+        // Aplicar no meshRenderer (vai ficando a última visível)
+        meshRenderer.material = material;
+
+        Debug.Log($"Material aplicado -> Textura principal: {material.mainTexture?.name}");
+
+        // Atualizar a natureza também
+        nature = tex.name;
+    }
+}
+
 }
