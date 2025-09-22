@@ -6,8 +6,12 @@ public class DeckAprendizagens : MonoBehaviour
     public GameObject prefabToSpawn;
     [Header("Distância de spawn da carta em relação ao jogador")]
     public float spawnDistance = 5.0f;
+    [Header("Glow effect do deck")]
+    public GameObject glowEffect;
     [Header("Câmera principal")]
     private Camera playerCamera;
+    private Renderer glowRenderer;
+    private bool lastCanPegarState = false;
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
@@ -16,6 +20,20 @@ public class DeckAprendizagens : MonoBehaviour
         {
             Debug.LogError("Câmera principal não encontrada. Certifique-se de que há uma câmera com a tag 'MainCamera'.");
         }
+        
+        if (glowEffect != null)
+        {
+            glowRenderer = glowEffect.GetComponent<Renderer>();
+            if (glowRenderer == null)
+                Debug.LogWarning("GlowEffect não possui Renderer para controlar visibilidade!");
+        }
+        
+        UpdateDeckVisibility();
+    }
+
+    void Update()
+    {
+        UpdateDeckVisibility();
     }
 
     void OnMouseDown()
@@ -63,9 +81,57 @@ public class DeckAprendizagens : MonoBehaviour
         }
     }
 
-    // Update is called once per frame
-    void Update()
+    void UpdateDeckVisibility()
     {
+        if (glowEffect == null) return;
         
+        bool isRetrospectivePhase = GameStateManager.Instance != null && 
+                                   GameStateManager.Instance.GetCurrentState() == GameStateManager.GameState.SprintRetrospective;
+        
+        bool hasActiveCards = FindObjectsOfType<CardAprendizagens>().Length > 0;
+        
+        bool shouldShowGlow = isRetrospectivePhase && (SprintRetrospectiveManager.Instance != null && 
+                             (SprintRetrospectiveManager.Instance.CanPegarCarta() || hasActiveCards));
+        
+        if (shouldShowGlow != lastCanPegarState)
+        {
+            lastCanPegarState = shouldShowGlow;
+            
+            if (glowRenderer != null)
+            {
+                StartCoroutine(FadeGlow(shouldShowGlow));
+            }
+            else
+            {
+                glowEffect.SetActive(shouldShowGlow);
+            }
+        }
+    }
+    
+    System.Collections.IEnumerator FadeGlow(bool fadeIn)
+    {
+        Material material = glowRenderer.material;
+        float startAlpha = fadeIn ? 0f : 1f;
+        float targetAlpha = fadeIn ? 1f : 0f;
+        float duration = 0.5f;
+        
+        if (fadeIn)
+            glowEffect.SetActive(true);
+        
+        float elapsed = 0f;
+        while (elapsed < duration)
+        {
+            elapsed += Time.deltaTime;
+            float alpha = Mathf.Lerp(startAlpha, targetAlpha, elapsed / duration);
+            
+            Color color = material.color;
+            color.a = alpha;
+            material.color = color;
+            
+            yield return null;
+        }
+        
+        if (!fadeIn)
+            glowEffect.SetActive(false);
     }
 }
