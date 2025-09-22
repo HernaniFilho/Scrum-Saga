@@ -717,7 +717,7 @@ public class SprintReviewManager : MonoBehaviourPunCallbacks
                 resultMessage = "O PO ficou muito satisfeito!\nPontuação máxima obtida!";
                 break;
             case SatisfactionLevel.Medium:
-                resultMessage = "Poderia ser melhor...\nPontuação reduzida pela metade!";
+                resultMessage = "Poderia ser melhor...\nPontuação média obtida!";
                 break;
             case SatisfactionLevel.Low:
                 resultMessage = "Necessário aprimorar!\nCarta reprovada!";
