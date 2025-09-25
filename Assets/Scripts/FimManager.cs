@@ -156,7 +156,7 @@ public class FimManager : MonoBehaviourPun
         }
       }
       
-      if (TimerManager.Instance != null && PhotonNetwork.IsMasterClient)
+      if (TimerManager.Instance != null && productOwnerManager != null && productOwnerManager.IsLocalPlayerProductOwner())
       {
         TimerManager.Instance.StartTimer(isLastSprint ? fimPhaseFeedbackDuration : fimPhaseDefaultDuration, onTimerComplete, "FimTimer");
       }
