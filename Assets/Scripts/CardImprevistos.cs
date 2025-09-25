@@ -205,38 +205,60 @@ public class CardImprevistos : MonoBehaviour
 
     void loadScoreVariables()
     {
-        ScoreManager.ScoreType[] randomTypes = GetTwoRandomScoreTypes();
-        if (randomTypes.Length < 2)
-        {
-            Debug.LogWarning("Não há pontuações suficientes para selecionar aleatoriamente.");
-            return;
-        }
         debuffs.Clear();
         
         // Decide se usa 1 ou 2 debuffs
         bool useOnlyOneDebuff = Random.Range(0, 2) == 0; // 50% chance
-        int debuffCount = useOnlyOneDebuff ? 1 : 2;
         
-        for (int i = 0; i < debuffCount; i++)
+        if (useOnlyOneDebuff)
         {
-            string varName = randomTypes[i].ToString();
-            int debuffValue;
+            // Para debuff de -2, encontra a trilha de maior pontuação
+            ScoreManager.ScoreType[] allTypes = (ScoreManager.ScoreType[])Enum.GetValues(typeof(ScoreManager.ScoreType));
             
-            if (useOnlyOneDebuff)
+            string targetType = "";
+            int highestScore = -1;
+            
+            foreach (ScoreManager.ScoreType type in allTypes)
             {
-                debuffValue = -maxDebuff; // Um debuff com -2
-                useFirstOnly = true;
-            }
-            else
-            {
-                debuffValue = -minDebuff; // Dois debuffs com -1 cada
-                useFirstOnly = false;
+                string typeName = type.ToString();
+                int currentScore = ScoreManager.Instance != null && ScoreManager.Instance.scoreboard.ContainsKey(typeName) 
+                                ? ScoreManager.Instance.scoreboard[typeName] : 0;
+                
+                if (currentScore > highestScore)
+                {
+                    highestScore = currentScore;
+                    targetType = typeName;
+                }
+                else if (currentScore == highestScore && Random.Range(0, 2) == 0)
+                {
+                    targetType = typeName;
+                }
             }
             
-            if (!debuffs.ContainsKey(varName))
+            debuffs.Add(targetType, -maxDebuff);
+            useFirstOnly = true;
+        }
+        else
+        {
+            // Para dois debuffs (-1 cada), usa a função para sortear 2 trilhas
+            ScoreManager.ScoreType[] randomTypes = GetTwoRandomScoreTypes();
+            if (randomTypes.Length < 2)
             {
-                debuffs.Add(varName, debuffValue);
+                Debug.LogWarning("Não há pontuações suficientes para selecionar aleatoriamente.");
+                return;
             }
+            
+            for (int i = 0; i < 2; i++)
+            {
+                string varName = randomTypes[i].ToString();
+                int debuffValue = -minDebuff; // -1 cada
+                
+                if (!debuffs.ContainsKey(varName))
+                {
+                    debuffs.Add(varName, debuffValue);
+                }
+            }
+            useFirstOnly = false;
         }
     }
 
