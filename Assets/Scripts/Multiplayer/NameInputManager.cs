@@ -46,13 +46,13 @@ public class NameInputManager : MonoBehaviour
         // Criar painel principal com fundo branco
         GameObject panelObj = new GameObject("NameInputPanel");
         
-        // Criar Canvas próprio para o painel
-        nameCanvas = panelObj.AddComponent<Canvas>();
-        nameCanvas.renderMode = RenderMode.ScreenSpaceOverlay;
-        nameCanvas.sortingOrder = 100; // Fica acima de outros elementos
-        
-        panelObj.AddComponent<CanvasScaler>();
-        panelObj.AddComponent<GraphicRaycaster>();
+        GameObject canvasPrincipal = GameObject.Find("CanvasPrincipal");
+        if (canvasPrincipal == null)
+        {
+            Debug.LogError("CanvasPrincipal não encontrado na cena!");
+            return;
+        }
+        panelObj.transform.SetParent(canvasPrincipal.transform, false);
 
         nameInputPanel = panelObj;
         Image panelImage = panelObj.AddComponent<Image>();

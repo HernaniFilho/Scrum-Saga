@@ -416,7 +416,8 @@ public class SprintReviewManager : MonoBehaviourPunCallbacks
         }
         
         // Calculate position (center of screen)
-        Vector3 screenCenter = new Vector3(Screen.width / 2f + 160f, Screen.height / 2f, cardSpawnDistance);
+        float xOffset = OffsetManager.Instance != null ? OffsetManager.Instance.xOffset : 160f;
+        Vector3 screenCenter = new Vector3(Screen.width / 2f + xOffset, Screen.height / 2f, cardSpawnDistance);
         Vector3 centerPosition = playerCamera.ScreenToWorldPoint(screenCenter);
         
         // Create card for PO
@@ -841,7 +842,8 @@ public class SprintReviewManager : MonoBehaviourPunCallbacks
     {
         if (cardTarefasPrefab == null || playerCamera == null || cardData == null) return;
         
-        Vector3 screenCenter = new Vector3(Screen.width / 2f + 160f, Screen.height / 2f, cardSpawnDistance);
+        float xOffset = OffsetManager.Instance != null ? OffsetManager.Instance.xOffset : 160f;
+        Vector3 screenCenter = new Vector3(Screen.width / 2f + xOffset, Screen.height / 2f, cardSpawnDistance);
         Vector3 centerPosition = playerCamera.ScreenToWorldPoint(screenCenter);
         
         Quaternion rotation = Quaternion.Euler(-90, 0, 180);

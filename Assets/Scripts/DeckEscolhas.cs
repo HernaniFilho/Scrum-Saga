@@ -68,7 +68,7 @@ public class DeckEscolhas : MonoBehaviour
         
         // Calcula a posição para spawnar: na frente da câmera + 160px para a direita
         Vector3 screenPos = playerCamera.WorldToScreenPoint(playerCamera.transform.position + playerCamera.transform.forward * spawnDistance);
-        screenPos.x += 160;
+        screenPos.x += OffsetManager.Instance != null ? OffsetManager.Instance.xOffset : 160f;
         Vector3 spawnPosition = playerCamera.ScreenToWorldPoint(screenPos);
 
         Quaternion rotation = Quaternion.Euler(-90, 0, 180);

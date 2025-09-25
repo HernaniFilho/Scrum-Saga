@@ -15,6 +15,9 @@ public class CenterBoard : MonoBehaviour
 
   private void Update()
   {
+    xOffset = OffsetManager.Instance != null ? OffsetManager.Instance.xOffset : 160f;
+    yOffset = OffsetManager.Instance != null ? OffsetManager.Instance.yOffset : -20f;
+
     Vector3 screenCenter = new Vector3(
       Screen.width / 2f + xOffset,
       Screen.height / 2f + yOffset,

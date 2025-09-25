@@ -205,7 +205,8 @@ public class SprintPlanningManager : MonoBehaviourPun
     if (playerCamera == null) return Vector3.zero;
 
     // Calcula a posição para spawnar: na frente da câmera + 160px para a direita
-    Vector3 screenCenter = new Vector3(Screen.width / 2f + 160f, Screen.height / 2f, spawnDistance);
+    float xOffset = OffsetManager.Instance != null ? OffsetManager.Instance.xOffset : 160f;
+    Vector3 screenCenter = new Vector3(Screen.width / 2f + xOffset, Screen.height / 2f, spawnDistance);
     Vector3 centerPosition = playerCamera.ScreenToWorldPoint(screenCenter);
 
     // 0 = top-left, 1 = top-right, 2 = bottom-left, 3 = bottom-right
@@ -222,7 +223,8 @@ public class SprintPlanningManager : MonoBehaviourPun
   {
     if (playerCamera == null) return Vector3.zero;
 
-    Vector3 screenCenter = new Vector3(Screen.width / 2f + 160f, Screen.height / 2f, selectedCardSpawnDistance);
+    float xOffset = OffsetManager.Instance != null ? OffsetManager.Instance.xOffset : 160f;
+    Vector3 screenCenter = new Vector3(Screen.width / 2f + xOffset, Screen.height / 2f, selectedCardSpawnDistance);
     Vector3 centerPosition = playerCamera.ScreenToWorldPoint(screenCenter);
 
     float offset = centeredCardSpacing / 2f;
@@ -315,7 +317,8 @@ public class SprintPlanningManager : MonoBehaviourPun
     
     if (!showingWithRejected)
     {
-      Vector3 screenCenter = new Vector3(Screen.width / 2f + 160f, Screen.height / 2f, selectedCardSpawnDistance);
+      float xOffset = OffsetManager.Instance != null ? OffsetManager.Instance.xOffset : 160f;
+      Vector3 screenCenter = new Vector3(Screen.width / 2f + xOffset, Screen.height / 2f, selectedCardSpawnDistance);
       centerPosition = playerCamera.ScreenToWorldPoint(screenCenter);
     }
     else

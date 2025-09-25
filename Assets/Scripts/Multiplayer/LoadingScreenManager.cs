@@ -46,14 +46,15 @@ public class LoadingScreenManager : MonoBehaviour
 
         // Criar painel principal com fundo branco (semelhante ao NameInput)
         GameObject panelObj = new GameObject("LoadingScreenPanel");
-        
-        // Criar Canvas próprio para o painel
-        loadingCanvas = panelObj.AddComponent<Canvas>();
-        loadingCanvas.renderMode = RenderMode.ScreenSpaceOverlay;
-        loadingCanvas.sortingOrder = 200; // Fica acima de todos os outros elementos
-        
-        panelObj.AddComponent<CanvasScaler>();
-        panelObj.AddComponent<GraphicRaycaster>();
+
+        // Define como filho do CanvasPrincipal
+        GameObject canvasPrincipal = GameObject.Find("CanvasPrincipal");
+        if (canvasPrincipal == null)
+        {
+            Debug.LogError("CanvasPrincipal não encontrado na cena!");
+            return;
+        }
+        panelObj.transform.SetParent(canvasPrincipal.transform, false);
 
         loadingPanel = panelObj;
         Image panelImage = panelObj.AddComponent<Image>();

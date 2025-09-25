@@ -234,7 +234,7 @@ public class ImprevistoManager : MonoBehaviourPunCallbacks
     {
         Camera playerCamera = Camera.main;
         Vector3 screenPos = playerCamera.WorldToScreenPoint(playerCamera.transform.position + playerCamera.transform.forward * spawnDistance);
-        screenPos.x += 160;
+        screenPos.x += OffsetManager.Instance != null ? OffsetManager.Instance.xOffset : 160f;
         Vector3 pos = playerCamera.ScreenToWorldPoint(screenPos);
         Quaternion rot = new Quaternion(rotation[0], rotation[1], rotation[2], rotation[3]);
         
