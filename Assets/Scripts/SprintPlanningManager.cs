@@ -249,6 +249,19 @@ public class SprintPlanningManager : MonoBehaviourPun
         storageGO.AddComponent<SelectedCardStorage>();
       }
 
+      // Registrar a textura da carta selecionada como utilizada
+      if (UsedCardsManager.Instance == null)
+      {
+        GameObject usedCardsGO = new GameObject("UsedCardsManager");
+        usedCardsGO.AddComponent<UsedCardsManager>();
+      }
+      
+      if (cardTarefas.meshRenderer != null && cardTarefas.meshRenderer.material != null && cardTarefas.meshRenderer.material.mainTexture != null)
+      {
+        string textureName = cardTarefas.meshRenderer.material.mainTexture.name;
+        UsedCardsManager.Instance.AddUsedCard(textureName);
+      }
+
       SelectedCardStorage.Instance.StoreSelectedCard(cardTarefas);
       Debug.Log($"Carta {cardIndex + 1} selecionada e armazenada!");
     }

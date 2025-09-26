@@ -187,11 +187,33 @@ public class CardTarefas : MonoBehaviour
             return;
         }
 
-        Texture2D randomTexture = textures[Random.Range(0, textures.Length)];
+        // Criar instância do UsedCardsManager se não existir
+        if (UsedCardsManager.Instance == null)
+        {
+            GameObject usedCardsGO = new GameObject("UsedCardsManager");
+            usedCardsGO.AddComponent<UsedCardsManager>();
+        }
+
+        Texture2D selectedTexture = null;
+        int maxAttempts = textures.Length * 2; // Evita loop infinito
+        int attempts = 0;
+
+        do
+        {
+            selectedTexture = textures[Random.Range(0, textures.Length)];
+            attempts++;
+            
+            if (attempts >= maxAttempts)
+            {
+                Debug.LogWarning($"Todas as texturas podem estar sendo usadas. Usando textura: {selectedTexture.name}");
+                break;
+            }
+        }
+        while (UsedCardsManager.Instance.IsCardUsed(selectedTexture.name));
         
         Material material = new Material(Shader.Find("Unlit/Texture"));
-        material.mainTexture = randomTexture;
-        material.SetTexture("_MainTex", randomTexture);
+        material.mainTexture = selectedTexture;
+        material.SetTexture("_MainTex", selectedTexture);
         meshRenderer.material = material;
     }
 }

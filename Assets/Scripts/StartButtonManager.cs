@@ -114,6 +114,12 @@ public class StartButtonManager : MonoBehaviourPun
             {
                 ScoreManager.Instance.ShuffleNatures();
             }
+            
+            // Limpar cartas utilizadas ao começar um novo ciclo de 3 sprints
+            if (UsedCardsManager.Instance != null)
+            {
+                UsedCardsManager.Instance.ClearUsedCards();
+            }
         }
         else
         {

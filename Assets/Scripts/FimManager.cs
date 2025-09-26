@@ -198,6 +198,12 @@ public class FimManager : MonoBehaviourPun
           SelectedCardStorage.Instance.ClearSelectedCard();
           SelectedCardStorage.Instance.ClearRejectedCard();
         }
+
+        // Limpar cartas utilizadas quando o jogo termina completamente
+        if (UsedCardsManager.Instance != null)
+        {
+          UsedCardsManager.Instance.ClearUsedCards();
+        }
       }
 
       if (gameStateManager != null)
