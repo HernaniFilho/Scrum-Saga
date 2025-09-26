@@ -22,6 +22,7 @@ public class CardTarefas : MonoBehaviour
     [Header("Estado da carta")]
     public bool isSelected = false;
     private bool customInitialized = false;
+    private bool hasPredefinedScores = false;
 
     public void InitializeWithCustomData(Dictionary<string, int> customScores, Material customMaterial, int customMaxScore = 1)
     {
@@ -34,6 +35,23 @@ public class CardTarefas : MonoBehaviour
         if (customMaterial != null && meshRenderer != null)
         {
             meshRenderer.material = new Material(customMaterial);
+        }
+    }
+
+    public void SetPredefinedScores(Dictionary<string, int> predefinedScores)
+    {
+        if (predefinedScores != null && predefinedScores.Count > 0)
+        {
+            scores = new Dictionary<string, int>(predefinedScores);
+            hasPredefinedScores = true;
+            
+            maxScore = 0;
+            foreach (var score in scores.Values)
+            {
+                if (score > maxScore) maxScore = score;
+            }
+            
+            Debug.Log($"Pontuações pré-definidas aplicadas: {string.Join(", ", scores.Keys)}");
         }
     }
     
@@ -55,8 +73,8 @@ public class CardTarefas : MonoBehaviour
             randomTexture();
         }
         
-        // Só gera novas pontuações se a carta não foi selecionada
-        if (!isSelected && scores.Count == 0)
+        // Só gera novas pontuações se a carta não foi selecionada e não tem pontuações pré-definidas
+        if (!isSelected && scores.Count == 0 && !hasPredefinedScores)
         {
             loadScoreVariables();
         }

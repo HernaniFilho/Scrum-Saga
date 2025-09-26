@@ -164,6 +164,14 @@ public class SprintPlanningManager : MonoBehaviourPun
 
     ClearSpawnedCards();
 
+    if (CardScoreManager.Instance == null)
+    {
+      GameObject scoreManagerGO = new GameObject("CardScoreManager");
+      scoreManagerGO.AddComponent<CardScoreManager>();
+    }
+
+    List<Dictionary<string, int>> uniqueScores = CardScoreManager.Instance.GenerateUniqueCardScores();
+
     for (int i = 0; i < 4; i++)
     {
       Vector3 spawnPosition;
@@ -182,6 +190,14 @@ public class SprintPlanningManager : MonoBehaviourPun
       GameObject newCard = Instantiate(cardTarefasPrefab, spawnPosition, rotation);
 
       newCard.transform.localScale = new Vector3(0.51f, 0.0001f, 0.65f);
+
+      // Configurar pontuações únicas para esta carta
+      CardTarefas cardTarefas = newCard.GetComponent<CardTarefas>();
+      if (cardTarefas != null && i < uniqueScores.Count)
+      {
+        cardTarefas.SetPredefinedScores(uniqueScores[i]);
+        Debug.Log($"Carta {i + 1} configurada com pontuações únicas");
+      }
 
       // Ativar o componente Censura quando mostrar as 4 cartas
       Transform censuraTransform = FindChildByName(newCard.transform, "Censura");
