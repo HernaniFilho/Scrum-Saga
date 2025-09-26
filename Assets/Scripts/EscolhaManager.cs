@@ -124,7 +124,7 @@ public class EscolhaManager : MonoBehaviourPunCallbacks
         if (resultadoEscolhaText != null)
         {
             resultadoEscolhaText.gameObject.SetActive(true);
-            resultadoEscolhaText.text = "Coletem uma carta de Escolha!";
+            resultadoEscolhaText.text = "PO, colete uma carta de Escolha!";
         }
     }
 

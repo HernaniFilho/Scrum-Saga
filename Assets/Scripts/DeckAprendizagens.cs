@@ -63,6 +63,14 @@ public class DeckAprendizagens : MonoBehaviour
             return;
         }
 
+        ProductOwnerManager productOwnerManager = FindObjectOfType<ProductOwnerManager>();
+        bool isPO = productOwnerManager != null && productOwnerManager.IsLocalPlayerProductOwner();
+        if (!isPO)
+        {
+            Debug.Log("Apenas o PO pode coletar a carta!");
+            return;
+        }
+
         Debug.Log("Deck de aprendizagem clicada. Instanciando...");
         
         // Calcula a posição para spawnar: na frente da câmera + 160px para a direita

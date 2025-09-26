@@ -120,7 +120,7 @@ public class SprintRetrospectiveManager : MonoBehaviourPunCallbacks
         if (resultadoAprendizagemText != null)
         {
             resultadoAprendizagemText.gameObject.SetActive(true);
-            resultadoAprendizagemText.text = "Coletem uma carta de Aprendizagem!";
+            resultadoAprendizagemText.text = "PO, colete uma carta de Aprendizagem!";
         }
     }
 

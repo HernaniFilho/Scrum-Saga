@@ -125,7 +125,7 @@ public class ImprevistoManager : MonoBehaviourPunCallbacks
         if (resultadoImprevistoText != null)
         {
             resultadoImprevistoText.gameObject.SetActive(true);
-            resultadoImprevistoText.text = "Coletem uma carta de Imprevisto!";
+            resultadoImprevistoText.text = "PO, colete uma carta de Imprevisto!";
         }
     }
 
