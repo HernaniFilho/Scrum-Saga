@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.UI;
 
 public class OffsetManager : MonoBehaviour
 {
@@ -37,16 +38,14 @@ public class OffsetManager : MonoBehaviour
   private float CalculateXOffset()
   {
     float baseXOffset = 160f;
-    float baseScreenWidth = 1686f;
-    float screenWidth = Screen.width;
-
-    float xOffset = (screenWidth / baseScreenWidth) * baseXOffset;
+    float xScale = GetComponent<RectTransform>().localScale.x;
+    
+    float xOffset = baseXOffset * xScale;
 
     if (debug)
     {
       Debug.LogError("[DEBUG Offset] - baseXOffset: " + baseXOffset);
-      Debug.LogError("[DEBUG Offset] - baseScreenWidth: " + baseScreenWidth);
-      Debug.LogError("[DEBUG Offset] - screenWidth: " + screenWidth);
+      Debug.LogError("[DEBUG Offset] - xScale: " + xScale);
       Debug.LogError("[DEBUG Offset] - xOffset: " + xOffset);
       Debug.LogError("---------------");
     }
@@ -57,16 +56,14 @@ public class OffsetManager : MonoBehaviour
   private float CalculateYOffset()
   {
     float baseYOffset = -20f;
-    float baseScreenHeight = 1000f;
-    float screenHeight = Screen.height;
+    float yScale = GetComponent<RectTransform>().localScale.y;
 
-    float yOffset = (screenHeight / baseScreenHeight) * baseYOffset;
+    float yOffset = baseYOffset * yScale;
 
     if (debug)
     {
       Debug.LogError("[DEBUG Offset] - baseYOffset: " + baseYOffset);
-      Debug.LogError("[DEBUG Offset] - baseScreenHeight: " + baseScreenHeight);
-      Debug.LogError("[DEBUG Offset] - screenHeight: " + screenHeight);
+      Debug.LogError("[DEBUG Offset] - yScale: " + yScale);
       Debug.LogError("[DEBUG Offset] - yOffset: " + yOffset);
       Debug.LogError("---------------");
     }
