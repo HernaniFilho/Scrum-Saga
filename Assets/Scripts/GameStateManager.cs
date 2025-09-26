@@ -51,7 +51,7 @@ public class GameStateManager : MonoBehaviour
     {
         { GameState.Inicio,              new Vector3(50, 10, -175)    },
         { GameState.SprintPlanning,      new Vector3(-35, 10, -175)    },
-        { GameState.DailyScrum,          new Vector3(-105, 10, -175)       },
+        { GameState.DailyScrum,          new Vector3(-111, 10, -175)       },
         { GameState.Imprevisto,          new Vector3(-105, 10, -55)        },
         { GameState.Escolha,             new Vector3(-105, 10, 45)       },
         { GameState.RealizacaoTarefa,    new Vector3(-105, 10, 150)      },

@@ -13000,6 +13000,10 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7090624468860566124, guid: 8d5be245db06c46458e884b0d4c81737, type: 3}
+      propertyPath: m_Enabled
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7090624468860566124, guid: 8d5be245db06c46458e884b0d4c81737, type: 3}
       propertyPath: m_ClearFlags
       value: 2
       objectReference: {fileID: 0}
