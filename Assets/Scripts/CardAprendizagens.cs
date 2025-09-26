@@ -124,6 +124,7 @@ public class CardAprendizagens : MonoBehaviour
         
         // Comportamento padrão para outras fases
         ScoreManager.Instance.UpdateScore(nature, 1);
+        
         Debug.Log("Pontuação de " + nature + " aumentada em 1.");
         Destroy(gameObject);
     }
@@ -154,32 +155,59 @@ public class CardAprendizagens : MonoBehaviour
         return;
     }
 
-    // Carregar todas as texturas disponíveis na pasta
-    Texture2D[] allTextures = Resources.LoadAll<Texture2D>(imageFolder);
-
-    if (allTextures.Length == 0)
+    // Obter natureza baseada no sprint atual
+    StartButtonManager startButtonManager = FindObjectOfType<StartButtonManager>();
+    if (startButtonManager == null)
     {
-        Debug.LogError($"Nenhuma textura encontrada em: {imageFolder}");
-        return;
+        Debug.LogError("StartButtonManager não encontrado! Usando natureza padrão.");
+        nature = "Adaptacao";
+    }
+    else
+    {
+        int currentSprint = startButtonManager.GetCurrentSprint();
+        if (ScoreManager.Instance != null)
+        {
+            nature = ScoreManager.Instance.GetNatureForSprint(currentSprint);
+        }
+        else
+        {
+            Debug.LogError("ScoreManager.Instance é null! Usando natureza padrão.");
+            nature = "Adaptacao";
+        }
     }
 
-    Debug.Log($"[DEBUG] Foram encontradas {allTextures.Length} texturas em '{imageFolder}':");
-
-    foreach (var tex in allTextures)
+    // Carregar a textura correspondente à natureza definida
+    string texturePath = imageFolder + "/" + nature;
+    Texture2D texture = Resources.Load<Texture2D>(texturePath);
+    
+    if (texture != null)
     {
-        Debug.Log($"- {tex.name} | {tex.width}x{tex.height}");
-
-        // Criar material novo para debug
+        // Criar e aplicar o material
         Material material = new Material(Shader.Find("Unlit/Texture"));
-        material.mainTexture = tex;
-
-        // Aplicar no meshRenderer (vai ficando a última visível)
+        material.mainTexture = texture;
         meshRenderer.material = material;
-
-        Debug.Log($"Material aplicado -> Textura principal: {material.mainTexture?.name}");
-
-        // Atualizar a natureza também
-        nature = tex.name;
+        
+        Debug.Log($"Natureza para este sprint: {nature}");
+    }
+    else
+    {
+        Debug.LogError($"Textura não encontrada para natureza: {nature} no caminho: {texturePath}");
+        
+        // Fallback: usar primeira textura disponível
+        Texture2D[] allTextures = Resources.LoadAll<Texture2D>(imageFolder);
+        if (allTextures.Length > 0)
+        {
+            Material material = new Material(Shader.Find("Unlit/Texture"));
+            material.mainTexture = allTextures[0];
+            meshRenderer.material = material;
+            nature = allTextures[0].name;
+            
+            Debug.LogWarning($"Usando textura fallback: {nature}");
+        }
+        else
+        {
+            Debug.LogError($"Nenhuma textura encontrada em: {imageFolder}");
+        }
     }
 }
 

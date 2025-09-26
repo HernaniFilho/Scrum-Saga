@@ -93,6 +93,9 @@ public class ScoreManager : MonoBehaviour
     private List<Natures> availableNatureCards = new List<Natures>();
     private GameObject[] natureCardObjects;
     private Image[] natureCardImages;
+    
+    // Sistema de naturezas embaralhadas por sprint (3 sprints, 3 naturezas)
+    private List<string> shuffledNatures = new List<string>();
 
     public static ScoreManager Instance { get; private set; }
 
@@ -218,6 +221,9 @@ public class ScoreManager : MonoBehaviour
         // Inicializar sistema de cartas de natureza (começar vazio)
         UpdateNatureCardDisplay();
         
+        // Embaralhar naturezas para os 3 sprints
+        ShuffleNatures();
+        
         Debug.Log("ScoreManager iniciado com dificuldade: " + gameDifficulty);
         foreach (var score in scoreboard)
         {
@@ -267,6 +273,9 @@ public class ScoreManager : MonoBehaviour
         }
         // Limpar cartas de natureza antes de recarregar
         ClearAllNatureCards();
+        
+        // Embaralhar novamente as naturezas ao reiniciar partida
+        ShuffleNatures();
         
         foreach (Natures nature in Enum.GetValues(typeof(Natures)))
         {
@@ -719,5 +728,46 @@ public class ScoreManager : MonoBehaviour
         UpdateNatureCardDisplay();
         Debug.Log($"Cartas de natureza sincronizadas: {availableNatureCards.Count} cartas totais");
     }
-
+    
+    // ============ SISTEMA DE NATUREZAS EMBARALHADAS POR SPRINT ============
+    
+    public void ShuffleNatures()
+    {
+        shuffledNatures.Clear();
+        
+        // Adicionar todas as naturezas disponíveis
+        foreach (Natures nature in Enum.GetValues(typeof(Natures)))
+        {
+            shuffledNatures.Add(nature.ToString());
+        }
+        
+        // Embaralhar usando Fisher-Yates
+        for (int i = shuffledNatures.Count - 1; i > 0; i--)
+        {
+            int randomIndex = UnityEngine.Random.Range(0, i + 1);
+            string temp = shuffledNatures[i];
+            shuffledNatures[i] = shuffledNatures[randomIndex];
+            shuffledNatures[randomIndex] = temp;
+        }
+        
+        Debug.Log($"Naturezas embaralhadas: [{string.Join(", ", shuffledNatures)}]");
+    }
+    
+    public string GetNatureForSprint(int sprintNumber)
+    {
+        // Sprint number vem de 1-3, mas array é 0-2
+        int index = sprintNumber - 1;
+        
+        if (index >= 0 && index < shuffledNatures.Count)
+        {
+            string nature = shuffledNatures[index];
+            Debug.Log($"Natureza para Sprint {sprintNumber}: {nature}");
+            return nature;
+        }
+        else
+        {
+            Debug.LogError($"Sprint inválido: {sprintNumber}. Retornando primeira natureza como fallback.");
+            return shuffledNatures.Count > 0 ? shuffledNatures[0] : "Adaptacao";
+        }
+    }
 }

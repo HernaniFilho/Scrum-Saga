@@ -108,6 +108,12 @@ public class StartButtonManager : MonoBehaviourPun
         if ((currentSprint + 1) > sprintsMax)
         {
             setCurrentSprint(1);
+            
+            // Embaralhar novamente as naturezas ao começar um novo ciclo de 3 sprints
+            if (ScoreManager.Instance != null)
+            {
+                ScoreManager.Instance.ShuffleNatures();
+            }
         }
         else
         {
