@@ -5035,7 +5035,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4668312910009021935, guid: 7802ee04431ec6a4487b74350fb74357, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 0
+      value: 201.4
       objectReference: {fileID: 0}
     - target: {fileID: 4668312910009021935, guid: 7802ee04431ec6a4487b74350fb74357, type: 3}
       propertyPath: m_AnchoredPosition.x
@@ -7363,7 +7363,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 9093959693127939050, guid: 7802ee04431ec6a4487b74350fb74357, type: 3}
       propertyPath: m_VerticalFit
-      value: 2
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 9191760230335669567, guid: 7802ee04431ec6a4487b74350fb74357, type: 3}
       propertyPath: m_AnchorMax.y
@@ -7614,9 +7614,9 @@ MonoBehaviour:
   natureCardObject_2: {fileID: 2073455886}
   natureCardObject_3: {fileID: 704760140}
   emptySlotSprite: {fileID: 603347504, guid: b0f60949cddebbe48980ae789d06d5ad, type: 3}
-  adaptacaoSprite: {fileID: 1506294811, guid: 6c6ec5b2ba7dab94e93417551ace6d1b, type: 3}
-  inspecaoSprite: {fileID: 24208531, guid: a89e1d16ff2e71c438c6d69b0375d6e0, type: 3}
-  transparenciaSprite: {fileID: 698059214, guid: cc2ee800352f44a45b86a51df1681b93, type: 3}
+  adaptacaoSprite: {fileID: 2026823380, guid: 5e794c4e3d2a01c4da01b14e883d00c1, type: 3}
+  inspecaoSprite: {fileID: 1198636110, guid: a6eba486751070845985f1704eed9d58, type: 3}
+  transparenciaSprite: {fileID: 1158149988, guid: fe39fb7efb2a6514297fdda59d4aac68, type: 3}
 --- !u!1 &537927973
 GameObject:
   m_ObjectHideFlags: 0
@@ -14847,7 +14847,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2766931272623668945, guid: 34f3584411545db45841bc3ef2bea25c, type: 3}
       propertyPath: imageFolder
-      value: Images/Naturezas/Antigas
+      value: Images/Naturezas/Novas
       objectReference: {fileID: 0}
     - target: {fileID: 2766931272623668945, guid: 34f3584411545db45841bc3ef2bea25c, type: 3}
       propertyPath: 'meshRenderers.Array.data[0]'
@@ -15026,7 +15026,7 @@ PrefabInstance:
       objectReference: {fileID: 1329942668}
     - target: {fileID: 2242116942746342, guid: 852bbf1f0b91f2042886e3fb3ae3c67e, type: 3}
       propertyPath: imageFolder
-      value: Images/Naturezas/Antigas
+      value: Images/Naturezas/Novas
       objectReference: {fileID: 0}
     - target: {fileID: 2242116942746342, guid: 852bbf1f0b91f2042886e3fb3ae3c67e, type: 3}
       propertyPath: meshRenderers.Array.size
@@ -15351,7 +15351,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 652548509806664424, guid: 964db72f22499b0469a62ce15906a05e, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Mode
-      value: 1
+      value: 5
       objectReference: {fileID: 0}
     - target: {fileID: 652548509806664424, guid: 964db72f22499b0469a62ce15906a05e, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
@@ -15359,7 +15359,7 @@ PrefabInstance:
       objectReference: {fileID: 1113505375}
     - target: {fileID: 652548509806664424, guid: 964db72f22499b0469a62ce15906a05e, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
-      value: NextState
+      value: ChangeState
       objectReference: {fileID: 0}
     - target: {fileID: 652548509806664424, guid: 964db72f22499b0469a62ce15906a05e, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_TargetAssemblyTypeName
@@ -15367,7 +15367,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 652548509806664424, guid: 964db72f22499b0469a62ce15906a05e, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Arguments.m_StringArgument
-      value: Imprevisto
+      value: SprintRetrospective
       objectReference: {fileID: 0}
     - target: {fileID: 783463364174436169, guid: 964db72f22499b0469a62ce15906a05e, type: 3}
       propertyPath: m_AnchorMax.y

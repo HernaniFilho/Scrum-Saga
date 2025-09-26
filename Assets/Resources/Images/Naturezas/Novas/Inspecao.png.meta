@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: 6c6ec5b2ba7dab94e93417551ace6d1b
+guid: a6eba486751070845985f1704eed9d58
 TextureImporter:
   internalIDToNameTable: []
   externalObjects: {}
@@ -110,7 +110,7 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: AdaptacaoRounded_0
+      name: Inspecao_0
       rect:
         serializedVersion: 2
         x: 0
@@ -125,8 +125,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: a2262c6a42ab21a48921a9e95c34950d
-      internalID: 1506294811
+      spriteID: 25140e199c5421545950560a42e4ef9b
+      internalID: 1198636110
       vertices: []
       indices: 
       edges: []
@@ -135,7 +135,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: b7138998e448b9945b2d2a93577c8bcd
+    spriteID: fdee9466929daaf4bba9cd59540b8d66
     internalID: 0
     vertices: []
     indices: 
@@ -145,7 +145,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      AdaptacaoRounded_0: 1506294811
+      Inspecao_0: 1198636110
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

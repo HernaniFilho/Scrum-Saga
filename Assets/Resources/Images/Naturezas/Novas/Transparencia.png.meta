@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: cc2ee800352f44a45b86a51df1681b93
+guid: fe39fb7efb2a6514297fdda59d4aac68
 TextureImporter:
   internalIDToNameTable: []
   externalObjects: {}
@@ -21,7 +21,7 @@ TextureImporter:
     heightScale: 0.25
     normalMapFilter: 0
     flipGreenChannel: 0
-  isReadable: 0
+  isReadable: 1
   streamingMipmaps: 0
   streamingMipmapsPriority: 0
   vTOnly: 0
@@ -110,7 +110,7 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: TransparenciaRounded_0
+      name: Transparencia_0
       rect:
         serializedVersion: 2
         x: 0
@@ -125,8 +125,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: d8554210bb7b9fa44b608694807132b2
-      internalID: 698059214
+      spriteID: 6ccec6f2f7c0e3e449484b541772fc0c
+      internalID: 1158149988
       vertices: []
       indices: 
       edges: []
@@ -135,7 +135,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: cc98e9783397a9748a3f07f531ebd5a3
+    spriteID: a95787fc3afb9e646a219986d7b9e1f2
     internalID: 0
     vertices: []
     indices: 
@@ -145,7 +145,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      TransparenciaRounded_0: 698059214
+      Transparencia_0: 1158149988
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

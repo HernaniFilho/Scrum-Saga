@@ -377,8 +377,8 @@ Transform:
   m_GameObject: {fileID: 4596599399986767389}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: -1, z: 0, w: 0}
-  m_LocalPosition: {x: -6.05, y: -9.3, z: 1.1}
-  m_LocalScale: {x: 7, y: 7, z: 10}
+  m_LocalPosition: {x: -5.589, y: -8.467, z: 1.1}
+  m_LocalScale: {x: 7, y: 8.663508, z: 7}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 314350191825147991}
@@ -583,7 +583,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   textFolder: Texts/Aprendizagens
   textUI: {fileID: 4266849842021893605}
-  imageFolder: Images/Naturezas/Antigas
+  imageFolder: Images/Naturezas/Novas
   whiteMaterialPath: Materials/White
   meshRenderer: {fileID: 5215799096721970843}
   nature: 
