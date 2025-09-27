@@ -368,5 +368,74 @@ public class NetworkManager : MonoBehaviourPunCallbacks
         }
     }
 
+    public void UpdatePlayerPOText(int playerIndex, string text)
+    {
+        if (playerPOTexts != null && playerIndex >= 0 && playerIndex < playerPOTexts.Length)
+        {
+            if (playerPOTexts[playerIndex] != null)
+            {
+                if (!playerPOTexts[playerIndex].gameObject.activeSelf)
+                {
+                    playerPOTexts[playerIndex].gameObject.SetActive(true);
+                }
+                
+                playerPOTexts[playerIndex].text = text;
+                Debug.Log($"NetworkManager: Atualizado playerPOTexts[{playerIndex}] para: '{text}' (GameObject ativado)");
+            }
+            else
+            {
+                Debug.LogWarning($"NetworkManager: playerPOTexts[{playerIndex}] é null!");
+            }
+        }
+        else
+        {
+            Debug.LogWarning($"NetworkManager: Índice inválido {playerIndex} ou playerPOTexts é null! Array length: {playerPOTexts?.Length}");
+        }
+    }
+
+    public void ClearFinishedPlayerTexts()
+    {
+        if (playerPOTexts != null)
+        {
+            int clearedCount = 0;
+            for (int i = 0; i < playerPOTexts.Length; i++)
+            {
+                if (playerPOTexts[i] != null && playerPOTexts[i].text == "Terminou!")
+                {
+                    playerPOTexts[i].text = "";
+                    clearedCount++;
+                }
+            }
+            Debug.Log($"NetworkManager: {clearedCount} textos 'Terminou!' foram limpos");
+        }
+    }
+
+    public void ClearAllPlayerPOTexts()
+    {
+        if (playerPOTexts != null)
+        {
+            for (int i = 0; i < playerPOTexts.Length; i++)
+            {
+                if (playerPOTexts[i] != null)
+                {
+                    playerPOTexts[i].text = "";
+                }
+            }
+            Debug.Log("NetworkManager: Todos os playerPOTexts foram limpos");
+        }
+    }
+
+    public string GetPlayerPOText(int playerIndex)
+    {
+        if (playerPOTexts != null && playerIndex >= 0 && playerIndex < playerPOTexts.Length)
+        {
+            if (playerPOTexts[playerIndex] != null)
+            {
+                return playerPOTexts[playerIndex].text;
+            }
+        }
+        return "";
+    }
+
     #endregion
 }

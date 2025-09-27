@@ -28,6 +28,13 @@ public class SprintPlanningManager : MonoBehaviourPun
   public UnityEngine.UI.Button stopDraftButton;
   public TMP_Text draftText;
   public GameObject legendaContainer;
+  
+  [Header("Draft Completion Elements")]
+  public GameObject finishDraftContainer;
+  public UnityEngine.UI.Button finishDraftButton;
+  public GameObject allPlayersFinishedPopup;
+  public UnityEngine.UI.Button closeAllFinishedButton;
+  public UnityEngine.UI.Button endSprintPlanningButton;
 
   [Header("Positioning")]
   public float spawnDistance = 1f; // Câmera: -297f, Cards: -296f
@@ -42,6 +49,8 @@ public class SprintPlanningManager : MonoBehaviourPun
   private bool cardSelectionCompleted = false;
   private CardTarefas selectedCardData = null;
   private bool hasStartedDraft = false;
+  private bool hasLocalPlayerFinished = false;
+  private NetworkManager networkManager;
 
   void Start()
   {
@@ -49,6 +58,7 @@ public class SprintPlanningManager : MonoBehaviourPun
     productOwnerManager = FindObjectOfType<ProductOwnerManager>();
     gameStateManager = GameStateManager.Instance;
     tabuleiro = GameObject.Find("Tabuleiro");
+    networkManager = FindObjectOfType<NetworkManager>();
 
     if (playerCamera == null)
     {
@@ -71,6 +81,28 @@ public class SprintPlanningManager : MonoBehaviourPun
     {
       legendaContainer.SetActive(false);
     }
+
+    // Setup dos elementos de conclus\u00e3o do rascunho
+    if (finishDraftContainer != null && finishDraftButton != null)
+    {
+      finishDraftContainer.SetActive(false);
+      finishDraftButton.onClick.AddListener(OnFinishDraftButtonClicked);
+    }
+
+    if (allPlayersFinishedPopup != null)
+    {
+      allPlayersFinishedPopup.SetActive(false);
+    }
+
+    if (closeAllFinishedButton != null)
+    {
+      closeAllFinishedButton.onClick.AddListener(OnCloseAllFinishedButtonClicked);
+    }
+
+    if (endSprintPlanningButton != null)
+    {
+      endSprintPlanningButton.onClick.AddListener(OnEndSprintPlanningButtonClicked);
+    }
   }
 
   void Update()
@@ -78,6 +110,11 @@ public class SprintPlanningManager : MonoBehaviourPun
     if (productOwnerManager == null)
     {
       productOwnerManager = FindObjectOfType<ProductOwnerManager>();
+    }
+
+    if (networkManager == null)
+    {
+      networkManager = FindObjectOfType<NetworkManager>();
     }
 
     if (gameStateManager == null) return;
@@ -99,11 +136,29 @@ public class SprintPlanningManager : MonoBehaviourPun
           if (hasStartedDraft)
           {
             draftText.gameObject.SetActive(false);
+            
+            // Mostrar container "Terminar Rascunho" para jogadores n\u00e3o-PO durante o rascunho
+            if (finishDraftContainer != null && !hasLocalPlayerFinished)
+            {
+              finishDraftContainer.SetActive(true);
+            }
           }
           else
           {
             draftText.gameObject.SetActive(true);
             draftText.text = "Aguardando PO escolher a carta e começar o rascunho...";
+            
+            if (finishDraftContainer != null)
+            {
+              finishDraftContainer.SetActive(false);
+            }
+          }
+        }
+        else
+        {
+          if (finishDraftContainer != null)
+          {
+            finishDraftContainer.SetActive(false);
           }
         }
       }
@@ -150,6 +205,16 @@ public class SprintPlanningManager : MonoBehaviourPun
       if (legendaContainer != null)
       {
         legendaContainer.SetActive(false);
+      }
+
+      if (finishDraftContainer != null)
+      {
+        finishDraftContainer.SetActive(false);
+      }
+
+      if (allPlayersFinishedPopup != null)
+      {
+        allPlayersFinishedPopup.SetActive(false);
       }
     }
   }
@@ -462,6 +527,9 @@ public class SprintPlanningManager : MonoBehaviourPun
       stopDraftContainer.gameObject.SetActive(false);
     }
 
+    // Limpar textos "Terminou!" de todos os jogadores
+    ClearAllPlayerFinishedTexts();
+
     if (TimerManager.Instance != null)
     {
       TimerManager.Instance.EndTimer();
@@ -478,6 +546,8 @@ public class SprintPlanningManager : MonoBehaviourPun
       CanvasManager.Instance.ClearCanvasForAll();
       CanvasManager.Instance.DeactivateCanvasForAll();
     }
+
+    ClearAllPlayerFinishedTexts();
 
     if (productOwnerManager != null && productOwnerManager.IsLocalPlayerProductOwner())
     {
@@ -500,6 +570,226 @@ public class SprintPlanningManager : MonoBehaviourPun
   void RascunhoTerminado()
   {
     hasStartedDraft = false;
+    hasLocalPlayerFinished = false;
+  }
+
+  private void OnFinishDraftButtonClicked()
+  {
+    Debug.Log($"Jogador {PhotonNetwork.LocalPlayer.NickName} (ActorNumber: {PhotonNetwork.LocalPlayer.ActorNumber}) terminou o rascunho!");
+    
+    hasLocalPlayerFinished = true;
+    
+    if (finishDraftContainer != null)
+    {
+      finishDraftContainer.SetActive(false);
+    }
+    
+    UpdatePlayerPOText("Terminou!");
+    
+    photonView.RPC("PlayerFinishedDraft", RpcTarget.All, PhotonNetwork.LocalPlayer.ActorNumber);
+  }
+
+  private void OnCloseAllFinishedButtonClicked()
+  {
+    Debug.Log("Fechando popup de todos terminaram");
+    
+    if (allPlayersFinishedPopup != null)
+    {
+      allPlayersFinishedPopup.SetActive(false);
+    }
+  }
+
+  private void OnEndSprintPlanningButtonClicked()
+  {
+    Debug.Log("Encerrando Sprint Planning via popup!");
+    
+    if (allPlayersFinishedPopup != null)
+    {
+      allPlayersFinishedPopup.SetActive(false);
+    }
+    
+    ClearAllPlayerFinishedTexts();
+    
+    if (TimerManager.Instance != null)
+    {
+      TimerManager.Instance.EndTimer();
+    }
+    
+    if (CanvasManager.Instance != null)
+    {
+      CanvasManager.Instance.SaveAndSyncAllPlayerDrawings();
+      CanvasManager.Instance.ClearCanvasForAll();
+      CanvasManager.Instance.DeactivateCanvasForAll();
+    }
+    
+    if (productOwnerManager != null && productOwnerManager.IsLocalPlayerProductOwner())
+    {
+      ClearSpawnedCards();
+      if (draftText != null)
+        draftText.gameObject.SetActive(false);
+      gameStateManager.NextState();
+    }
+    
+    hasStartedDraft = false;
+    photonView.RPC("RascunhoTerminado", RpcTarget.All);
+  }
+
+  private void UpdatePlayerPOText(string text)
+  {
+    if (networkManager == null) 
+    {
+      Debug.LogError("SprintPlanningManager: NetworkManager \u00e9 null no UpdatePlayerPOText!");
+      return;
+    }
+    
+    int playerIndex = GetPlayerIndex(PhotonNetwork.LocalPlayer.ActorNumber);
+    Debug.Log($"SprintPlanningManager: UpdatePlayerPOText - ActorNumber: {PhotonNetwork.LocalPlayer.ActorNumber}, PlayerIndex: {playerIndex}, Text: '{text}'");
+    
+    if (playerIndex >= 0 && playerIndex < 5)
+    {
+      photonView.RPC("UpdatePlayerPOTextRPC", RpcTarget.All, playerIndex, text);
+    }
+    else
+    {
+      Debug.LogError($"SprintPlanningManager: PlayerIndex inv\u00e1lido: {playerIndex}");
+    }
+  }
+
+  private int GetPlayerIndex(int actorNumber)
+  {
+    Player[] players = PhotonNetwork.PlayerList;
+    for (int i = 0; i < players.Length && i < 5; i++)
+    {
+      if (players[i].ActorNumber == actorNumber)
+      {
+        return i;
+      }
+    }
+    return -1;
+  }
+
+  [PunRPC]
+  void UpdatePlayerPOTextRPC(int playerIndex, string text)
+  {
+    if (networkManager == null)
+    {
+      networkManager = FindObjectOfType<NetworkManager>();
+    }
+    
+    if (networkManager != null)
+    {
+      networkManager.UpdatePlayerPOText(playerIndex, text);
+    }
+    else
+    {
+      Debug.LogError("SprintPlanningManager: NetworkManager n\u00e3o encontrado!");
+    }
+  }
+
+  [PunRPC]
+  void PlayerFinishedDraft(int actorNumber)
+  {
+    Debug.Log($"Jogador {actorNumber} terminou o rascunho");
+    
+    if (productOwnerManager != null && productOwnerManager.IsLocalPlayerProductOwner())
+    {
+      CheckIfAllPlayersFinished();
+    }
+  }
+
+  private void CheckIfAllPlayersFinished()
+  {
+    Player[] players = PhotonNetwork.PlayerList;
+    int totalNonPOPlayers = 0;
+    int finishedPlayers = 0;
+    
+    foreach (Player player in players)
+    {
+      bool isPlayerPO = false;
+      if (player.CustomProperties.ContainsKey("IsProductOwner"))
+      {
+        isPlayerPO = (bool)player.CustomProperties["IsProductOwner"];
+      }
+      
+      if (!isPlayerPO)
+      {
+        totalNonPOPlayers++;
+        
+        int playerIndex = GetPlayerIndex(player.ActorNumber);
+        bool hasFinished = PlayerHasFinished(playerIndex);
+        Debug.Log($"Jogador {player.NickName} (Index: {playerIndex}) - Terminou: {hasFinished}");
+        
+        if (hasFinished)
+        {
+          finishedPlayers++;
+        }
+      }
+      else
+      {
+        Debug.Log($"Jogador {player.NickName} \u00e9 PO - ignorando");
+      }
+    }
+    
+    if (totalNonPOPlayers > 0 && finishedPlayers >= totalNonPOPlayers)
+    {
+      Debug.Log("TODOS TERMINARAM! Mostrando popup para o PO");
+      ShowAllPlayersFinishedPopup();
+    }
+    else
+    {
+      Debug.Log("Nem todos terminaram ainda");
+    }
+  }
+
+  private bool PlayerHasFinished(int playerIndex)
+  {
+    if (networkManager == null) 
+    {
+      Debug.LogError("SprintPlanningManager: NetworkManager \u00e9 null no PlayerHasFinished!");
+      return false;
+    }
+    
+    string playerText = networkManager.GetPlayerPOText(playerIndex);
+    bool hasFinished = playerText == "Terminou!";
+    Debug.Log($"PlayerHasFinished({playerIndex}): texto='{playerText}', terminou={hasFinished}");
+    return hasFinished;
+  }
+
+  private void ShowAllPlayersFinishedPopup()
+  {
+    Debug.Log("Todos os jogadores terminaram! Mostrando popup para o PO.");
+    
+    if (allPlayersFinishedPopup != null)
+    {
+      allPlayersFinishedPopup.SetActive(true);
+    }
+  }
+
+  private void ClearAllPlayerFinishedTexts()
+  {
+    Debug.Log("Limpando textos 'Terminou!' de todos os jogadores via RPC");
+    
+    photonView.RPC("ClearFinishedTextsRPC", RpcTarget.All);
+  }
+
+  [PunRPC]
+  void ClearFinishedTextsRPC()
+  {
+    Debug.Log("RPC: Limpando textos 'Terminou!' localmente");
+    
+    if (networkManager != null)
+    {
+      networkManager.ClearFinishedPlayerTexts();
+    }
+    else
+    {
+      Debug.LogError("RPC: NetworkManager \u00e9 null na limpeza!");
+      networkManager = FindObjectOfType<NetworkManager>();
+      if (networkManager != null)
+      {
+        networkManager.ClearFinishedPlayerTexts();
+      }
+    }
   }
 
   private Transform FindChildByName(Transform parent, string name)
@@ -524,6 +814,9 @@ public class SprintPlanningManager : MonoBehaviourPun
     selectedCard = null;
     selectedCardData = null;
     hasSpawnedCardsThisPhase = false;
+    hasLocalPlayerFinished = false;
+    
+    ClearAllPlayerFinishedTexts();
     
     // Esconder elementos de UI
     if (startDraftButton != null)
@@ -534,6 +827,10 @@ public class SprintPlanningManager : MonoBehaviourPun
       draftText.gameObject.SetActive(false);
     if (legendaContainer != null)
       legendaContainer.SetActive(false);
+    if (finishDraftContainer != null)
+      finishDraftContainer.SetActive(false);
+    if (allPlayersFinishedPopup != null)
+      allPlayersFinishedPopup.SetActive(false);
       
     Debug.Log("SprintPlanningManager resetado - cartas e UI limpos");
   }
