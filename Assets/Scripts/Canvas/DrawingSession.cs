@@ -31,6 +31,11 @@ public class DrawingSession
     {
         commands.Add(command);
     }
+
+    public void AddCommandWithoutNotification(DrawingCommand command)
+    {
+        commands.Add(command);
+    }
     
     public void ClearCommands()
     {

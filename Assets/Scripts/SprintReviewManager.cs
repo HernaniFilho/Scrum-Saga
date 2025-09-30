@@ -818,7 +818,7 @@ public class SprintReviewManager : MonoBehaviourPunCallbacks
                     if (buttonRect != null)
                     {
                         Vector3 currentPos = buttonRect.anchoredPosition;
-                        buttonRect.anchoredPosition = new Vector3(currentPos.x, currentPos.y - 40, currentPos.z);
+                        buttonRect.anchoredPosition = new Vector3(currentPos.x, currentPos.y - 30, currentPos.z);
                         hasMovedToggleButton = true;
                     }
                 }

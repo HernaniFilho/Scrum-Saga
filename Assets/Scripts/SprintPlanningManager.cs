@@ -36,6 +36,10 @@ public class SprintPlanningManager : MonoBehaviourPun
   public UnityEngine.UI.Button closeAllFinishedButton;
   public UnityEngine.UI.Button endSprintPlanningButton;
 
+  [Header("Undo/Redo Elements")]
+  public GameObject undoButton;
+  public GameObject redoButton;
+
   [Header("Positioning")]
   public float spawnDistance = 1f; // Câmera: -297f, Cards: -296f
   public float selectedCardSpawnDistance = 0.67f; // Câmera: -297f, Card: -296.33
@@ -51,6 +55,10 @@ public class SprintPlanningManager : MonoBehaviourPun
   private bool hasStartedDraft = false;
   private bool hasLocalPlayerFinished = false;
   private NetworkManager networkManager;
+  
+  // Undo/Redo system
+  private List<DrawingCommand> undoStack = new List<DrawingCommand>();
+  private CommandRecorder commandRecorder;
 
   void Start()
   {
@@ -59,6 +67,7 @@ public class SprintPlanningManager : MonoBehaviourPun
     gameStateManager = GameStateManager.Instance;
     tabuleiro = GameObject.Find("Tabuleiro");
     networkManager = FindObjectOfType<NetworkManager>();
+    commandRecorder = FindObjectOfType<CommandRecorder>();
 
     if (playerCamera == null)
     {
@@ -103,6 +112,21 @@ public class SprintPlanningManager : MonoBehaviourPun
     {
       endSprintPlanningButton.onClick.AddListener(OnEndSprintPlanningButtonClicked);
     }
+
+    // Configurar botões de undo/redo
+    if (undoButton != null && redoButton != null)
+    {
+      undoButton.SetActive(false);
+      redoButton.SetActive(false);
+      
+      UnityEngine.UI.Button undoBtnComponent = undoButton.GetComponent<UnityEngine.UI.Button>();
+      UnityEngine.UI.Button redoBtnComponent = redoButton.GetComponent<UnityEngine.UI.Button>();
+      
+      if (undoBtnComponent != null)
+        undoBtnComponent.onClick.AddListener(OnUndoButtonClicked);
+      if (redoBtnComponent != null)
+        redoBtnComponent.onClick.AddListener(OnRedoButtonClicked);
+    }
   }
 
   void Update()
@@ -115,6 +139,11 @@ public class SprintPlanningManager : MonoBehaviourPun
     if (networkManager == null)
     {
       networkManager = FindObjectOfType<NetworkManager>();
+    }
+
+    if (commandRecorder == null)
+    {
+      commandRecorder = FindObjectOfType<CommandRecorder>();
     }
 
     if (gameStateManager == null) return;
@@ -142,6 +171,8 @@ public class SprintPlanningManager : MonoBehaviourPun
             {
               finishDraftContainer.SetActive(true);
             }
+            
+            UpdateUndoRedoButtons();
           }
           else
           {
@@ -152,6 +183,9 @@ public class SprintPlanningManager : MonoBehaviourPun
             {
               finishDraftContainer.SetActive(false);
             }
+            
+            if (undoButton != null) undoButton.SetActive(false);
+            if (redoButton != null) redoButton.SetActive(false);
           }
         }
         else
@@ -216,6 +250,9 @@ public class SprintPlanningManager : MonoBehaviourPun
       {
         allPlayersFinishedPopup.SetActive(false);
       }
+
+      if (undoButton != null) undoButton.SetActive(false);
+      if (redoButton != null) redoButton.SetActive(false);
     }
   }
 
@@ -513,6 +550,8 @@ public class SprintPlanningManager : MonoBehaviourPun
       CanvasManager.Instance.ActivateDrawingForAll();
     }
 
+    InitializeUndoRedoSystem();
+
     draftText.gameObject.SetActive(true);
     draftText.text = "Descreva o desenho, o Dev Team está rascunhando...";
     photonView.RPC("RascunhoIniciado", RpcTarget.All);
@@ -564,6 +603,8 @@ public class SprintPlanningManager : MonoBehaviourPun
   void RascunhoIniciado()
   {
     hasStartedDraft = true;
+    
+    InitializeUndoRedoSystem();
   }
 
   [PunRPC]
@@ -818,6 +859,8 @@ public class SprintPlanningManager : MonoBehaviourPun
     
     ClearAllPlayerFinishedTexts();
     
+    undoStack.Clear();
+    
     // Esconder elementos de UI
     if (startDraftButton != null)
       startDraftButton.gameObject.SetActive(false);
@@ -831,8 +874,158 @@ public class SprintPlanningManager : MonoBehaviourPun
       finishDraftContainer.SetActive(false);
     if (allPlayersFinishedPopup != null)
       allPlayersFinishedPopup.SetActive(false);
+    if (undoButton != null)
+      undoButton.SetActive(false);
+    if (redoButton != null)
+      redoButton.SetActive(false);
       
     Debug.Log("SprintPlanningManager resetado - cartas e UI limpos");
+  }
+
+  private void UpdateUndoRedoButtons()
+  {
+    if (commandRecorder == null || undoButton == null || redoButton == null) return;
+
+    bool isProductOwner = productOwnerManager != null && productOwnerManager.IsLocalPlayerProductOwner();
+    if (isProductOwner || !hasStartedDraft)
+    {
+      undoButton.SetActive(false);
+      redoButton.SetActive(false);
+      return;
+    }
+
+    DrawingSession session = commandRecorder.GetCurrentSession();
+    if (session == null)
+    {
+      undoButton.SetActive(false);
+      redoButton.SetActive(false);
+      return;
+    }
+
+    bool hasCommandsToUndo = session.GetCommandCount() > 0;
+    undoButton.SetActive(hasCommandsToUndo);
+
+    bool hasCommandsToRedo = undoStack.Count > 0;
+    redoButton.SetActive(hasCommandsToRedo);
+  }
+
+  private void OnUndoButtonClicked()
+  {
+    if (commandRecorder == null) return;
+
+    DrawingSession session = commandRecorder.GetCurrentSession();
+    if (session == null || session.GetCommandCount() == 0) return;
+
+    DrawingCommand lastCommand = session.GetLastCommand();
+    if (lastCommand != null)
+    {
+      session.RemoveLastCommand();
+      
+      undoStack.Add(lastCommand);
+
+      RemoveLastDrawingFromCanvas(lastCommand);
+
+      UpdateUndoRedoButtons();
+    }
+  }
+
+  private void OnRedoButtonClicked()
+  {
+    if (commandRecorder == null || undoStack.Count == 0) return;
+
+    DrawingSession session = commandRecorder.GetCurrentSession();
+    if (session == null) return;
+
+    DrawingCommand commandToRedo = undoStack[undoStack.Count - 1];
+    undoStack.RemoveAt(undoStack.Count - 1);
+
+    session.AddCommandWithoutNotification(commandToRedo);
+
+    RedrawCommandOnCanvas(commandToRedo);
+
+    UpdateUndoRedoButtons();
+  }
+
+  public void OnNewCommandAdded()
+  {
+    if (undoStack.Count > 0)
+    {
+      undoStack.Clear();
+    }
+    
+    UpdateUndoRedoButtons();
+  }
+
+  public void ForceInitializeUndoRedo()
+  {
+    InitializeUndoRedoSystem();
+  }
+
+  private void InitializeUndoRedoSystem()
+  {
+    undoStack.Clear();
+    
+    if (commandRecorder == null)
+    {
+      commandRecorder = FindObjectOfType<CommandRecorder>();
+    }
+    
+    if (commandRecorder != null)
+    {
+      // Acessa o campo privado sprintPlanningManager via reflexão para forçar atualização
+      var field = typeof(CommandRecorder).GetField("sprintPlanningManager", 
+        System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+      if (field != null)
+      {
+        field.SetValue(commandRecorder, this);
+      }
+    }
+    
+    UpdateUndoRedoButtons();
+  }
+
+  private void RemoveLastDrawingFromCanvas(DrawingCommand removedCommand)
+  {
+    ShapeDrawer shapeDrawer = FindObjectOfType<ShapeDrawer>();
+    if (shapeDrawer == null) 
+    {
+      Debug.LogError("ShapeDrawer não encontrado para remoção do último desenho");
+      return;
+    }
+
+    DrawingSession session = commandRecorder.GetCurrentSession();
+    if (session == null) 
+    {
+      Debug.LogError("Nenhuma sessão encontrada");
+      return;
+    }
+
+    shapeDrawer.ClearAll();
+
+    if (session.commands.Count > 0)
+    {
+      CommandReplaySystem replaySystem = FindObjectOfType<CommandReplaySystem>();
+      if (replaySystem != null)
+      {
+        foreach (DrawingCommand cmd in session.commands)
+        {
+          replaySystem.ReplayCommand(cmd);
+        }
+      }
+    }
+  }
+
+  private void RedrawCommandOnCanvas(DrawingCommand command)
+  {
+    CommandReplaySystem replaySystem = FindObjectOfType<CommandReplaySystem>();
+    if (replaySystem != null)
+    {
+      replaySystem.ReplayCommand(command);
+    }
+    else
+    {
+      Debug.LogError("CommandReplaySystem não encontrado para redesenhar comando");
+    }
   }
 
   void OnDestroy()

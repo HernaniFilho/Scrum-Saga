@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections;
 using System.Collections.Generic;
 
 public class CommandRecorder : MonoBehaviour
@@ -8,6 +9,7 @@ public class CommandRecorder : MonoBehaviour
     
     private DrawingSession currentSession;
     private ShapeDrawer shapeDrawer;
+    private SprintPlanningManager sprintPlanningManager;
     
     public static CommandRecorder Instance { get; private set; }
     
@@ -58,53 +60,58 @@ public class CommandRecorder : MonoBehaviour
     
     public void RecordCommand(ShapeType shapeType, Vector2 position, Vector2 size, float rotation, Color color, float thickness)
     {
-        if (!isRecording || currentSession == null) return;
-        
-        string playerName = GetCurrentPlayerName();
-        string playerId = GetCurrentPlayerId();
-        DrawingCommand command = new DrawingCommand(shapeType, position, size, rotation, color, thickness, playerName, playerId);
-        currentSession.AddCommand(command);
-        
-        Debug.Log($"Comando gravado: {shapeType} na posição {position} por {playerName} (total: {currentSession.GetCommandCount()})");
-    }
+    if (!isRecording || currentSession == null) return;
+    
+    string playerName = GetCurrentPlayerName();
+    string playerId = GetCurrentPlayerId();
+    DrawingCommand command = new DrawingCommand(shapeType, position, size, rotation, color, thickness, playerName, playerId);
+    currentSession.AddCommand(command);
+    
+    NotifyNewCommandAdded();
+    
+    Debug.Log($"Comando gravado: {shapeType} na posição {position} por {playerName} (total: {currentSession.GetCommandCount()})");
+  }
     
     public void RecordCommand(DrawingCommand command)
     {
-        if (!isRecording || currentSession == null) return;
-        
-        currentSession.AddCommand(command);
-        Debug.Log($"Comando gravado: {command.shapeType} (total: {currentSession.GetCommandCount()})");
-    }
+    if (!isRecording || currentSession == null) return;
+    
+    currentSession.AddCommand(command);
+    
+    NotifyNewCommandAdded();
+    
+    Debug.Log($"Comando gravado: {command.shapeType} (total: {currentSession.GetCommandCount()})");
+  }
     
     public void RecordShapeFromGameObject(GameObject shape)
     {
-        if (!isRecording || currentSession == null || shape == null) return;
-        
-        ShapeData shapeData = shape.GetComponent<ShapeData>();
-        RectTransform rectTransform = shape.GetComponent<RectTransform>();
-        
-        if (shapeData != null && rectTransform != null)
-        {
-            string playerName = GetCurrentPlayerName();
-            string playerId = GetCurrentPlayerId();
-            DrawingCommand command = new DrawingCommand(shapeData, rectTransform, playerName, playerId);
-            currentSession.AddCommand(command);
-            
-            Debug.Log($"Shape gravado como comando: {command.shapeType} na posição {command.position} com cor {command.color} por {playerName} (total: {currentSession.GetCommandCount()})");
-        }
+    if (!isRecording || currentSession == null || shape == null) return;
+    
+    ShapeData shapeData = shape.GetComponent<ShapeData>();
+    RectTransform rectTransform = shape.GetComponent<RectTransform>();
+    
+    if (shapeData != null && rectTransform != null)
+    {
+      string playerName = GetCurrentPlayerName();
+      string playerId = GetCurrentPlayerId();
+      DrawingCommand command = new DrawingCommand(shapeData, rectTransform, playerName, playerId);
+      currentSession.AddCommand(command);
+    
+      NotifyNewCommandAdded();
     }
+  }
     
     public void RecordFloodFill(Vector2 position, Color fillColor)
     {
-        if (!isRecording || currentSession == null) return;
-        
-        string playerName = GetCurrentPlayerName();
-        string playerId = GetCurrentPlayerId();
-        DrawingCommand floodFillCommand = new DrawingCommand(position, fillColor, playerName, playerId);
-        currentSession.AddCommand(floodFillCommand);
-        
-        Debug.Log($"Flood fill gravado: posição {position} com cor {fillColor} por {playerName} (total: {currentSession.GetCommandCount()})");
-    }
+    if (!isRecording || currentSession == null) return;
+    
+    string playerName = GetCurrentPlayerName();
+    string playerId = GetCurrentPlayerId();
+    DrawingCommand floodFillCommand = new DrawingCommand(position, fillColor, playerName, playerId);
+    currentSession.AddCommand(floodFillCommand);
+    
+    NotifyNewCommandAdded();
+  }
     
     public DrawingSession GetCurrentSession()
     {
@@ -176,6 +183,43 @@ public class CommandRecorder : MonoBehaviour
     
     public void ResumeRecording()
     {
-        isRecording = true;
+    isRecording = true;
     }
+
+  private void NotifyNewCommandAdded()
+  {
+    if (sprintPlanningManager == null)
+    {
+      sprintPlanningManager = FindObjectOfType<SprintPlanningManager>();
+    }
+    
+    if (sprintPlanningManager != null)
+    {
+      sprintPlanningManager.OnNewCommandAdded();
+    }
+    else
+    {
+      Debug.LogWarning("SprintPlanningManager não encontrado para notificação de novo comando - tentando com delay");
+      StartCoroutine(RetryNotifyNewCommand());
+    }
+  }
+  
+  private System.Collections.IEnumerator RetryNotifyNewCommand()
+  {
+    yield return new WaitForEndOfFrame();
+    
+    if (sprintPlanningManager == null)
+    {
+      sprintPlanningManager = FindObjectOfType<SprintPlanningManager>();
+    }
+    
+    if (sprintPlanningManager != null)
+    {
+      sprintPlanningManager.OnNewCommandAdded();
+    }
+    else
+    {
+      Debug.LogWarning("SprintPlanningManager ainda não encontrado após retry");
+    }
+  }
 }
