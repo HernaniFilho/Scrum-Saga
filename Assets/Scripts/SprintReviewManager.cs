@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 using TMPro;
 using Photon.Pun;
 using ExitGames.Client.Photon;
@@ -17,7 +18,8 @@ public class SprintReviewManager : MonoBehaviourPunCallbacks
     public UnityEngine.UI.Button mediumSatisfactionButton;
     public UnityEngine.UI.Button lowSatisfactionButton;
     public UnityEngine.UI.Button toggleViewButton;
-    public TMP_Text displayText; // Unified text for waiting, result, and hover messages
+    public TMP_Text displayText; // Unified text for waiting and result
+    public TMP_Text satisfactionText; // Hover messages
     
     [Header("Round Info Text")]
     public TMP_Text roundInfoText;
@@ -48,6 +50,7 @@ public class SprintReviewManager : MonoBehaviourPunCallbacks
     
     [Header("Positioning")]
     public float cardSpawnDistance = 0.67f; // Same as selected card in SprintPlanningManager
+    public float evaluationUIOffset = 25f; // Offset for UI during PO evaluation
     
     // Photon synchronization keys
     private const string SATISFACTION_RESULT_KEY = "SprintReview_Result";
@@ -187,6 +190,11 @@ public class SprintReviewManager : MonoBehaviourPunCallbacks
         {
             displayText.gameObject.SetActive(false);
         }
+
+        if (satisfactionText != null)
+        {
+            satisfactionText.gameObject.SetActive(false);
+        }
         
         SetupPauseButton();
     }
@@ -224,20 +232,20 @@ public class SprintReviewManager : MonoBehaviourPunCallbacks
     private void OnButtonHover(string message)
     {
         bool isProductOwner = productOwnerManager != null && productOwnerManager.IsLocalPlayerProductOwner();
-        if (isProductOwner && !hasVoted && displayText != null)
+        if (isProductOwner && !hasVoted && satisfactionText != null)
         {
-            displayText.text = message;
-            displayText.gameObject.SetActive(true);
+            satisfactionText.text = message;
+            satisfactionText.gameObject.SetActive(true);
         }
     }
     
     private void OnButtonExit()
     {
         bool isProductOwner = productOwnerManager != null && productOwnerManager.IsLocalPlayerProductOwner();
-        if (isProductOwner && !hasVoted && displayText != null)
+        if (isProductOwner && !hasVoted && satisfactionText != null)
         {
-            displayText.text = "";
-            displayText.gameObject.SetActive(false);
+            satisfactionText.text = "";
+            satisfactionText.gameObject.SetActive(false);
         }
     }
     
@@ -531,8 +539,11 @@ public class SprintReviewManager : MonoBehaviourPunCallbacks
             if (!hasVoted)
             {
                 if (buttonsContainer != null) buttonsContainer.SetActive(true);
-                
+
                 if (displayText != null) displayText.gameObject.SetActive(false);
+                if (satisfactionText != null) satisfactionText.gameObject.SetActive(false);
+
+                MoveElementsDown();
             }
         }
         else
@@ -570,6 +581,8 @@ public class SprintReviewManager : MonoBehaviourPunCallbacks
         if (buttonsContainer != null) buttonsContainer.SetActive(false);
 
         if (toggleViewButton != null) toggleViewButton.gameObject.SetActive(false);
+        
+        RestoreElementsPosition();
 
         // Synchronize result for all players
         SynchronizeResult(level);
@@ -724,11 +737,14 @@ public class SprintReviewManager : MonoBehaviourPunCallbacks
                 resultMessage = "Necessário aprimorar!\nCarta reprovada!";
                 break;
         }
-        
+
         if (displayText != null)
         {
             displayText.text = resultMessage;
             displayText.gameObject.SetActive(true);
+
+            LayoutRebuilder.ForceRebuildLayoutImmediate(displayText.rectTransform);
+            LayoutRebuilder.ForceRebuildLayoutImmediate(displayText.transform.parent as RectTransform);
         }
         
         isShowingResult = true;
@@ -818,7 +834,7 @@ public class SprintReviewManager : MonoBehaviourPunCallbacks
                     if (buttonRect != null)
                     {
                         Vector3 currentPos = buttonRect.anchoredPosition;
-                        buttonRect.anchoredPosition = new Vector3(currentPos.x, currentPos.y - 30, currentPos.z);
+                        buttonRect.anchoredPosition = new Vector3(currentPos.x, currentPos.y - 35, currentPos.z);
                         hasMovedToggleButton = true;
                     }
                 }
@@ -1018,10 +1034,12 @@ public class SprintReviewManager : MonoBehaviourPunCallbacks
         // Esconder e resetar UI
         if (displayText != null)
             displayText.gameObject.SetActive(false);
+        if (satisfactionText != null)
+            satisfactionText.gameObject.SetActive(false);
             
         // Esconder botões de avaliação
-        if (highSatisfactionButton != null)
-            highSatisfactionButton.transform.parent.gameObject.SetActive(false);
+            if (highSatisfactionButton != null)
+                highSatisfactionButton.transform.parent.gameObject.SetActive(false);
         if (mediumSatisfactionButton != null)
             mediumSatisfactionButton.transform.parent.gameObject.SetActive(false);
         if (lowSatisfactionButton != null)
@@ -1119,6 +1137,56 @@ public class SprintReviewManager : MonoBehaviourPunCallbacks
                 displayText.gameObject.SetActive(true);
             }
             yield return new WaitForSeconds(0.1f);
+        }
+    }
+    
+    private void MoveElementsDown()
+    {
+        MobileScaler mobileScaler = FindObjectOfType<MobileScaler>();
+        bool isMobile = mobileScaler != null && mobileScaler.isMobile;
+        if (!isMobile) return;
+
+        if (buttonsContainer != null)
+        {
+            RectTransform buttonsRect = buttonsContainer.GetComponent<RectTransform>();
+            if (buttonsRect != null)
+            {
+                buttonsRect.anchoredPosition += new Vector2(0, -evaluationUIOffset);
+            }
+        }
+        
+        if (satisfactionText != null)
+        {
+            RectTransform satisfactionTextRect = satisfactionText.GetComponent<RectTransform>();
+            if (satisfactionTextRect != null)
+            {
+                satisfactionTextRect.anchoredPosition += new Vector2(0, -evaluationUIOffset);
+            }
+        }
+    }
+
+    private void RestoreElementsPosition()
+    {
+        MobileScaler mobileScaler = FindObjectOfType<MobileScaler>();
+        bool isMobile = mobileScaler != null && mobileScaler.isMobile;
+        if (!isMobile) return;
+
+        if (buttonsContainer != null)
+        {
+            RectTransform buttonsRect = buttonsContainer.GetComponent<RectTransform>();
+            if (buttonsRect != null)
+            {
+                buttonsRect.anchoredPosition += new Vector2(0, evaluationUIOffset);
+            }
+        }
+        
+        if (satisfactionText != null)
+        {
+            RectTransform satisfactionTextRect = satisfactionText.GetComponent<RectTransform>();
+            if (satisfactionTextRect != null)
+            {
+                satisfactionTextRect.anchoredPosition += new Vector2(0, evaluationUIOffset);
+            }
         }
     }
     
@@ -1268,13 +1336,20 @@ public class SprintReviewManager : MonoBehaviourPunCallbacks
                     {
                         displayText.gameObject.SetActive(false);
                     }
-                    
+
                     if (toggleViewButton != null)
                     {
                         toggleViewButton.gameObject.SetActive(false);
                     }
-                    
+
                     isShowingResult = false;
+                }
+                else
+                {
+                    if (satisfactionText != null)
+                    {
+                        satisfactionText.gameObject.SetActive(false);
+                    }
                 }
             }
         }

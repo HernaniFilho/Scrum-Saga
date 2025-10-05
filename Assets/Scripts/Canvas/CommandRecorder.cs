@@ -64,6 +64,10 @@ public class CommandRecorder : MonoBehaviour
     
     string playerName = GetCurrentPlayerName();
     string playerId = GetCurrentPlayerId();
+    
+    float xOffset = OffsetManager.Instance != null ? OffsetManager.Instance.xOffset : 0f;
+    position.x -= xOffset;
+    
     DrawingCommand command = new DrawingCommand(shapeType, position, size, rotation, color, thickness, playerName, playerId);
     currentSession.AddCommand(command);
     
@@ -95,6 +99,10 @@ public class CommandRecorder : MonoBehaviour
       string playerName = GetCurrentPlayerName();
       string playerId = GetCurrentPlayerId();
       DrawingCommand command = new DrawingCommand(shapeData, rectTransform, playerName, playerId);
+            
+      float xOffset = OffsetManager.Instance != null ? OffsetManager.Instance.xOffset : 0f;
+      command.position.x -= xOffset;
+
       currentSession.AddCommand(command);
     
       NotifyNewCommandAdded();
@@ -107,6 +115,10 @@ public class CommandRecorder : MonoBehaviour
     
     string playerName = GetCurrentPlayerName();
     string playerId = GetCurrentPlayerId();
+    
+    float xOffset = OffsetManager.Instance != null ? OffsetManager.Instance.xOffset : 0f;
+    position.x -= xOffset;
+    
     DrawingCommand floodFillCommand = new DrawingCommand(position, fillColor, playerName, playerId);
     currentSession.AddCommand(floodFillCommand);
     

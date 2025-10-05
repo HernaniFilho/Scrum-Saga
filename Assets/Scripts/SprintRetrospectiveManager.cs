@@ -138,8 +138,23 @@ public class SprintRetrospectiveManager : MonoBehaviourPunCallbacks
     {
         if (!PhotonNetwork.InRoom) return;
         
+        // Desabilitar collider por 2 segundos
+        Collider col = cartaInstanciada.GetComponent<Collider>();
+        if (col != null)
+        {
+            StartCoroutine(EnableColliderAfterDelay(col));
+        }
+        
         // Aguardar inicialização completa da carta
         StartCoroutine(WaitForCardInitialization(cartaInstanciada, spawnDistance, rotation));
+    }
+
+    private IEnumerator EnableColliderAfterDelay(Collider col)
+    {
+        col.enabled = false;
+        yield return new WaitForSeconds(2f);
+        if (col != null)
+            col.enabled = true;
     }
 
     private IEnumerator WaitForCardInitialization(GameObject cartaInstanciada, float spawnDistance, Quaternion rotation)
@@ -207,7 +222,7 @@ public class SprintRetrospectiveManager : MonoBehaviourPunCallbacks
         if (PhotonNetwork.LocalPlayer.NickName != playerName && deckAprendizagens != null && !cartaJaCriada)
         {
             cartaJaCriada = true;
-            CreateSyncedCard(spawnDistance, rotation, texto, nature);
+            StartCoroutine(CreateSyncedCardWithDelay(spawnDistance, rotation, texto, nature));
         }
 
         // Iniciar timer de auto-remoção usando TimerManager (apenas Master Client)
@@ -222,7 +237,24 @@ public class SprintRetrospectiveManager : MonoBehaviourPunCallbacks
         UpdatePauseButtonVisibility();
     }
 
-    void CreateSyncedCard(float spawnDistance, float[] rotation, string texto, string nature)
+    IEnumerator CreateSyncedCardWithDelay(float spawnDistance, float[] rotation, string texto, string nature)
+    {
+        GameObject carta = CreateSyncedCard(spawnDistance, rotation, texto, nature);
+        
+        if (carta != null)
+        {
+            Collider col = carta.GetComponent<Collider>();
+            if (col != null)
+            {
+                col.enabled = false;
+                yield return new WaitForSeconds(2f);
+                if (col != null)
+                    col.enabled = true;
+            }
+        }
+    }
+
+    GameObject CreateSyncedCard(float spawnDistance, float[] rotation, string texto, string nature)
     {
         Camera playerCamera = Camera.main;
         Vector3 screenPos = playerCamera.WorldToScreenPoint(playerCamera.transform.position + playerCamera.transform.forward * spawnDistance);
@@ -249,6 +281,8 @@ public class SprintRetrospectiveManager : MonoBehaviourPunCallbacks
                 carta.AddComponent<BoxCollider>();
             }
         }
+        
+        return carta;
     }
 
     public void OnPOClickCard()
@@ -485,7 +519,7 @@ public class SprintRetrospectiveManager : MonoBehaviourPunCallbacks
                 if (PhotonNetwork.LocalPlayer.NickName != playerName && deckAprendizagens != null && !cartaJaCriada)
                 {
                     cartaJaCriada = true;
-                    CreateSyncedCard(spawnDistance, rotation, texto, nature);
+                    StartCoroutine(CreateSyncedCardWithDelay(spawnDistance, rotation, texto, nature));
                 }
             }
         }
@@ -493,4 +527,3 @@ public class SprintRetrospectiveManager : MonoBehaviourPunCallbacks
 
     #endregion
 }
-

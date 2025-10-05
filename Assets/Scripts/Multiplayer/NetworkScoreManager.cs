@@ -74,23 +74,53 @@ public class NetworkScoreManager : MonoBehaviourPunCallbacks
             var temp = Instance;
             Instance = null;
             
-            // Aplicar valor diretamente sem somar
+            // Aplicar valor diretamente
+            int previousValue = scoreManager.scoreboard[scoreKey];
             scoreManager.scoreboard[scoreKey] = newValue;
             
-            // Usar a mesma lógica do UpdateScore mas sem validações
-            if (System.Enum.TryParse<ScoreManager.ScoreType>(scoreKey, out ScoreManager.ScoreType scoreType))
+            // Sincronizar cartas de natureza se for uma natureza
+            if (System.Enum.TryParse<ScoreManager.Natures>(scoreKey, out ScoreManager.Natures nature))
             {
-                scoreManager.UpdateScoreDisplay(scoreKey, newValue);
-            }
-            else if (System.Enum.TryParse<ScoreManager.Natures>(scoreKey, out ScoreManager.Natures nature))
-            {
-                scoreManager.UpdateScoreTexts(scoreKey, newValue);
-                // Sincronizar cartas visuais também
-                scoreManager.SyncNatureCardsWithValues();
+                int delta = newValue - previousValue;
+                if (delta < 0)
+                {
+                    int cardsToRemove = Mathf.Abs(delta);
+                    for (int i = 0; i < cardsToRemove; i++)
+                    {
+                        if (scoreManager.HasNatureCard(nature))
+                        {
+                            scoreManager.UseNatureCard(nature);
+                        }
+                    }
+                }
+                else if (delta > 0)
+                {
+                    for (int i = 0; i < delta; i++)
+                    {
+                        scoreManager.AddNatureCard(nature);
+                    }
+                }
             }
             
             // Reativar NetworkScoreManager
             Instance = temp;
+            
+            // Notificar displays locais
+            var registeredDisplaysField = typeof(ScoreManager).GetField("registeredDisplays", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            if (registeredDisplaysField != null)
+            {
+                var displays = registeredDisplaysField.GetValue(scoreManager) as System.Collections.Generic.List<ScoreDisplay>;
+                if (displays != null)
+                {
+                    foreach (var display in displays)
+                    {
+                        if (display != null)
+                        {
+                            display.UpdateDisplay();
+                        }
+                    }
+                }
+            }
             
             Debug.Log($"Pontuação sincronizada da rede: {scoreKey} = {newValue}");
         }

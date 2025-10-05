@@ -42,8 +42,11 @@ public class SprintPlanningManager : MonoBehaviourPun
 
   [Header("Positioning")]
   public float spawnDistance = 1f; // Câmera: -297f, Cards: -296f
+  public float mobileSpawnDistance = 1f;
   public float selectedCardSpawnDistance = 0.67f; // Câmera: -297f, Card: -296.33
+  public float mobileSelectedCardSpawnDistance = 0.67f;
   public float cardSpacing = 0.8f;
+  public float mobileCardSpacing = 0.7f;
   public float centeredCardSpacing = 0.6f; // Espaçamento entre rejected e selected quando centralizadas
 
   private List<GameObject> spawnedCards = new List<GameObject>();
@@ -55,6 +58,7 @@ public class SprintPlanningManager : MonoBehaviourPun
   private bool hasStartedDraft = false;
   private bool hasLocalPlayerFinished = false;
   private NetworkManager networkManager;
+  private MobileScaler mobileScaler;
   
   // Undo/Redo system
   private List<DrawingCommand> undoStack = new List<DrawingCommand>();
@@ -68,6 +72,7 @@ public class SprintPlanningManager : MonoBehaviourPun
     tabuleiro = GameObject.Find("Tabuleiro");
     networkManager = FindObjectOfType<NetworkManager>();
     commandRecorder = FindObjectOfType<CommandRecorder>();
+    mobileScaler = FindObjectOfType<MobileScaler>();
 
     if (playerCamera == null)
     {
@@ -253,6 +258,15 @@ public class SprintPlanningManager : MonoBehaviourPun
 
       if (undoButton != null) undoButton.SetActive(false);
       if (redoButton != null) redoButton.SetActive(false);
+    }
+
+    bool isMobile = mobileScaler != null && mobileScaler.isMobile;
+
+    if (isMobile)
+    {
+      cardSpacing = mobileCardSpacing;
+      selectedCardSpawnDistance = mobileSelectedCardSpawnDistance;
+      spawnDistance = mobileSpawnDistance;
     }
   }
 
@@ -533,10 +547,10 @@ public class SprintPlanningManager : MonoBehaviourPun
     }
 
     // Mostrar botão de parar rascunho
-    if (stopDraftContainer != null)
-    {
-      stopDraftContainer.gameObject.SetActive(true);
-    }
+    // if (stopDraftContainer != null)
+    // {
+    //   stopDraftContainer.gameObject.SetActive(true);
+    // }
 
     // Momento do rascunho - iniciar timer de 1:40 para todos os players
     if (TimerManager.Instance != null)
@@ -591,7 +605,8 @@ public class SprintPlanningManager : MonoBehaviourPun
     if (productOwnerManager != null && productOwnerManager.IsLocalPlayerProductOwner())
     {
       ClearSpawnedCards();
-      draftText.gameObject.SetActive(false);
+      if (draftText != null)
+        draftText.gameObject.SetActive(false);
       gameStateManager.NextState();
     }
 
@@ -649,30 +664,10 @@ public class SprintPlanningManager : MonoBehaviourPun
       allPlayersFinishedPopup.SetActive(false);
     }
     
-    ClearAllPlayerFinishedTexts();
-    
     if (TimerManager.Instance != null)
     {
       TimerManager.Instance.EndTimer();
     }
-    
-    if (CanvasManager.Instance != null)
-    {
-      CanvasManager.Instance.SaveAndSyncAllPlayerDrawings();
-      CanvasManager.Instance.ClearCanvasForAll();
-      CanvasManager.Instance.DeactivateCanvasForAll();
-    }
-    
-    if (productOwnerManager != null && productOwnerManager.IsLocalPlayerProductOwner())
-    {
-      ClearSpawnedCards();
-      if (draftText != null)
-        draftText.gameObject.SetActive(false);
-      gameStateManager.NextState();
-    }
-    
-    hasStartedDraft = false;
-    photonView.RPC("RascunhoTerminado", RpcTarget.All);
   }
 
   private void UpdatePlayerPOText(string text)

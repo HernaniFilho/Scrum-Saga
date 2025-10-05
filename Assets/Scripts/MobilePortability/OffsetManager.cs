@@ -39,8 +39,11 @@ public class OffsetManager : MonoBehaviour
   {
     float baseXOffset = 160f;
     float xScale = GetComponent<RectTransform>().localScale.x;
+
+    MobileScaler mobileScaler = GetComponent<MobileScaler>();
+    bool isMobile = mobileScaler != null && mobileScaler.isMobile;
     
-    float xOffset = baseXOffset * xScale;
+    float xOffset = isMobile ? 0 : baseXOffset * xScale;
 
     if (debug)
     {
@@ -58,7 +61,10 @@ public class OffsetManager : MonoBehaviour
     float baseYOffset = -20f;
     float yScale = GetComponent<RectTransform>().localScale.y;
 
-    float yOffset = baseYOffset * yScale;
+    MobileScaler mobileScaler = GetComponent<MobileScaler>();
+    bool isMobile = mobileScaler != null && mobileScaler.isMobile;
+
+    float yOffset = isMobile ? 0 : baseYOffset * yScale;
 
     if (debug)
     {

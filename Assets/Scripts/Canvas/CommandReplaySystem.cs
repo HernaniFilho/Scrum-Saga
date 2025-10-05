@@ -198,7 +198,11 @@ public class CommandReplaySystem : MonoBehaviour
         RectTransform tempRect = tempPreview.AddComponent<RectTransform>();
         tempRect.SetParent(shapeContainer, false);
         
-        tempRect.anchoredPosition = command.position;
+        float xOffset = OffsetManager.Instance != null ? OffsetManager.Instance.xOffset : 0f;
+        Vector2 adjustedPosition = command.position;
+        adjustedPosition.x += xOffset;
+        
+        tempRect.anchoredPosition = adjustedPosition;
         tempRect.sizeDelta = command.size;
         
         // Lines precisam de pivot especial
@@ -344,9 +348,13 @@ public class CommandReplaySystem : MonoBehaviour
             
             if (performFloodFillMethod != null)
             {
-                UnityEngine.Debug.Log($"Chamando PerformFloodFill original com posição {command.floodFillPosition} e cor {command.floodFillColor}");
+                float xOffset = OffsetManager.Instance != null ? OffsetManager.Instance.xOffset : 0f;
+                Vector2 adjustedFloodFillPosition = command.floodFillPosition;
+                adjustedFloodFillPosition.x += xOffset;
                 
-                performFloodFillMethod.Invoke(shapeDrawer, new object[] { command.floodFillPosition, command.floodFillColor });
+                UnityEngine.Debug.Log($"Chamando PerformFloodFill original com posição {adjustedFloodFillPosition} e cor {command.floodFillColor}");
+                
+                performFloodFillMethod.Invoke(shapeDrawer, new object[] { adjustedFloodFillPosition, command.floodFillColor });
                 
                 UnityEngine.Debug.Log("PerformFloodFill original executado");
                 
