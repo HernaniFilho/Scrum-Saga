@@ -44,7 +44,21 @@ public class NetworkGameStateManager : MonoBehaviourPunCallbacks
         {
             Hashtable props = new Hashtable();
             props[GAME_STATE_KEY] = (int)newState;
+            props["GameStarted"] = newState != GameStateManager.GameState.Inicio;
             PhotonNetwork.CurrentRoom.SetCustomProperties(props);
+            
+            // Fecha a sala quando o jogo começa
+            if (newState != GameStateManager.GameState.Inicio && PhotonNetwork.CurrentRoom.IsOpen)
+            {
+                PhotonNetwork.CurrentRoom.IsOpen = false;
+                Debug.Log($"Sala fechada - jogo começou (Estado: {newState})");
+            }
+            else if (newState == GameStateManager.GameState.Inicio && !PhotonNetwork.CurrentRoom.IsOpen)
+            {
+                PhotonNetwork.CurrentRoom.IsOpen = true;
+                Debug.Log($"Sala reaberta - jogo voltou para Inicio");
+            }
+            
             Debug.Log($"Estado {newState} enviado para outros jogadores");
         }
     }

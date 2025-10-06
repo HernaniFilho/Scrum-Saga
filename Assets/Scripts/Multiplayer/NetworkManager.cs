@@ -3,6 +3,7 @@ using Photon.Pun;
 using Photon.Realtime;
 using TMPro;
 using UnityEngine.UI;
+using Hashtable = ExitGames.Client.Photon.Hashtable;
 
 public class NetworkManager : MonoBehaviourPunCallbacks
 {
@@ -193,9 +194,17 @@ public class NetworkManager : MonoBehaviourPunCallbacks
             }
         }
         
-        // Atualizar status PO
+        // Atualizar status PO (NÃO sobrescrever se já tiver texto "Terminou!")
         if (playerPOTexts[index] != null)
         {
+            string currentText = playerPOTexts[index].text;
+            
+            // Não sobrescrever se já tem "Terminou!"
+            if (currentText == "Terminou!")
+            {
+                return;
+            }
+            
             if (productOwnerManager != null && productOwnerManager.IsPlayerProductOwner(player))
             {
                 playerPOTexts[index].gameObject.SetActive(true);
@@ -232,11 +241,10 @@ public class NetworkManager : MonoBehaviourPunCallbacks
         }
     }
 
-    private void UpdateUI()
+    public void UpdateUI()
     {
         bool isConnectedToRoom = PhotonNetwork.InRoom;
 
-        // Ocultar/mostrar elementos da UI conforme o estado da conexão
         if (uiToHideWhenConnected != null)
         {
             foreach (GameObject obj in uiToHideWhenConnected)
@@ -262,10 +270,13 @@ public class NetworkManager : MonoBehaviourPunCallbacks
 
     public override void OnConnectedToMaster()
     {
-        Debug.Log("Conectado ao Master Server");
-        loadingScreen?.UpdateLoadingMessage("Conectado ao Master Server");
-        UpdateConnectionStatus("Conectado ao Master Server");
-        JoinRandomOrCreateRoom();
+        loadingScreen?.UpdateLoadingMessage("Conectado!");
+        UpdateConnectionStatus("Conectado!");
+        
+        if (autoConnect)
+        {
+            JoinRandomOrCreateRoom();
+        }
     }
 
     public override void OnDisconnected(DisconnectCause cause)
@@ -295,10 +306,25 @@ public class NetworkManager : MonoBehaviourPunCallbacks
         Debug.Log($"Entrou na sala: {PhotonNetwork.CurrentRoom.Name}");
         UpdateConnectionStatus("Conectado à sala!");
         
-        // Esconder tela de loading quando entrar na sala
         loadingScreen?.HideLoadingScreen();
         
+        if (productOwnerManager == null)
+        {
+            productOwnerManager = FindObjectOfType<ProductOwnerManager>();
+        }
+        
+        if (!PhotonNetwork.CurrentRoom.CustomProperties.ContainsKey("GameState"))
+        {
+            if (PhotonNetwork.IsMasterClient)
+            {
+                Hashtable roomProps = new Hashtable();
+                roomProps["GameState"] = (int)GameStateManager.GameState.Inicio;
+                PhotonNetwork.CurrentRoom.SetCustomProperties(roomProps);
+            }
+        }
+        
         UpdateUI();
+        UpdateRoomInfo();
     }
 
     public override void OnLeftRoom()
@@ -316,6 +342,13 @@ public class NetworkManager : MonoBehaviourPunCallbacks
     {
         Debug.Log($"Sala criada: {PhotonNetwork.CurrentRoom.Name}");
         UpdateConnectionStatus("Sala criada!");
+        
+        Hashtable roomProps = new Hashtable();
+        roomProps["GameState"] = (int)GameStateManager.GameState.Inicio;
+        PhotonNetwork.CurrentRoom.SetCustomProperties(roomProps);
+        
+        UpdateUI();
+        UpdateRoomInfo();
     }
 
     public override void OnCreateRoomFailed(short returnCode, string message)
@@ -328,12 +361,22 @@ public class NetworkManager : MonoBehaviourPunCallbacks
     {
         Debug.Log($"Jogador {newPlayer.NickName} entrou na sala");
         UpdateRoomInfo();
+        
+        if (productOwnerManager != null)
+        {
+            productOwnerManager.UpdateUI();
+        }
     }
 
     public override void OnPlayerLeftRoom(Player otherPlayer)
     {
         Debug.Log($"Jogador {otherPlayer.NickName} saiu da sala");
         UpdateRoomInfo();
+        
+        if (productOwnerManager != null)
+        {
+            productOwnerManager.UpdateUI();
+        }
     }
 
     public override void OnMasterClientSwitched(Player newMasterClient)
@@ -370,27 +413,30 @@ public class NetworkManager : MonoBehaviourPunCallbacks
 
     public void UpdatePlayerPOText(int playerIndex, string text)
     {
-        if (playerPOTexts != null && playerIndex >= 0 && playerIndex < playerPOTexts.Length)
+        if (playerPOTexts == null)
         {
-            if (playerPOTexts[playerIndex] != null)
-            {
-                if (!playerPOTexts[playerIndex].gameObject.activeSelf)
-                {
-                    playerPOTexts[playerIndex].gameObject.SetActive(true);
-                }
-                
-                playerPOTexts[playerIndex].text = text;
-                Debug.Log($"NetworkManager: Atualizado playerPOTexts[{playerIndex}] para: '{text}' (GameObject ativado)");
-            }
-            else
-            {
-                Debug.LogWarning($"NetworkManager: playerPOTexts[{playerIndex}] é null!");
-            }
+            Debug.LogError("playerPOTexts array é null!");
+            return;
         }
-        else
+        
+        if (playerIndex < 0 || playerIndex >= playerPOTexts.Length)
         {
-            Debug.LogWarning($"NetworkManager: Índice inválido {playerIndex} ou playerPOTexts é null! Array length: {playerPOTexts?.Length}");
+            Debug.LogError($"PlayerIndex inválido: {playerIndex}");
+            return;
         }
+        
+        if (playerPOTexts[playerIndex] == null)
+        {
+            Debug.LogError($"playerPOTexts[{playerIndex}] é null!");
+            return;
+        }
+        
+        if (!playerPOTexts[playerIndex].gameObject.activeSelf)
+        {
+            playerPOTexts[playerIndex].gameObject.SetActive(true);
+        }
+        
+        playerPOTexts[playerIndex].text = text;
     }
 
     public void ClearFinishedPlayerTexts()

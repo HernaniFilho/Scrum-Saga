@@ -96,7 +96,7 @@ public class ProductOwnerManager : MonoBehaviourPunCallbacks
         return IsPlayerProductOwner(PhotonNetwork.LocalPlayer);
     }
 
-    private void UpdateUI()
+    public void UpdateUI()
     {
         if (becomeProductOwnerButton == null) return;
 
@@ -104,7 +104,6 @@ public class ProductOwnerManager : MonoBehaviourPunCallbacks
         bool hasProductOwner = currentPO != null;
         bool isLocalPlayerPO = IsLocalPlayerProductOwner();
 
-        // Atualizar visibilidade do botão
         becomeProductOwnerButton.transform.parent.gameObject.SetActive(!hasProductOwner && PhotonNetwork.InRoom);
 
         if (gameStateManager == null) return;
@@ -135,8 +134,12 @@ public class ProductOwnerManager : MonoBehaviourPunCallbacks
             }
         }
 
-        // Atualizar interatividade do botão
         becomeProductOwnerButton.interactable = !hasProductOwner && PhotonNetwork.InRoom;
+        
+        if (networkManager != null)
+        {
+            networkManager.UpdateRoomInfo();
+        }
     }
 
     #region Photon Callbacks

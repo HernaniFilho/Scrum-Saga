@@ -2,8 +2,9 @@ using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
 using Photon.Pun;
+using Photon.Realtime;
 
-public class MultiplayerSetup : MonoBehaviour
+public class MultiplayerSetup : MonoBehaviourPunCallbacks
 {
     [Header("Multiplayer Settings")]
     [SerializeField] private bool enableMultiplayer = true;
@@ -26,6 +27,7 @@ public class MultiplayerSetup : MonoBehaviour
     private NetworkManager networkManager;
     private NetworkScoreManager networkScoreManager;
     private NameInputManager nameInputManager;
+    private LobbyManager lobbyManager;
 
     void Start()
     {
@@ -70,6 +72,8 @@ public class MultiplayerSetup : MonoBehaviour
         SetupNetworkScoreManager();
         
         SetupNetworkManager();
+
+        SetupLobbyManager();
         
         Debug.Log("Configuração de Multiplayer concluída!");
     }
@@ -163,6 +167,7 @@ public class MultiplayerSetup : MonoBehaviour
     void SetupNameInputManager()
     {
         // Criar o componente NameInputManager se não existir
+        nameInputManager = FindObjectOfType<NameInputManager>();
         if (nameInputManager == null)
         {
             GameObject nameInputObj = new GameObject("NameInputManager");
@@ -173,7 +178,10 @@ public class MultiplayerSetup : MonoBehaviour
         nameInputManager.OnNameConfirmed += OnPlayerNameConfirmed;
         
         // Mostrar tela de nome
-        ShowNameInputScreen();
+        if (nameInputManager != null)
+        {
+            nameInputManager.ShowNameInputScreen();
+        }
         
         // Esconder outros elementos da UI
         if (connectionStatusText != null) connectionStatusText.gameObject.SetActive(false);
@@ -183,33 +191,43 @@ public class MultiplayerSetup : MonoBehaviour
         ClearAllPlayerTexts();
     }
 
-    void ShowNameInputScreen()
-    {
-        if (nameInputManager != null)
-        {
-            nameInputManager.ShowNameInputScreen();
-        }
-    }
-
     void OnPlayerNameConfirmed(string playerName)
     {
-        // Definir o nickname no NetworkManager se disponível
         if (networkManager != null)
         {
             networkManager.SetNickname(playerName);
         }
 
-        // Mostrar UI normal
-        if (connectionStatusText != null) connectionStatusText.gameObject.SetActive(true);
-        if (roomNameText != null) roomNameText.gameObject.SetActive(true);
-        if (playerCountText != null) playerCountText.gameObject.SetActive(true);
-        // Textos de jogadores ficam vazios inicialmente (serão gerenciados pelo NetworkManager)
+        ConnectAndShowLobby();
+    }
+
+    void ConnectAndShowLobby()
+    {
+        LoadingScreenManager loadingScreen = FindObjectOfType<LoadingScreenManager>();
         
-        // Agora que o nome foi escolhido, conectar à sala
-        // A loading screen será mostrada automaticamente pelo NetworkManager.ConnectToPhoton()
-        if (networkManager != null)
+        if (!PhotonNetwork.IsConnected)
         {
-            networkManager.ConnectToPhoton();
+            loadingScreen?.ShowLoadingScreen("Conectando...");
+            PhotonNetwork.ConnectUsingSettings();
+        }
+        else if (lobbyManager != null)
+        {
+            lobbyManager.ShowLobby();
+        }
+    }
+
+    void SetupLobbyManager()
+    {
+        lobbyManager = FindObjectOfType<LobbyManager>();
+        if (lobbyManager == null)
+        {
+            GameObject lobbyObj = new GameObject("LobbyManager");
+            lobbyManager = lobbyObj.AddComponent<LobbyManager>();
+            Debug.Log("LobbyManager criado");
+        }
+        else
+        {
+            Debug.Log("LobbyManager já existe");
         }
     }
 
@@ -251,6 +269,15 @@ public class MultiplayerSetup : MonoBehaviour
                 if (playerPOTexts[i] != null)
                     playerPOTexts[i].text = "";
             }
+        }
+    }
+
+    public override void OnConnectedToMaster()
+    {
+        Debug.Log("Conectado ao Master Server - Mostrando lobby");
+        if (lobbyManager != null)
+        {
+            lobbyManager.ShowLobby();
         }
     }
 }

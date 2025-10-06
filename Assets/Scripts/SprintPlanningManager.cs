@@ -96,7 +96,7 @@ public class SprintPlanningManager : MonoBehaviourPun
       legendaContainer.SetActive(false);
     }
 
-    // Setup dos elementos de conclus\u00e3o do rascunho
+    // Setup dos elementos de conclusão do rascunho
     if (finishDraftContainer != null && finishDraftButton != null)
     {
       finishDraftContainer.SetActive(false);
@@ -171,7 +171,7 @@ public class SprintPlanningManager : MonoBehaviourPun
           {
             draftText.gameObject.SetActive(false);
             
-            // Mostrar container "Terminar Rascunho" para jogadores n\u00e3o-PO durante o rascunho
+            // Mostrar container "Terminar Rascunho" para jogadores não-PO durante o rascunho
             if (finishDraftContainer != null && !hasLocalPlayerFinished)
             {
               finishDraftContainer.SetActive(true);
@@ -546,13 +546,6 @@ public class SprintPlanningManager : MonoBehaviourPun
       startDraftButton.gameObject.SetActive(false);
     }
 
-    // Mostrar botão de parar rascunho
-    // if (stopDraftContainer != null)
-    // {
-    //   stopDraftContainer.gameObject.SetActive(true);
-    // }
-
-    // Momento do rascunho - iniciar timer de 1:40 para todos os players
     if (TimerManager.Instance != null)
     {
       TimerManager.Instance.StartTimer(100f, OnDraftTimeComplete, "DraftTimer");
@@ -580,7 +573,6 @@ public class SprintPlanningManager : MonoBehaviourPun
       stopDraftContainer.gameObject.SetActive(false);
     }
 
-    // Limpar textos "Terminou!" de todos os jogadores
     ClearAllPlayerFinishedTexts();
 
     if (TimerManager.Instance != null)
@@ -631,8 +623,6 @@ public class SprintPlanningManager : MonoBehaviourPun
 
   private void OnFinishDraftButtonClicked()
   {
-    Debug.Log($"Jogador {PhotonNetwork.LocalPlayer.NickName} (ActorNumber: {PhotonNetwork.LocalPlayer.ActorNumber}) terminou o rascunho!");
-    
     hasLocalPlayerFinished = true;
     
     if (finishDraftContainer != null)
@@ -674,12 +664,15 @@ public class SprintPlanningManager : MonoBehaviourPun
   {
     if (networkManager == null) 
     {
-      Debug.LogError("SprintPlanningManager: NetworkManager \u00e9 null no UpdatePlayerPOText!");
-      return;
+      networkManager = FindObjectOfType<NetworkManager>();
+      if (networkManager == null)
+      {
+        Debug.LogError("NetworkManager não encontrado!");
+        return;
+      }
     }
     
     int playerIndex = GetPlayerIndex(PhotonNetwork.LocalPlayer.ActorNumber);
-    Debug.Log($"SprintPlanningManager: UpdatePlayerPOText - ActorNumber: {PhotonNetwork.LocalPlayer.ActorNumber}, PlayerIndex: {playerIndex}, Text: '{text}'");
     
     if (playerIndex >= 0 && playerIndex < 5)
     {
@@ -687,7 +680,7 @@ public class SprintPlanningManager : MonoBehaviourPun
     }
     else
     {
-      Debug.LogError($"SprintPlanningManager: PlayerIndex inv\u00e1lido: {playerIndex}");
+      Debug.LogError($"PlayerIndex inválido: {playerIndex}");
     }
   }
 
@@ -718,7 +711,7 @@ public class SprintPlanningManager : MonoBehaviourPun
     }
     else
     {
-      Debug.LogError("SprintPlanningManager: NetworkManager n\u00e3o encontrado!");
+      Debug.LogError("NetworkManager não encontrado no RPC!");
     }
   }
 
@@ -762,7 +755,7 @@ public class SprintPlanningManager : MonoBehaviourPun
       }
       else
       {
-        Debug.Log($"Jogador {player.NickName} \u00e9 PO - ignorando");
+        Debug.Log($"Jogador {player.NickName} é PO - ignorando");
       }
     }
     
@@ -781,8 +774,12 @@ public class SprintPlanningManager : MonoBehaviourPun
   {
     if (networkManager == null) 
     {
-      Debug.LogError("SprintPlanningManager: NetworkManager \u00e9 null no PlayerHasFinished!");
-      return false;
+      networkManager = FindObjectOfType<NetworkManager>();
+      if (networkManager == null)
+      {
+        Debug.LogError("SprintPlanningManager: NetworkManager não encontrado!");
+        return false;
+      }
     }
     
     string playerText = networkManager.GetPlayerPOText(playerIndex);
@@ -819,7 +816,7 @@ public class SprintPlanningManager : MonoBehaviourPun
     }
     else
     {
-      Debug.LogError("RPC: NetworkManager \u00e9 null na limpeza!");
+      Debug.LogError("RPC: NetworkManager é null na limpeza!");
       networkManager = FindObjectOfType<NetworkManager>();
       if (networkManager != null)
       {
