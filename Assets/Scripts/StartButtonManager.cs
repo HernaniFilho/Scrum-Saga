@@ -59,6 +59,11 @@ public class StartButtonManager : MonoBehaviourPun
 
         if (!shouldShowButton) return;
 
+        int playerCount = PhotonNetwork.PlayerList.Length;
+        bool hasMinimumPlayers = !productOwnerManager.requireMinimumPlayers || playerCount >= productOwnerManager.minimumPlayersToStart;
+        
+        startPhaseButton.gameObject.SetActive(hasMinimumPlayers);
+
         if (currentSprint == 0 || currentSprint == sprintsMax)
         {
             buttonText.text = "Começar jogo";

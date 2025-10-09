@@ -14,6 +14,8 @@ public class ProductOwnerManager : MonoBehaviourPunCallbacks
 
     [Header("Configuration")]
     public string productOwnerPropertyKey = "IsProductOwner";
+    public bool requireMinimumPlayers = true;
+    public int minimumPlayersToStart = 2;
     
     private NetworkManager networkManager;
     private GameStateManager gameStateManager;
@@ -115,6 +117,8 @@ public class ProductOwnerManager : MonoBehaviourPunCallbacks
             if (waitingText != null)
             {
                 waitingText.gameObject.SetActive(true);
+                int playerCount = PhotonNetwork.PlayerList.Length;
+                bool hasMinimumPlayers = !requireMinimumPlayers || playerCount >= minimumPlayersToStart;
 
                 if (hasProductOwner)
                 {
@@ -124,7 +128,14 @@ public class ProductOwnerManager : MonoBehaviourPunCallbacks
                     }
                     else
                     {
-                        waitingText.gameObject.SetActive(false);
+                        if (!hasMinimumPlayers)
+                        {
+                            waitingText.text = $"Aguardando mais jogadores... ({playerCount}/{minimumPlayersToStart})";
+                        }
+                        else
+                        {
+                            waitingText.gameObject.SetActive(false);
+                        }
                     }
                 }
                 else
@@ -173,8 +184,13 @@ public class ProductOwnerManager : MonoBehaviourPunCallbacks
         if (IsPlayerProductOwner(otherPlayer))
         {
             Debug.Log("Product Owner saiu da sala");
-            UpdateUI();
         }
+        UpdateUI();
+    }
+
+    public override void OnPlayerEnteredRoom(Player newPlayer)
+    {
+        UpdateUI();
     }
 
     #endregion
