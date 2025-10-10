@@ -62,6 +62,10 @@ public class MobileScaler : MonoBehaviour
             {
                 ManageMobile();
             }
+            else
+            {
+                ManageDesktop();
+            }
         }
     }
 
