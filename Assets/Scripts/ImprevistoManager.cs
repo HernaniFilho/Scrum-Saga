@@ -39,6 +39,7 @@ public class ImprevistoManager : MonoBehaviourPunCallbacks
 
     private bool cartaJaCriada = false;
     private bool hasStartedImprevistoPhase = false;
+    private bool cartaLocalmenteColetada = false;
 
     public static ImprevistoManager Instance { get; private set; }
 
@@ -133,6 +134,9 @@ public class ImprevistoManager : MonoBehaviourPunCallbacks
     {
         if (!PhotonNetwork.InRoom) return false;
         
+        // Verificação local instantânea
+        if (cartaLocalmenteColetada) return false;
+        
         bool cartaJaPega = PhotonNetwork.CurrentRoom.CustomProperties.ContainsKey(CARTA_PEGA_KEY);
         bool cartaJaRemovida = PhotonNetwork.CurrentRoom.CustomProperties.ContainsKey(CARTA_REMOVIDA_KEY);
         
@@ -143,8 +147,26 @@ public class ImprevistoManager : MonoBehaviourPunCallbacks
     {
         if (!PhotonNetwork.InRoom) return;
         
+        // Marcar localmente que a carta foi coletada (instantâneo)
+        cartaLocalmenteColetada = true;
+        
+        // Desabilitar collider por 2 segundos
+        Collider col = cartaInstanciada.GetComponent<Collider>();
+        if (col != null)
+        {
+            StartCoroutine(EnableColliderAfterDelay(col));
+        }
+        
         // Aguardar inicialização completa da carta
         StartCoroutine(WaitForCardInitialization(cartaInstanciada, spawnDistance, rotation));
+    }
+
+    private IEnumerator EnableColliderAfterDelay(Collider col)
+    {
+        col.enabled = false;
+        yield return new WaitForSeconds(1.2f);
+        if (col != null)
+            col.enabled = true;
     }
 
     private IEnumerator WaitForCardInitialization(GameObject cartaInstanciada, float spawnDistance, Quaternion rotation)
@@ -217,7 +239,7 @@ public class ImprevistoManager : MonoBehaviourPunCallbacks
         if (PhotonNetwork.LocalPlayer.NickName != playerName && deckImprevistos != null && !cartaJaCriada)
         {
             cartaJaCriada = true;
-            CreateSyncedCard(spawnDistance, rotation, texto, naturesKeys, naturesValues, debuffsKeys, debuffsValues, useFirstOnly);
+            StartCoroutine(CreateSyncedCardWithDelay(spawnDistance, rotation, texto, naturesKeys, naturesValues, debuffsKeys, debuffsValues, useFirstOnly));
         }
 
         // Iniciar timer de auto-remoção usando TimerManager (apenas Master Client)
@@ -230,7 +252,24 @@ public class ImprevistoManager : MonoBehaviourPunCallbacks
         UpdatePauseButtonVisibility();
     }
 
-    void CreateSyncedCard(float spawnDistance, float[] rotation, string texto, string[] naturesKeys, int[] naturesValues, string[] debuffsKeys, int[] debuffsValues, bool useFirstOnly)
+    IEnumerator CreateSyncedCardWithDelay(float spawnDistance, float[] rotation, string texto, string[] naturesKeys, int[] naturesValues, string[] debuffsKeys, int[] debuffsValues, bool useFirstOnly)
+    {
+        GameObject carta = CreateSyncedCard(spawnDistance, rotation, texto, naturesKeys, naturesValues, debuffsKeys, debuffsValues, useFirstOnly);
+        
+        if (carta != null)
+        {
+            Collider col = carta.GetComponent<Collider>();
+            if (col != null)
+            {
+                col.enabled = false;
+                yield return new WaitForSeconds(1.2f);
+                if (col != null)
+                    col.enabled = true;
+            }
+        }
+    }
+
+    GameObject CreateSyncedCard(float spawnDistance, float[] rotation, string texto, string[] naturesKeys, int[] naturesValues, string[] debuffsKeys, int[] debuffsValues, bool useFirstOnly)
     {
         Camera playerCamera = Camera.main;
         Vector3 screenPos = playerCamera.WorldToScreenPoint(playerCamera.transform.position + playerCamera.transform.forward * spawnDistance);
@@ -254,9 +293,11 @@ public class ImprevistoManager : MonoBehaviourPunCallbacks
             // Garantir que há collider para o clique funcionar
             if (carta.GetComponent<Collider>() == null)
             {
-                carta.AddComponent<BoxCollider>();
+            carta.AddComponent<BoxCollider>();
             }
-        }
+            }
+                
+        return carta;
     }
 
     public void ConfigureCardForNetworking(CardImprevistos card)
@@ -556,6 +597,7 @@ public class ImprevistoManager : MonoBehaviourPunCallbacks
     {
         cartaJaCriada = false;
         hasStartedImprevistoPhase = false;
+        cartaLocalmenteColetada = false;
         
         // Parar timer se estiver ativo
         if (TimerManager.Instance != null && PhotonNetwork.InRoom)
@@ -594,6 +636,7 @@ public class ImprevistoManager : MonoBehaviourPunCallbacks
     {
         cartaJaCriada = false;
         hasStartedImprevistoPhase = false;
+        cartaLocalmenteColetada = false;
         
         // Parar timers se estiverem ativos
         if (TimerManager.Instance != null)
@@ -706,7 +749,7 @@ public class ImprevistoManager : MonoBehaviourPunCallbacks
                 if (PhotonNetwork.LocalPlayer.NickName != playerName && deckImprevistos != null && !cartaJaCriada)
                 {
                     cartaJaCriada = true;
-                    CreateSyncedCard(spawnDistance, rotation, texto, naturesKeys, naturesValues, debuffsKeys, debuffsValues, useFirstOnly);
+                    StartCoroutine(CreateSyncedCardWithDelay(spawnDistance, rotation, texto, naturesKeys, naturesValues, debuffsKeys, debuffsValues, useFirstOnly));
                 }
             }
         }

@@ -38,6 +38,7 @@ public class EscolhaManager : MonoBehaviourPunCallbacks
 
     private bool cartaJaCriada = false;
     private bool hasStartedEscolhaPhase = false;
+    private bool cartaLocalmenteColetada = false;
 
     public static EscolhaManager Instance { get; private set; }
 
@@ -132,6 +133,9 @@ public class EscolhaManager : MonoBehaviourPunCallbacks
     {
         if (!PhotonNetwork.InRoom) return false;
         
+        // Verificação local instantânea
+        if (cartaLocalmenteColetada) return false;
+        
         bool cartaJaPega = PhotonNetwork.CurrentRoom.CustomProperties.ContainsKey(CARTA_PEGA_KEY);
         bool escolhaJaFeita = PhotonNetwork.CurrentRoom.CustomProperties.ContainsKey(ESCOLHA_FEITA_KEY);
         
@@ -141,6 +145,9 @@ public class EscolhaManager : MonoBehaviourPunCallbacks
     public void NotifyCartaPega(GameObject cartaInstanciada, float spawnDistance, Quaternion rotation)
     {
         if (!PhotonNetwork.InRoom) return;
+        
+        // Marcar localmente que a carta foi coletada (instantâneo)
+        cartaLocalmenteColetada = true;
         
         // Pegar informações da carta para sincronizar
         CardEscolhas cardComponent = cartaInstanciada.GetComponent<CardEscolhas>();
@@ -424,6 +431,7 @@ public class EscolhaManager : MonoBehaviourPunCallbacks
     {
         cartaJaCriada = false; // Reset da flag de duplicação
         hasStartedEscolhaPhase = false; // Reset da flag de fase
+        cartaLocalmenteColetada = false; // Reset da flag local
 
         // Parar timer se estiver ativo
         if (TimerManager.Instance != null && PhotonNetwork.InRoom)
@@ -462,6 +470,7 @@ public class EscolhaManager : MonoBehaviourPunCallbacks
     {
         cartaJaCriada = false;
         hasStartedEscolhaPhase = false;
+        cartaLocalmenteColetada = false;
         
         // Parar timer se estiver ativo
         if (TimerManager.Instance != null)

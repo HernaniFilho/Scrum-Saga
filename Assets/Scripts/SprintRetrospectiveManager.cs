@@ -34,6 +34,7 @@ public class SprintRetrospectiveManager : MonoBehaviourPunCallbacks
 
     private bool cartaJaCriada = false;
     private bool hasStartedRetrospectivePhase = false;
+    private bool cartaLocalmenteColetada = false;
 
     public static SprintRetrospectiveManager Instance { get; private set; }
 
@@ -128,6 +129,9 @@ public class SprintRetrospectiveManager : MonoBehaviourPunCallbacks
     {
         if (!PhotonNetwork.InRoom) return false;
         
+        // Verificação local instantânea
+        if (cartaLocalmenteColetada) return false;
+        
         bool cartaJaPega = PhotonNetwork.CurrentRoom.CustomProperties.ContainsKey(CARTA_PEGA_KEY);
         bool cartaJaRemovida = PhotonNetwork.CurrentRoom.CustomProperties.ContainsKey(CARTA_REMOVIDA_KEY);
         
@@ -137,6 +141,9 @@ public class SprintRetrospectiveManager : MonoBehaviourPunCallbacks
     public void NotifyCartaPega(GameObject cartaInstanciada, float spawnDistance, Quaternion rotation)
     {
         if (!PhotonNetwork.InRoom) return;
+        
+        // Marcar localmente que a carta foi coletada (instantâneo)
+        cartaLocalmenteColetada = true;
         
         // Desabilitar collider por 2 segundos
         Collider col = cartaInstanciada.GetComponent<Collider>();
@@ -152,7 +159,7 @@ public class SprintRetrospectiveManager : MonoBehaviourPunCallbacks
     private IEnumerator EnableColliderAfterDelay(Collider col)
     {
         col.enabled = false;
-        yield return new WaitForSeconds(2f);
+        yield return new WaitForSeconds(1.2f);
         if (col != null)
             col.enabled = true;
     }
@@ -247,7 +254,7 @@ public class SprintRetrospectiveManager : MonoBehaviourPunCallbacks
             if (col != null)
             {
                 col.enabled = false;
-                yield return new WaitForSeconds(2f);
+                yield return new WaitForSeconds(1.2f);
                 if (col != null)
                     col.enabled = true;
             }
@@ -385,6 +392,7 @@ public class SprintRetrospectiveManager : MonoBehaviourPunCallbacks
     {
         cartaJaCriada = false;
         hasStartedRetrospectivePhase = false;
+        cartaLocalmenteColetada = false;
         
         // Parar timer se estiver ativo
         if (TimerManager.Instance != null && PhotonNetwork.InRoom)
@@ -421,6 +429,7 @@ public class SprintRetrospectiveManager : MonoBehaviourPunCallbacks
     {
         cartaJaCriada = false;
         hasStartedRetrospectivePhase = false;
+        cartaLocalmenteColetada = false;
         
         // Parar timer se estiver ativo
         if (TimerManager.Instance != null)
