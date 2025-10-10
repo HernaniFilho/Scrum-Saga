@@ -9,8 +9,18 @@ public class ProductOwnerManager : MonoBehaviourPunCallbacks
 {
     [Header("UI References")]
     public Button becomeProductOwnerButton;
+    public Button stopBeingProductOwnerButton;
     public TMP_Text buttonText;
     public TMP_Text waitingText;
+
+    [Header("Popup Confirmation")]
+    public GameObject popupBecomePOContainer;
+    public Button confirmarBecomePOButton;
+    public Button cancelarBecomePOButton;
+
+    public GameObject popupStopPOContainer;
+    public Button confirmarStopPOButton;
+    public Button cancelarStopPOButton;
 
     [Header("Configuration")]
     public string productOwnerPropertyKey = "IsProductOwner";
@@ -30,7 +40,47 @@ public class ProductOwnerManager : MonoBehaviourPunCallbacks
             becomeProductOwnerButton.onClick.AddListener(OnBecomeProductOwnerClicked);
         }
         
+        if (stopBeingProductOwnerButton != null)
+        {
+            stopBeingProductOwnerButton.onClick.AddListener(OnStopBeingProductOwnerClicked);
+        }
+
+        SetupPopups();
+        
         UpdateUI();
+    }
+
+    void SetupPopups()
+    {
+        if (popupBecomePOContainer != null)
+        {
+            popupBecomePOContainer.SetActive(false);
+        }
+
+        if (confirmarBecomePOButton != null)
+        {
+            confirmarBecomePOButton.onClick.AddListener(OnConfirmarBecomePOClicked);
+        }
+
+        if (cancelarBecomePOButton != null)
+        {
+            cancelarBecomePOButton.onClick.AddListener(OnCancelarBecomePOClicked);
+        }
+
+        if (popupStopPOContainer != null)
+        {
+            popupStopPOContainer.SetActive(false);
+        }
+
+        if (confirmarStopPOButton != null)
+        {
+            confirmarStopPOButton.onClick.AddListener(OnConfirmarStopPOClicked);
+        }
+
+        if (cancelarStopPOButton != null)
+        {
+            cancelarStopPOButton.onClick.AddListener(OnCancelarStopPOClicked);
+        }
     }
 
     void Update()
@@ -42,15 +92,63 @@ public class ProductOwnerManager : MonoBehaviourPunCallbacks
     {
         if (!PhotonNetwork.InRoom) return;
 
-        // Verificar se já existe um Product Owner
         if (GetCurrentProductOwner() != null)
         {
             Debug.Log("Já existe um Product Owner na sala");
             return;
         }
 
-        // Tornar-se Product Owner
+        if (popupBecomePOContainer != null)
+        {
+            popupBecomePOContainer.SetActive(true);
+        }
+    }
+
+    private void OnConfirmarBecomePOClicked()
+    {
+        if (popupBecomePOContainer != null)
+        {
+            popupBecomePOContainer.SetActive(false);
+        }
+
         BecomeProductOwner();
+    }
+
+    private void OnCancelarBecomePOClicked()
+    {
+        if (popupBecomePOContainer != null)
+        {
+            popupBecomePOContainer.SetActive(false);
+        }
+    }
+
+    public void OnStopBeingProductOwnerClicked()
+    {
+        if (!PhotonNetwork.InRoom) return;
+
+        if (popupStopPOContainer != null)
+        {
+            popupStopPOContainer.SetActive(true);
+        }
+    }
+
+    private void OnConfirmarStopPOClicked()
+    {
+        if (popupStopPOContainer != null)
+        {
+            popupStopPOContainer.SetActive(false);
+        }
+
+        ClearProductOwner();
+        Debug.Log("Você deixou de ser Product Owner");
+    }
+
+    private void OnCancelarStopPOClicked()
+    {
+        if (popupStopPOContainer != null)
+        {
+            popupStopPOContainer.SetActive(false);
+        }
     }
 
     public void BecomeProductOwner()
@@ -111,6 +209,15 @@ public class ProductOwnerManager : MonoBehaviourPunCallbacks
         if (gameStateManager == null) return;
 
         var currentState = gameStateManager.GetCurrentState();
+        
+        // Gerenciar botão de parar de ser PO (apenas durante fase Inicio e se for PO local)
+        if (stopBeingProductOwnerButton != null)
+        {
+            bool shouldShowStopButton = isLocalPlayerPO && 
+                                       currentState == GameStateManager.GameState.Inicio && 
+                                       PhotonNetwork.InRoom;
+            stopBeingProductOwnerButton.transform.parent.gameObject.SetActive(shouldShowStopButton);
+        }
 
         if (currentState == GameStateManager.GameState.Inicio)
         {
@@ -166,6 +273,12 @@ public class ProductOwnerManager : MonoBehaviourPunCallbacks
             if ((bool)changedProps[productOwnerPropertyKey] == true)
             {
                 RemoveOtherProductOwners(targetPlayer);
+                
+                // Fechar popup de confirmação para outros jogadores
+                if (popupBecomePOContainer != null && popupBecomePOContainer.activeSelf)
+                {
+                    popupBecomePOContainer.SetActive(false);
+                }
             }
             
             UpdateUI();
