@@ -13,6 +13,7 @@ public class FimManager : MonoBehaviourPun
     [Header("Result UI")]
     public TMP_Text fimText;
     public TMP_Text feedbackText;
+    public GameObject feedbackContainer;
     
     [Header("Pause Button")]
     public Button pauseButton;
@@ -96,9 +97,9 @@ public class FimManager : MonoBehaviourPun
         fimText.gameObject.SetActive(false);
       }
       
-      if (feedbackText != null)
+      if (feedbackContainer != null)
       {
-        feedbackText.gameObject.SetActive(false);
+        feedbackContainer.SetActive(false);
       }
       
       SetupPauseButton();
@@ -130,7 +131,7 @@ public class FimManager : MonoBehaviourPun
         fimText.text = "";
 
         fimText.gameObject.SetActive(true);
-        feedbackText.gameObject.SetActive(true);
+        feedbackContainer.SetActive(false);
 
         fimText.text = "Fim da Sprint! Prepare-se para a próxima!";
         if (isLastSprint && ScoreManager.Instance != null)
@@ -141,18 +142,23 @@ public class FimManager : MonoBehaviourPun
           if (tabuleiro != null)
             tabuleiro.SetActive(false);
 
+          feedbackContainer.SetActive(true);
+          
           if (lowestScore >= 7)
           {
-            feedbackText.text = "Feedback do Cliente: Estou extremamente satisfeito com o trabalho realizado pela sua equipe! Continue assim!";
+            feedbackText.text = "Estou extremamente satisfeito com o trabalho realizado pela sua equipe! Continue assim!";
           }
           else if (lowestScore >= 4)
           {
-            feedbackText.text = "Feedback do Cliente: Sua equipe fez um bom trabalho, mas poderia ter se organizado melhor!";
+            feedbackText.text = "Sua equipe fez um bom trabalho, mas poderia ter se organizado melhor!";
           }
           else
           {
-            feedbackText.text = "Feedback do Cliente: Não estou satisfeito com o projeto entregue pela equipe! Que tal tentar de novo?";
+            feedbackText.text = "Não estou satisfeito com o projeto entregue pela equipe! Que tal tentar de novo?";
           }
+          
+          LayoutRebuilder.ForceRebuildLayoutImmediate(feedbackText.rectTransform);
+          LayoutRebuilder.ForceRebuildLayoutImmediate(feedbackText.transform.parent as RectTransform);
         }
       }
       
@@ -223,9 +229,9 @@ public class FimManager : MonoBehaviourPun
         fimText.gameObject.SetActive(false);
       }
       
-      if (feedbackText != null)
+      if (feedbackContainer != null)
       {
-        feedbackText.gameObject.SetActive(false);
+        feedbackContainer.SetActive(false);
       }
     }
 
@@ -245,8 +251,8 @@ public class FimManager : MonoBehaviourPun
       // Reset da UI local
       if (fimText != null)
         fimText.gameObject.SetActive(false);
-      if (feedbackText != null)
-        feedbackText.gameObject.SetActive(false);
+      if (feedbackContainer != null)
+        feedbackContainer.SetActive(false);
         
       // Esconder botão de pause
       if (pauseButton != null)
