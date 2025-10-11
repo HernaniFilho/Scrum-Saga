@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 using Photon.Pun;
 using ExitGames.Client.Photon;
 using Hashtable = ExitGames.Client.Photon.Hashtable;
@@ -9,8 +10,7 @@ public class SelectedCardData
 {
     public string imageName;
     public Dictionary<string, int> scores;
-    public Texture2D cardTexture;
-    public Material cardMaterial;
+    public Sprite cardSprite;
     
     public SelectedCardData()
     {
@@ -66,18 +66,12 @@ public class SelectedCardStorage : MonoBehaviourPunCallbacks
         // Store scores (tracks that the card improves)
         selectedCardData.scores = new Dictionary<string, int>(cardTarefas.scores);
 
-        // Store texture/material information
-        MeshRenderer meshRenderer = cardTarefas.meshRenderer;
-        if (meshRenderer != null && meshRenderer.material != null)
+        // Store sprite information
+        Image image = cardTarefas.image;
+        if (image != null && image.sprite != null)
         {
-            selectedCardData.cardMaterial = new Material(meshRenderer.material);
-            
-            Texture2D texture = meshRenderer.material.mainTexture as Texture2D;
-            if (texture != null)
-            {
-                selectedCardData.cardTexture = texture;
-                selectedCardData.imageName = texture.name;
-            }
+            selectedCardData.cardSprite = image.sprite;
+            selectedCardData.imageName = image.sprite.name;
         }
 
         Debug.Log("Dados da carta selecionada armazenados com sucesso!");
@@ -118,17 +112,11 @@ public class SelectedCardStorage : MonoBehaviourPunCallbacks
 
         rejectedCardData.scores = new Dictionary<string, int>(cardTarefas.scores);
 
-        MeshRenderer meshRenderer = cardTarefas.meshRenderer;
-        if (meshRenderer != null && meshRenderer.material != null)
+        Image image = cardTarefas.image;
+        if (image != null && image.sprite != null)
         {
-            rejectedCardData.cardMaterial = new Material(meshRenderer.material);
-            
-            Texture2D texture = meshRenderer.material.mainTexture as Texture2D;
-            if (texture != null)
-            {
-                rejectedCardData.cardTexture = texture;
-                rejectedCardData.imageName = texture.name;
-            }
+            rejectedCardData.cardSprite = image.sprite;
+            rejectedCardData.imageName = image.sprite.name;
         }
 
         Debug.Log("Carta reprovada armazenada com sucesso!");
@@ -213,9 +201,9 @@ public class SelectedCardStorage : MonoBehaviourPunCallbacks
             ["scores"] = selectedCardData.scores ?? new Dictionary<string, int>()
         };
         
-        if (selectedCardData.cardMaterial != null && selectedCardData.cardMaterial.mainTexture != null)
+        if (selectedCardData.cardSprite != null)
         {
-            syncData["textureName"] = selectedCardData.cardMaterial.mainTexture.name;
+            syncData["textureName"] = selectedCardData.cardSprite.name;
         }
         
         Hashtable props = new Hashtable();
@@ -235,9 +223,9 @@ public class SelectedCardStorage : MonoBehaviourPunCallbacks
             ["scores"] = rejectedCardData.scores ?? new Dictionary<string, int>()
         };
         
-        if (rejectedCardData.cardMaterial != null && rejectedCardData.cardMaterial.mainTexture != null)
+        if (rejectedCardData.cardSprite != null)
         {
-            syncData["textureName"] = rejectedCardData.cardMaterial.mainTexture.name;
+            syncData["textureName"] = rejectedCardData.cardSprite.name;
         }
         
         Hashtable props = new Hashtable();
@@ -258,9 +246,9 @@ public class SelectedCardStorage : MonoBehaviourPunCallbacks
             ["maxScore"] = selectedCard.maxScore
         };
         
-        if (selectedCard.meshRenderer != null && selectedCard.meshRenderer.material != null && selectedCard.meshRenderer.material.mainTexture != null)
+        if (selectedCard.image != null && selectedCard.image.sprite != null)
         {
-            syncData["textureName"] = selectedCard.meshRenderer.material.mainTexture.name;
+            syncData["textureName"] = selectedCard.image.sprite.name;
         }
         
         Hashtable props = new Hashtable();
@@ -281,9 +269,9 @@ public class SelectedCardStorage : MonoBehaviourPunCallbacks
             ["maxScore"] = rejectedCard.maxScore
         };
         
-        if (rejectedCard.meshRenderer != null && rejectedCard.meshRenderer.material != null && rejectedCard.meshRenderer.material.mainTexture != null)
+        if (rejectedCard.image != null && rejectedCard.image.sprite != null)
         {
-            syncData["textureName"] = rejectedCard.meshRenderer.material.mainTexture.name;
+            syncData["textureName"] = rejectedCard.image.sprite.name;
         }
         
         Hashtable props = new Hashtable();
@@ -337,26 +325,23 @@ public class SelectedCardStorage : MonoBehaviourPunCallbacks
         
         if (syncData.ContainsKey("textureName"))
         {
-            string textureName = syncData["textureName"].ToString();
+            string spriteName = syncData["textureName"].ToString();
             
-            Texture2D[] textures = Resources.LoadAll<Texture2D>("Images/Tarefas/Cartas");
-            Texture2D foundTexture = null;
+            Sprite[] sprites = Resources.LoadAll<Sprite>("Images/Tarefas/Cartas_Novas");
+            Sprite foundSprite = null;
             
-            foreach (Texture2D tex in textures)
+            foreach (Sprite spr in sprites)
             {
-                if (tex.name == textureName)
+                if (spr.name == spriteName)
                 {
-                    foundTexture = tex;
+                    foundSprite = spr;
                     break;
                 }
             }
             
-            if (foundTexture != null)
+            if (foundSprite != null)
             {
-                cardData.cardTexture = foundTexture;
-                cardData.cardMaterial = new Material(Shader.Find("Unlit/Texture"));
-                cardData.cardMaterial.mainTexture = foundTexture;
-                cardData.cardMaterial.SetTexture("_MainTex", foundTexture);
+                cardData.cardSprite = foundSprite;
             }
         }
         
@@ -374,28 +359,25 @@ public class SelectedCardStorage : MonoBehaviourPunCallbacks
         
         if (syncData.ContainsKey("textureName"))
         {
-            string textureName = syncData["textureName"].ToString();
+            string spriteName = syncData["textureName"].ToString();
             
-            Texture2D[] textures = Resources.LoadAll<Texture2D>("Images/Tarefas/Cartas");
-            Texture2D foundTexture = null;
+            Sprite[] sprites = Resources.LoadAll<Sprite>("Images/Tarefas/Cartas_Novas");
+            Sprite foundSprite = null;
             
-            foreach (Texture2D tex in textures)
+            foreach (Sprite spr in sprites)
             {
-                if (tex.name == textureName)
+                if (spr.name == spriteName)
                 {
-                    foundTexture = tex;
+                    foundSprite = spr;
                     break;
                 }
             }
             
-            if (foundTexture != null)
+            if (foundSprite != null)
             {
-                MeshRenderer meshRenderer = tempCardObj.AddComponent<MeshRenderer>();
-                Material material = new Material(Shader.Find("Unlit/Texture"));
-                material.mainTexture = foundTexture;
-                material.SetTexture("_MainTex", foundTexture);
-                meshRenderer.material = material;
-                cardTarefas.meshRenderer = meshRenderer;
+                Image image = tempCardObj.AddComponent<Image>();
+                image.sprite = foundSprite;
+                cardTarefas.image = image;
             }
         }
         

@@ -28525,7 +28525,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 743136160933033798, guid: 82222119a51a12746a99388b640556c5, type: 3}
       propertyPath: imageFolder
-      value: Images/Tarefas/Cartas
+      value: Images/Tarefas/Cartas_Novas
       objectReference: {fileID: 0}
     - target: {fileID: 743136160933033798, guid: 82222119a51a12746a99388b640556c5, type: 3}
       propertyPath: meshRenderer
@@ -28545,19 +28545,23 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8332130045520305128, guid: 82222119a51a12746a99388b640556c5, type: 3}
       propertyPath: m_LocalScale.x
-      value: 4
+      value: 7.4168
+      objectReference: {fileID: 0}
+    - target: {fileID: 8332130045520305128, guid: 82222119a51a12746a99388b640556c5, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 0.18542
       objectReference: {fileID: 0}
     - target: {fileID: 8332130045520305128, guid: 82222119a51a12746a99388b640556c5, type: 3}
       propertyPath: m_LocalScale.z
-      value: 7
+      value: 12.9794
       objectReference: {fileID: 0}
     - target: {fileID: 8332130045520305128, guid: 82222119a51a12746a99388b640556c5, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -17
+      value: -15.2917
       objectReference: {fileID: 0}
     - target: {fileID: 8332130045520305128, guid: 82222119a51a12746a99388b640556c5, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 4
+      value: 6.9896
       objectReference: {fileID: 0}
     - target: {fileID: 8332130045520305128, guid: 82222119a51a12746a99388b640556c5, type: 3}
       propertyPath: m_LocalPosition.z
@@ -32837,7 +32841,7 @@ PrefabInstance:
       objectReference: {fileID: 1579298752}
     - target: {fileID: 8702914381964408519, guid: 964db72f22499b0469a62ce15906a05e, type: 3}
       propertyPath: currentState
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 8745095344789834489, guid: 964db72f22499b0469a62ce15906a05e, type: 3}
       propertyPath: m_AnchorMax.y

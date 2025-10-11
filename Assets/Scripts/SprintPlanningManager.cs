@@ -381,17 +381,17 @@ public class SprintPlanningManager : MonoBehaviourPun
         storageGO.AddComponent<SelectedCardStorage>();
       }
 
-      // Registrar a textura da carta selecionada como utilizada
+      // Registrar o sprite da carta selecionada como utilizado
       if (UsedCardsManager.Instance == null)
       {
         GameObject usedCardsGO = new GameObject("UsedCardsManager");
         usedCardsGO.AddComponent<UsedCardsManager>();
       }
       
-      if (cardTarefas.meshRenderer != null && cardTarefas.meshRenderer.material != null && cardTarefas.meshRenderer.material.mainTexture != null)
+      if (cardTarefas.image != null && cardTarefas.image.sprite != null)
       {
-        string textureName = cardTarefas.meshRenderer.material.mainTexture.name;
-        UsedCardsManager.Instance.AddUsedCard(textureName);
+        string spriteName = cardTarefas.image.sprite.name;
+        UsedCardsManager.Instance.AddUsedCard(spriteName);
       }
 
       SelectedCardStorage.Instance.StoreSelectedCard(cardTarefas);
@@ -502,11 +502,11 @@ public class SprintPlanningManager : MonoBehaviourPun
   {
     if (card == null || sourceCardData == null) return;
 
-    MeshRenderer sourceMeshRenderer = sourceCardData.meshRenderer;
-    MeshRenderer targetMeshRenderer = card.GetComponent<MeshRenderer>();
-    if (sourceMeshRenderer != null && targetMeshRenderer != null && sourceMeshRenderer.material != null)
+    UnityEngine.UI.Image sourceImage = sourceCardData.image;
+    UnityEngine.UI.Image targetImage = card.GetComponentInChildren<UnityEngine.UI.Image>();
+    if (sourceImage != null && targetImage != null && sourceImage.sprite != null)
     {
-      targetMeshRenderer.material = new Material(sourceMeshRenderer.material);
+      targetImage.sprite = sourceImage.sprite;
     }
 
     CardTarefas targetCardTarefas = card.GetComponent<CardTarefas>();
@@ -515,7 +515,7 @@ public class SprintPlanningManager : MonoBehaviourPun
       targetCardTarefas.scores = new Dictionary<string, int>(sourceCardData.scores);
       targetCardTarefas.maxScore = sourceCardData.maxScore;
       targetCardTarefas.isSelected = true;
-      targetCardTarefas.InitializeWithCustomData(sourceCardData.scores, targetMeshRenderer?.material, sourceCardData.maxScore);
+      targetCardTarefas.InitializeWithCustomData(sourceCardData.scores, targetImage?.sprite, sourceCardData.maxScore);
     }
   }
 

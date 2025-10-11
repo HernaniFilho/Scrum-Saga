@@ -3,12 +3,13 @@ using System.Collections.Generic;
 using System.Linq;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 using Random = UnityEngine.Random;
 
 public class CardTarefas : MonoBehaviour
 {
-    public string imageFolder = "Images/Tarefas/Cartas";
-    public MeshRenderer meshRenderer;
+    public string imageFolder = "Images/Tarefas/Cartas_Novas";
+    public Image image;
     [Header("Pontuação máxima para atribuição aleatória")]
     public int maxScore = 1;
 
@@ -24,7 +25,7 @@ public class CardTarefas : MonoBehaviour
     private bool customInitialized = false;
     private bool hasPredefinedScores = false;
 
-    public void InitializeWithCustomData(Dictionary<string, int> customScores, Material customMaterial, int customMaxScore = 1)
+    public void InitializeWithCustomData(Dictionary<string, int> customScores, Sprite customSprite, int customMaxScore = 1)
     {
         customInitialized = true;
         isSelected = true;
@@ -32,9 +33,9 @@ public class CardTarefas : MonoBehaviour
         scores = new Dictionary<string, int>(customScores);
         maxScore = customMaxScore;
         
-        if (customMaterial != null && meshRenderer != null)
+        if (customSprite != null && image != null)
         {
-            meshRenderer.material = new Material(customMaterial);
+            image.sprite = customSprite;
         }
     }
 
@@ -67,8 +68,8 @@ public class CardTarefas : MonoBehaviour
             return;
         }
         
-        // Só aplica textura aleatória se não houver material definido (evita sobrescrever cartas selecionadas)
-        if (meshRenderer != null && (meshRenderer.material == null || meshRenderer.material.mainTexture == null))
+        // Só aplica sprite aleatório se não houver sprite definido (evita sobrescrever cartas selecionadas)
+        if (image != null && image.sprite == null)
         {
             randomTexture();
         }
@@ -198,10 +199,10 @@ public class CardTarefas : MonoBehaviour
 
     void randomTexture()
     {
-        Texture2D[] textures = Resources.LoadAll<Texture2D>(imageFolder);
-        if (textures.Length == 0)
+        Sprite[] sprites = Resources.LoadAll<Sprite>(imageFolder);
+        if (sprites.Length == 0)
         {
-            Debug.LogWarning("Nenhuma textura encontrada em: " + imageFolder);
+            Debug.LogWarning("Nenhum sprite encontrado em: " + imageFolder);
             return;
         }
 
@@ -212,26 +213,23 @@ public class CardTarefas : MonoBehaviour
             usedCardsGO.AddComponent<UsedCardsManager>();
         }
 
-        Texture2D selectedTexture = null;
-        int maxAttempts = textures.Length * 2; // Evita loop infinito
+        Sprite selectedSprite = null;
+        int maxAttempts = sprites.Length * 2; // Evita loop infinito
         int attempts = 0;
 
         do
         {
-            selectedTexture = textures[Random.Range(0, textures.Length)];
+            selectedSprite = sprites[Random.Range(0, sprites.Length)];
             attempts++;
             
             if (attempts >= maxAttempts)
             {
-                Debug.LogWarning($"Todas as texturas podem estar sendo usadas. Usando textura: {selectedTexture.name}");
+                Debug.LogWarning($"Todos os sprites podem estar sendo usados. Usando sprite: {selectedSprite.name}");
                 break;
             }
         }
-        while (UsedCardsManager.Instance.IsCardUsed(selectedTexture.name));
+        while (UsedCardsManager.Instance.IsCardUsed(selectedSprite.name));
         
-        Material material = new Material(Shader.Find("Unlit/Texture"));
-        material.mainTexture = selectedTexture;
-        material.SetTexture("_MainTex", selectedTexture);
-        meshRenderer.material = material;
+        image.sprite = selectedSprite;
     }
 }

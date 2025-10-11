@@ -476,7 +476,7 @@ public class SprintReviewManager : MonoBehaviourPunCallbacks
         
         // Get components
         CardTarefas cardTarefas = card.GetComponent<CardTarefas>();
-        MeshRenderer meshRenderer = card.GetComponent<MeshRenderer>();
+        UnityEngine.UI.Image image = card.GetComponentInChildren<UnityEngine.UI.Image>();
         
         // Set card as selected and apply scores
         if (cardTarefas != null)
@@ -485,24 +485,11 @@ public class SprintReviewManager : MonoBehaviourPunCallbacks
             cardTarefas.scores = new Dictionary<string, int>(cardData.scores);
         }
         
-        // Apply the original material from SelectedCardStorage
-        if (meshRenderer != null && cardData.cardMaterial != null)
+        // Apply the sprite from SelectedCardStorage
+        if (image != null && cardData.cardSprite != null)
         {
-            // Create a copy to avoid modifying the original
-            Material preservedMaterial = new Material(cardData.cardMaterial);
-            meshRenderer.material = preservedMaterial;
-            
-            Debug.Log($"Texture preservada no Sprint Review: {preservedMaterial.mainTexture?.name}");
-        }
-        else if (meshRenderer != null && cardData.cardTexture != null)
-        {
-            // Fallback: recreate material from texture info
-            Material fallbackMaterial = new Material(Shader.Find("Unlit/Texture"));
-            fallbackMaterial.mainTexture = cardData.cardTexture;
-            fallbackMaterial.SetTexture("_MainTex", cardData.cardTexture);
-            meshRenderer.material = fallbackMaterial;
-            
-            Debug.Log($"Material recriado no Sprint Review: {cardData.cardTexture.name}");
+            image.sprite = cardData.cardSprite;
+            Debug.Log($"Sprite preservado no Sprint Review: {cardData.cardSprite.name}");
         }
         
         // Update score texts
@@ -781,9 +768,9 @@ public class SprintReviewManager : MonoBehaviourPunCallbacks
                 ["scores"] = card.scores ?? new Dictionary<string, int>()
             };
             
-            if (card.cardMaterial != null && card.cardMaterial.mainTexture != null)
+            if (card.cardSprite != null)
             {
-                cardData["textureName"] = card.cardMaterial.mainTexture.name;
+                cardData["textureName"] = card.cardSprite.name;
             }
             
             cardsList.Add(cardData);
@@ -1365,26 +1352,23 @@ public class SprintReviewManager : MonoBehaviourPunCallbacks
         
         if (syncData.ContainsKey("textureName"))
         {
-            string textureName = syncData["textureName"].ToString();
+            string spriteName = syncData["textureName"].ToString();
             
-            Texture2D[] textures = Resources.LoadAll<Texture2D>("Images/Tarefas/Cartas");
-            Texture2D foundTexture = null;
+            Sprite[] sprites = Resources.LoadAll<Sprite>("Images/Tarefas/Cartas_Novas");
+            Sprite foundSprite = null;
             
-            foreach (Texture2D tex in textures)
+            foreach (Sprite spr in sprites)
             {
-                if (tex.name == textureName)
+                if (spr.name == spriteName)
                 {
-                    foundTexture = tex;
+                    foundSprite = spr;
                     break;
                 }
             }
             
-            if (foundTexture != null)
+            if (foundSprite != null)
             {
-                cardData.cardTexture = foundTexture;
-                cardData.cardMaterial = new Material(Shader.Find("Unlit/Texture"));
-                cardData.cardMaterial.mainTexture = foundTexture;
-                cardData.cardMaterial.SetTexture("_MainTex", foundTexture);
+                cardData.cardSprite = foundSprite;
             }
         }
         
