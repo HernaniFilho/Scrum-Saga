@@ -12,6 +12,7 @@ public class MobileScaler : MonoBehaviour
     public List<GameObject> DesktopObjects = new List<GameObject>();
     public bool isMobile = false;
     public TMP_Text debugText;
+    private bool isMobileByDevice = false;
 
 #if UNITY_WEBGL && !UNITY_EDITOR
     [DllImport("__Internal")]
@@ -19,6 +20,9 @@ public class MobileScaler : MonoBehaviour
 
     [DllImport("__Internal")]
     private static extern int GetViewportHeight();
+
+    [DllImport("__Internal")]
+    private static extern int IsMobileDevice();
 #endif
 
     private Vector2 GetViewportSize()
@@ -32,8 +36,14 @@ public class MobileScaler : MonoBehaviour
 
     void Awake()
     {
+#if UNITY_WEBGL && !UNITY_EDITOR
+        isMobileByDevice = IsMobileDevice() == 1;
+#endif
+
         Vector2 viewport = GetViewportSize();
-        isMobile = viewport.x < 1000;
+        bool isMobileByWidth = viewport.x < 1000;
+        
+        isMobile = isMobileByWidth || isMobileByDevice;
         // debugText.text = $"{viewport.x}x{viewport.y}";
 
         if (isMobile)
