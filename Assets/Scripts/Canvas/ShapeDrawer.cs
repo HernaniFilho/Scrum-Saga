@@ -169,6 +169,12 @@ public class ShapeDrawer : MonoBehaviour, IPointerDownHandler, IDragHandler, IPo
                     RealizacaoTarefaManager.Instance.SyncFloodFillInRealTime(localPoint, selectedBucketColor);
                 });
             }
+            
+            // Fecha o color picker após pintar
+            if (colorPickerPopup != null && colorPickerPopup.IsVisible)
+            {
+                colorPickerPopup.ClosePopup();
+            }
             return;
         }
         
@@ -191,9 +197,6 @@ public class ShapeDrawer : MonoBehaviour, IPointerDownHandler, IDragHandler, IPo
     
     private void OnBucketColorPickerClosed()
     {
-        bucketModeActive = false;
-        
-        currentShape = ShapeType.Rectangle;
     }
     
     private void PerformFloodFill(Vector2 localPoint, Color fillColor)
@@ -333,8 +336,6 @@ public class ShapeDrawer : MonoBehaviour, IPointerDownHandler, IDragHandler, IPo
     
     private void ActivateBucketMode()
     {
-        bucketModeActive = true;
-        
         if (colorPickerPopup != null)
         {
             selectedBucketColor = colorPickerPopup.GetCurrentSelectedColor();
@@ -342,9 +343,17 @@ public class ShapeDrawer : MonoBehaviour, IPointerDownHandler, IDragHandler, IPo
         
         if (colorPickerPopup != null)
         {
-            colorPickerPopup.ShowPopup();
+            if (colorPickerPopup.IsVisible)
+            {
+                colorPickerPopup.ClosePopup();
+            }
+            else
+            {
+                colorPickerPopup.ShowPopup();
+            }
         }
-        
+
+        bucketModeActive = true;
     }
     
     public void SetShapeToRectangle() => SetShape(ShapeType.Rectangle);
