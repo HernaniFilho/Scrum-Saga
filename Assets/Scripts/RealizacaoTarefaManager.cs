@@ -34,7 +34,7 @@ public class RealizacaoTarefaManager : MonoBehaviourPunCallbacks
     private UndoSystem undoSystem;
 
     [Header("Configuration")]
-    public float realizacaoTimer = 80f; // 1m20 = 80 segundos
+    public float realizacaoTimer = 105f; // 1m20 = 80 segundos
 
     [Header("Network Keys")]
     private const string REALIZACAO_INICIADA_KEY = "RealizacaoIniciada";

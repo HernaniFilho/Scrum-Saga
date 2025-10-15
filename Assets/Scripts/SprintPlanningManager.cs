@@ -548,7 +548,7 @@ public class SprintPlanningManager : MonoBehaviourPun
 
     if (TimerManager.Instance != null)
     {
-      TimerManager.Instance.StartTimer(100f, OnDraftTimeComplete, "DraftTimer");
+      TimerManager.Instance.StartTimer(120f, OnDraftTimeComplete, "DraftTimer");
     }
 
     if (CanvasManager.Instance != null)

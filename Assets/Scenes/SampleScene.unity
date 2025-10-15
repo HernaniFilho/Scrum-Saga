@@ -31198,7 +31198,7 @@ PrefabInstance:
       objectReference: {fileID: 1935395084}
     - target: {fileID: 4903429362628227274, guid: 964db72f22499b0469a62ce15906a05e, type: 3}
       propertyPath: realizacaoTimer
-      value: 80
+      value: 105
       objectReference: {fileID: 0}
     - target: {fileID: 4903429362628227274, guid: 964db72f22499b0469a62ce15906a05e, type: 3}
       propertyPath: vezDoPlayerText
