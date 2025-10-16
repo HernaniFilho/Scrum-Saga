@@ -43,6 +43,7 @@ public class RealizacaoTarefaManager : MonoBehaviourPunCallbacks
 
     private bool hasStartedRealizacao = false;
     private bool timerRunning = false;
+    private bool isFinishingRealizacao = false;
     private List<Player> playersOrder = new List<Player>();
     private int currentPlayerIndex = 0;
     private int commandCountBeforeTurn = 0; // Para rastrear comandos da vez atual
@@ -99,6 +100,7 @@ public class RealizacaoTarefaManager : MonoBehaviourPunCallbacks
                 ResetRealizacaoState();
                 hasStartedRealizacao = false;
                 timerRunning = false;
+                isFinishingRealizacao = false;
             }
 
             if (startRealizacaoButton != null)
@@ -192,6 +194,7 @@ public class RealizacaoTarefaManager : MonoBehaviourPunCallbacks
         // Reset local state but don't clear room properties yet
         hasStartedRealizacao = false;
         timerRunning = false;
+        isFinishingRealizacao = false;
         currentPlayerIndex = 0;
         playersOrder.Clear();
 
@@ -263,6 +266,8 @@ public class RealizacaoTarefaManager : MonoBehaviourPunCallbacks
 
         if (timerManager != null)
             timerManager.EndTimer();
+        
+        FinishRealizacaoPhase();
     }
 
     private void SetupPlayersOrder()
@@ -589,6 +594,14 @@ public class RealizacaoTarefaManager : MonoBehaviourPunCallbacks
     {
         Debug.Log("Timer da Realização da Tarefa encerrado!");
 
+        FinishRealizacaoPhase();
+    }
+
+    private void FinishRealizacaoPhase()
+    {
+        if (isFinishingRealizacao) return;
+        isFinishingRealizacao = true;
+
         // Notificar todos os jogadores que o tempo acabou para confirmação automática
         photonView.RPC("HandleTimeUp", RpcTarget.All);
 
@@ -615,6 +628,7 @@ public class RealizacaoTarefaManager : MonoBehaviourPunCallbacks
     {
         hasStartedRealizacao = false;
         timerRunning = false;
+        isFinishingRealizacao = false;
         currentPlayerIndex = 0;
         playersOrder.Clear();
 
