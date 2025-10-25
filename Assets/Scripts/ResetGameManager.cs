@@ -344,6 +344,69 @@ public class ResetGameManager : MonoBehaviourPunCallbacks
         Debug.Log("Reset de todos os card managers finalizado!");
     }
 
+    public void ResetLocalGameState()
+    {
+        Debug.Log("Resetando estado local do jogo ao sair da sala...");
+        
+        if (gameStateManager != null)
+        {
+            gameStateManager.ResetToInitialState();
+        }
+        
+        if (scoreManager != null)
+        {
+            scoreManager.ResetScore();
+        }
+        
+        if (startButtonManager != null)
+        {
+            startButtonManager.ResetSprintsLocal();
+        }
+        
+        if (fimManager != null)
+        {
+            fimManager.ResetFimState();
+        }
+        
+        if (sprintPlanningManager != null)
+        {
+            sprintPlanningManager.ResetSprintPlanning();
+        }
+
+        if (sprintReviewManager != null)
+        {
+            sprintReviewManager.ResetSprintReviewManager();
+        }
+
+        if (scrumMasterCardManager != null)
+        {
+            scrumMasterCardManager.ResetCartaStatus();
+        }
+        
+        if (canvasManager != null)
+        {
+            canvasManager.ClearCanvasForAll();
+            canvasManager.DeactivateCanvasForAll();
+        }
+        
+        if (commandSaveSystem != null)
+        {
+            commandSaveSystem.ClearAllSavedSessions();
+        }
+        
+        if (popupConfirmacaoContainer != null)
+        {
+            popupConfirmacaoContainer.SetActive(false);
+        }
+        
+        if (avisoResetContainer != null)
+        {
+            avisoResetContainer.SetActive(false);
+        }
+        
+        Debug.Log("Reset local finalizado!");
+    }
+
     #region Photon Callbacks
 
     public override void OnJoinedRoom()

@@ -28,6 +28,9 @@ public class NetworkManager : MonoBehaviourPunCallbacks
     
     [Header("Product Owner")]
     private ProductOwnerManager productOwnerManager;
+    
+    [Header("Reset Manager")]
+    private ResetGameManager resetGameManager;
 
     void Start()
     {
@@ -331,6 +334,17 @@ public class NetworkManager : MonoBehaviourPunCallbacks
     {
         Debug.Log("Saiu da sala");
         UpdateConnectionStatus("Não está em uma sala");
+        
+        // Resetar estado local do jogo (limpar cartas, popups, etc.)
+        if (resetGameManager == null)
+        {
+            resetGameManager = ResetGameManager.Instance;
+        }
+        
+        if (resetGameManager != null)
+        {
+            resetGameManager.ResetLocalGameState();
+        }
         
         // Mostrar tela de loading quando sair da sala
         loadingScreen?.ShowLoadingScreen("Conectando...");
