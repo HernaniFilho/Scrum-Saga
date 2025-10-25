@@ -14,9 +14,15 @@ public class LobbyManager : MonoBehaviourPunCallbacks
     public GameObject roomCardPrefab;
     public GameObject noRoomsMessage;
 
+    [Header("Join In Progress Popup")]
+    public GameObject popupJoinInProgressContainer;
+    public Button confirmarJoinInProgressButton;
+    public Button cancelarJoinInProgressButton;
+
     private Dictionary<string, GameObject> roomCards = new Dictionary<string, GameObject>();
     private LoadingScreenManager loadingScreen;
     private RoomNameInputManager roomNameInputManager;
+    private string pendingRoomToJoin;
 
     void Start()
     {
@@ -38,9 +44,29 @@ public class LobbyManager : MonoBehaviourPunCallbacks
             createRoomButton.onClick.AddListener(OnCreateRoomButtonClicked);
         }
 
+        SetupJoinInProgressPopup();
+
         if (lobbyPanel != null)
         {
             lobbyPanel.SetActive(false);
+        }
+    }
+
+    void SetupJoinInProgressPopup()
+    {
+        if (popupJoinInProgressContainer != null)
+        {
+            popupJoinInProgressContainer.SetActive(false);
+        }
+
+        if (confirmarJoinInProgressButton != null)
+        {
+            confirmarJoinInProgressButton.onClick.AddListener(OnConfirmarJoinInProgress);
+        }
+
+        if (cancelarJoinInProgressButton != null)
+        {
+            cancelarJoinInProgressButton.onClick.AddListener(OnCancelarJoinInProgress);
         }
     }
 
@@ -97,11 +123,12 @@ public class LobbyManager : MonoBehaviourPunCallbacks
         roomOptions.MaxPlayers = 5;
         roomOptions.IsVisible = true;
         roomOptions.IsOpen = true;
+        roomOptions.CustomRoomPropertiesForLobby = new string[] { "GameState" };
 
         PhotonNetwork.CreateRoom(roomName, roomOptions);
     }
 
-    public void JoinRoom(string roomName)
+    public void JoinRoom(string roomName, bool isGameInProgress = false)
     {
         if (!PhotonNetwork.IsConnectedAndReady)
         {
@@ -109,8 +136,49 @@ public class LobbyManager : MonoBehaviourPunCallbacks
             return;
         }
 
-        loadingScreen?.ShowLoadingScreen("Entrando na sala...");
-        PhotonNetwork.JoinRoom(roomName);
+        if (isGameInProgress)
+        {
+            pendingRoomToJoin = roomName;
+            ShowJoinInProgressPopup();
+        }
+        else
+        {
+            loadingScreen?.ShowLoadingScreen("Entrando na sala...");
+            PhotonNetwork.JoinRoom(roomName);
+        }
+    }
+
+    void ShowJoinInProgressPopup()
+    {
+        if (popupJoinInProgressContainer != null)
+        {
+            popupJoinInProgressContainer.SetActive(true);
+        }
+    }
+
+    void OnConfirmarJoinInProgress()
+    {
+        if (popupJoinInProgressContainer != null)
+        {
+            popupJoinInProgressContainer.SetActive(false);
+        }
+
+        if (!string.IsNullOrEmpty(pendingRoomToJoin))
+        {
+            loadingScreen?.ShowLoadingScreen("Entrando na sala...");
+            PhotonNetwork.JoinRoom(pendingRoomToJoin);
+            pendingRoomToJoin = null;
+        }
+    }
+
+    void OnCancelarJoinInProgress()
+    {
+        if (popupJoinInProgressContainer != null)
+        {
+            popupJoinInProgressContainer.SetActive(false);
+        }
+
+        pendingRoomToJoin = null;
     }
 
     void UpdateRoomList()

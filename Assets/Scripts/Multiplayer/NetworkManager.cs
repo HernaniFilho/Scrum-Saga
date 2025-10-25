@@ -299,6 +299,7 @@ public class NetworkManager : MonoBehaviourPunCallbacks
         roomOptions.MaxPlayers = maxPlayersPerRoom;
         roomOptions.IsVisible = true;
         roomOptions.IsOpen = true;
+        roomOptions.CustomRoomPropertiesForLobby = new string[] { "GameState" };
         
         string roomName = "ScrumSaga_" + Random.Range(1000, 9999);
         PhotonNetwork.CreateRoom(roomName, roomOptions);

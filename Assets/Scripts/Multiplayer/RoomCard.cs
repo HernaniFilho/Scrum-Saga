@@ -13,6 +13,7 @@ public class RoomCard : MonoBehaviour
 
     private string currentRoomName;
     private LobbyManager lobbyManager;
+    private RoomInfo currentRoomInfo;
     private const string GAME_STATE_KEY = "GameState";
 
     void Start()
@@ -27,6 +28,7 @@ public class RoomCard : MonoBehaviour
     {
         lobbyManager = lobby;
         currentRoomName = roomInfo.Name;
+        currentRoomInfo = roomInfo;
 
         if (roomNameText != null)
         {
@@ -41,22 +43,16 @@ public class RoomCard : MonoBehaviour
         if (joinButton != null)
         {
             bool isRoomFull = roomInfo.PlayerCount >= roomInfo.MaxPlayers;
-            bool isGameStarted = IsGameStarted(roomInfo);
-            
-            joinButton.interactable = roomInfo.IsOpen && !isRoomFull && !isGameStarted;
+            joinButton.interactable = !isRoomFull;
         }
     }
 
     bool IsGameStarted(RoomInfo roomInfo)
     {
-        if (!roomInfo.IsOpen)
+        if (roomInfo.CustomProperties.ContainsKey(GAME_STATE_KEY))
         {
-            return true;
-        }
-        
-        if (roomInfo.CustomProperties.ContainsKey("GameStarted"))
-        {
-            return (bool)roomInfo.CustomProperties["GameStarted"];
+            int gameState = (int)roomInfo.CustomProperties[GAME_STATE_KEY];
+            return gameState != 0;
         }
         
         return false;
@@ -66,7 +62,8 @@ public class RoomCard : MonoBehaviour
     {
         if (lobbyManager != null && !string.IsNullOrEmpty(currentRoomName))
         {
-            lobbyManager.JoinRoom(currentRoomName);
+            bool isGameInProgress = IsGameStarted(currentRoomInfo);
+            lobbyManager.JoinRoom(currentRoomName, isGameInProgress);
         }
     }
 }
