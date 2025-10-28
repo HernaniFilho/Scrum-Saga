@@ -13,6 +13,7 @@ public class DailyScrumManager : MonoBehaviourPun
     public GameObject stopDailyContainer;
     public UnityEngine.UI.Button stopDailyButton;
     public TMP_Text waitingText;
+    public TMP_Text errorText;
 
     private GameStateManager gameStateManager;
     private bool hasStartedDaily = false;
@@ -32,6 +33,11 @@ public class DailyScrumManager : MonoBehaviourPun
         {
             stopDailyContainer.gameObject.SetActive(false);
             stopDailyButton.onClick.AddListener(OnStopDailyButtonClicked);
+        }
+
+        if (errorText != null)
+        {
+            errorText.gameObject.SetActive(false);
         }
     }
 
@@ -73,6 +79,11 @@ public class DailyScrumManager : MonoBehaviourPun
             {
                 stopDailyContainer.gameObject.SetActive(false);
             }
+
+            if (errorText != null)
+            {
+                errorText.gameObject.SetActive(false);
+            }
         }
     }
 
@@ -93,6 +104,11 @@ public class DailyScrumManager : MonoBehaviourPun
         if (startDailyButton != null)
         {
             startDailyButton.gameObject.SetActive(false);
+        }
+
+        if (errorText != null)
+        {
+            errorText.gameObject.SetActive(false);
         }
 
         // Mostrar botão de parar Daily
@@ -154,6 +170,11 @@ public class DailyScrumManager : MonoBehaviourPun
             CanvasManager.Instance.DeactivateCanvasForAll();
         }
 
+        if (errorText != null)
+        {
+            errorText.gameObject.SetActive(false);
+        }
+
         // Limpar display do nome do player para todos
         photonView.RPC("ClearPlayerNameForAll", RpcTarget.All);
 
@@ -181,8 +202,8 @@ public class DailyScrumManager : MonoBehaviourPun
     private System.Collections.IEnumerator EnsureDrawingsLoad()
     {
         int tentativas = 0;
-        
-        while (tentativas < 20) // Máximo 10 segundos tentando (20 * 0.5s)
+
+        while (tentativas < 6) // Máximo 3 segundos tentando (20 * 0.5s)
         {
             CommandSaveSystem commandSaveSystem = FindObjectOfType<CommandSaveSystem>();
             int savedCount = commandSaveSystem != null ? commandSaveSystem.SavedSessions.Count : 0;
@@ -198,6 +219,12 @@ public class DailyScrumManager : MonoBehaviourPun
             
             tentativas++;
             yield return new UnityEngine.WaitForSeconds(0.5f);
+        }
+
+        if (errorText != null)
+        {
+            errorText.gameObject.SetActive(true);
+            errorText.text = "Ocorreu um erro inesperado!";
         }
     }
 
