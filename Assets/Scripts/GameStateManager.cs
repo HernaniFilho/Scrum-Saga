@@ -31,6 +31,15 @@ public class GameStateManager : MonoBehaviour
     [Header("Configurações de Movimento")]
     public float movementSpeed = 5f;
     
+    [Header("Pop-ups das Fases")]
+    public GameObject sprintPlanningPopup;
+    public GameObject dailyScrumPopup;
+    public GameObject imprevistoPopup;
+    public GameObject escolhaPopup;
+    public GameObject realizacaoTarefaPopup;
+    public GameObject sprintReviewPopup;
+    public GameObject sprintRetrospectivePopup;
+    
     private bool isMoving = false;
 
 
@@ -240,5 +249,52 @@ public class GameStateManager : MonoBehaviour
     {
         ChangeState(GameState.Inicio);
         Debug.Log("Estado resetado para o inicial (Inicio)");
+    }
+
+    public void OpenCurrentStatePopup()
+    {
+        GameObject popupToOpen = null;
+
+        switch (currentState)
+        {
+            case GameState.SprintPlanning:
+                popupToOpen = sprintPlanningPopup;
+                break;
+            case GameState.DailyScrum:
+                popupToOpen = dailyScrumPopup;
+                break;
+            case GameState.Imprevisto:
+                popupToOpen = imprevistoPopup;
+                break;
+            case GameState.Escolha:
+                popupToOpen = escolhaPopup;
+                break;
+            case GameState.RealizacaoTarefa:
+                popupToOpen = realizacaoTarefaPopup;
+                break;
+            case GameState.SprintReview:
+                popupToOpen = sprintReviewPopup;
+                break;
+            case GameState.SprintRetrospective:
+                popupToOpen = sprintRetrospectivePopup;
+                break;
+        }
+
+        if (popupToOpen != null)
+        {
+            popupToOpen.SetActive(true);
+            Debug.Log($"Pop-up aberto para o estado: {currentState}");
+        }
+    }
+
+    public void CloseAllPopups()
+    {
+        if (sprintPlanningPopup != null) sprintPlanningPopup.SetActive(false);
+        if (dailyScrumPopup != null) dailyScrumPopup.SetActive(false);
+        if (imprevistoPopup != null) imprevistoPopup.SetActive(false);
+        if (escolhaPopup != null) escolhaPopup.SetActive(false);
+        if (realizacaoTarefaPopup != null) realizacaoTarefaPopup.SetActive(false);
+        if (sprintReviewPopup != null) sprintReviewPopup.SetActive(false);
+        if (sprintRetrospectivePopup != null) sprintRetrospectivePopup.SetActive(false);
     }
 }
