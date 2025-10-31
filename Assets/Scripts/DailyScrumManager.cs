@@ -275,4 +275,29 @@ public class DailyScrumManager : MonoBehaviourPun
             waitingText.gameObject.SetActive(false);
         }
     }
+
+    public void ResetDailyScrum()
+    {
+        hasStartedDaily = false;
+
+        if (startDailyButton != null)
+        {
+            startDailyButton.gameObject.SetActive(false);
+        }
+
+        if (stopDailyContainer != null)
+        {
+            stopDailyContainer.gameObject.SetActive(false);
+        }
+
+        if (errorText != null)
+        {
+            errorText.gameObject.SetActive(false);
+        }
+
+        if (waitingText != null)
+        {
+            waitingText.gameObject.SetActive(false);
+        }
+    }
 }

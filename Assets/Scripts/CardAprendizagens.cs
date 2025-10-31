@@ -107,7 +107,7 @@ public class CardAprendizagens : MonoBehaviour
     }
     void OnMouseDown()
     {
-        if (ResetGameManager.IsResetPopupOpen)
+        if (ResetGameManager.IsResetPopupOpen || RestartPhaseManager.IsRestartPopupOpen)
         {
             return;
         }

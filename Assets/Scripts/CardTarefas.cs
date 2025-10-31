@@ -120,7 +120,7 @@ public class CardTarefas : MonoBehaviour
 
     void OnMouseDown()
     {
-        if (ResetGameManager.IsResetPopupOpen)
+        if (ResetGameManager.IsResetPopupOpen || RestartPhaseManager.IsRestartPopupOpen)
         {
             return;
         }

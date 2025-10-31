@@ -89,6 +89,8 @@ MonoBehaviour:
   - PlayerFinishedDraft
   - UpdatePlayerPOTextRPC
   - ClearFinishedTextsRPC
+  - RestartCurrentPhase
+  - ResetRealizacaoTarefaRPC
   DisableAutoOpenWizard: 1
   ShowSettings: 0
   DevRegionSetOnce: 1

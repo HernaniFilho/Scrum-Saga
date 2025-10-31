@@ -631,6 +631,10 @@ public class RealizacaoTarefaManager : MonoBehaviourPunCallbacks
         isFinishingRealizacao = false;
         currentPlayerIndex = 0;
         playersOrder.Clear();
+        isViewingDraft = false;
+        taskCommands.Clear();
+        taskCommandStartIndex = 0;
+        commandCountBeforeTurn = 0;
 
         if (PhotonNetwork.IsMasterClient)
         {
@@ -643,12 +647,48 @@ public class RealizacaoTarefaManager : MonoBehaviourPunCallbacks
 
         if (startRealizacaoButton != null)
             startRealizacaoButton.gameObject.SetActive(false);
+        if (stopRealizacaoContainer != null)
+            stopRealizacaoContainer.gameObject.SetActive(false);
         if (aguardandoText != null)
             aguardandoText.gameObject.SetActive(false);
         if (vezDoPlayerText != null)
             vezDoPlayerText.transform.parent.gameObject.SetActive(false);
         if (confirmationPopupContainer != null)
             confirmationPopupContainer.SetActive(false);
+        if (viewDraftButton != null)
+            viewDraftButton.gameObject.SetActive(false);
+    }
+
+    public void ResetRealizacaoTarefa()
+    {
+        ResetRealizacaoState();
+    }
+    
+    [PunRPC]
+    void ResetRealizacaoTarefaRPC()
+    {
+        hasStartedRealizacao = false;
+        timerRunning = false;
+        isFinishingRealizacao = false;
+        currentPlayerIndex = 0;
+        playersOrder.Clear();
+        isViewingDraft = false;
+        taskCommands.Clear();
+        taskCommandStartIndex = 0;
+        commandCountBeforeTurn = 0;
+
+        if (startRealizacaoButton != null)
+            startRealizacaoButton.gameObject.SetActive(false);
+        if (stopRealizacaoContainer != null)
+            stopRealizacaoContainer.gameObject.SetActive(false);
+        if (aguardandoText != null)
+            aguardandoText.gameObject.SetActive(false);
+        if (vezDoPlayerText != null)
+            vezDoPlayerText.transform.parent.gameObject.SetActive(false);
+        if (confirmationPopupContainer != null)
+            confirmationPopupContainer.SetActive(false);
+        if (viewDraftButton != null)
+            viewDraftButton.gameObject.SetActive(false);
     }
 
     #region View Draft Methods
